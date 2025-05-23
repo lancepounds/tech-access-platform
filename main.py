@@ -14,6 +14,12 @@ class User(db.Model):
     password = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(80), nullable=False, default='user')
 
+class Company(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+    role = db.Column(db.String(80), nullable=False, default='company')
+    approved = db.Column(db.Boolean, default=False)
+
 with app.app_context():
     db.create_all()
 
@@ -45,6 +51,12 @@ def register():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Registration failed'}), 500
+
+@app.route('/admin/pending_companies', methods=['GET'])
+def get_pending_companies():
+    pending_companies = Company.query.filter_by(approved=False).all()
+    companies_list = [{'id': company.id, 'name': company.name} for company in pending_companies]
+    return jsonify(companies_list), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
