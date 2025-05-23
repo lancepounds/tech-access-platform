@@ -169,12 +169,17 @@ def events():
         
     # POST method handling
     token = request.headers.get('Authorization')
-    if not token or not token.startswith('Bearer '):
-        return jsonify({'error': 'Missing or invalid token'}), 401
+    if not token:
+        return jsonify({'error': 'Missing token'}), 401
     
-    company_name = token.split('Bearer ')[1]
-    company = Company.query.filter_by(name=company_name).first()
+    decoded = decode_token(token)
+    if not decoded:
+        return jsonify({'error': 'Invalid token'}), 401
     
+    if decoded['role'] != 'company':
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    company = Company.query.filter_by(name=decoded['email']).first()
     if not company:
         return jsonify({'error': 'Company not found'}), 404
     if not company.approved:
@@ -211,11 +216,17 @@ def events():
 @app.route('/events/<int:event_id>/rsvp', methods=['POST'])
 def rsvp_event(event_id):
     token = request.headers.get('Authorization')
-    if not token or not token.startswith('Bearer '):
-        return jsonify({'error': 'Missing or invalid token'}), 401
+    if not token:
+        return jsonify({'error': 'Missing token'}), 401
+        
+    decoded = decode_token(token)
+    if not decoded:
+        return jsonify({'error': 'Invalid token'}), 401
     
-    user_email = token.split('Bearer ')[1]
-    user = User.query.filter_by(email=user_email).first()
+    if decoded['role'] != 'user':
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    user = User.query.filter_by(email=decoded['email']).first()
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
