@@ -52,11 +52,18 @@ def register():
         db.session.rollback()
         return jsonify({'error': 'Registration failed'}), 500
 
+# Simple admin token (in production, use real authentication)
+ADMIN_TOKEN = "my-secret-admin-token"
+
 @app.route('/admin/pending_companies', methods=['GET'])
-def get_pending_companies():
-    pending_companies = Company.query.filter_by(approved=False).all()
-    companies_list = [{'id': company.id, 'name': company.name} for company in pending_companies]
-    return jsonify(companies_list), 200
+def list_pending_companies():
+    token = request.headers.get('Authorization')
+    if token != f"Bearer {ADMIN_TOKEN}":
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    pending = Company.query.filter_by(approved=False).all()
+    result = [{'id': c.id, 'name': c.name} for c in pending]
+    return jsonify(result), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
