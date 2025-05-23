@@ -245,5 +245,29 @@ def rsvp_event(event_id):
             return jsonify({'error': 'You have already RSVP\'d for this event'}), 400
         return jsonify({'error': f'Failed to RSVP: {str(e)}'}), 500
 
+@app.route('/events/<int:event_id>/rsvps', methods=['GET'])
+def get_event_rsvps(event_id):
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({'error': 'Missing token'}), 401
+
+    decoded = decode_token(token)
+    if not decoded or decoded['role'] != 'company':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    company = Company.query.filter_by(name=decoded['email']).first()
+    if not company or not company.approved:
+        return jsonify({'error': 'Company not found or not approved'}), 403
+
+    event = Event.query.get(event_id)
+    if not event or event.company_id != company.id:
+        return jsonify({'error': 'Event not found or does not belong to your company'}), 404
+
+    rsvps = RSVP.query.filter_by(event_id=event_id).all()
+    return jsonify([{
+        'user_email': rsvp.user_email,
+        'timestamp': rsvp.created_at.isoformat()
+    } for rsvp in rsvps]), 200
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
