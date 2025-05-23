@@ -2,7 +2,12 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
+
+# Secret key for JWT (in production, use environment variable)
+JWT_SECRET = 'your-secret-key'
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -44,6 +49,37 @@ with app.app_context():
 @app.route('/')
 def index():
     return 'Hello from Flask!'
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({'error': 'Missing email or password'}), 400
+
+    # Check if it's a user
+    user = User.query.filter_by(email=data['email']).first()
+    if user and check_password_hash(user.password, data['password']):
+        token = jwt.encode({
+            'email': user.email,
+            'role': user.role,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }, JWT_SECRET, algorithm='HS256')
+        return jsonify({'token': token, 'role': 'user'}), 200
+
+    # Check if it's a company
+    company = Company.query.filter_by(name=data['email']).first()
+    if company:
+        # For companies, we use their name as both email and password
+        if data['password'] == data['email']:
+            token = jwt.encode({
+                'email': company.name,
+                'role': company.role,
+                'approved': company.approved,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+            }, JWT_SECRET, algorithm='HS256')
+            return jsonify({'token': token, 'role': 'company'}), 200
+
+    return jsonify({'error': 'Invalid credentials'}), 401
 
 @app.route('/user/register', methods=['POST'])
 def register():
