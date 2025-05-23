@@ -102,8 +102,19 @@ def approve_company():
         db.session.rollback()
         return jsonify({'error': f'Failed to approve company: {str(e)}'}), 500
 
-@app.route('/events', methods=['POST'])
-def create_event():
+@app.route('/events', methods=['GET', 'POST'])
+def events():
+    if request.method == 'GET':
+        events = Event.query.join(Company).all()
+        return jsonify([{
+            'id': event.id,
+            'title': event.title,
+            'description': event.description,
+            'date': event.date.isoformat(),
+            'company_name': event.company.name
+        } for event in events]), 200
+        
+    # POST method handling
     token = request.headers.get('Authorization')
     if not token or not token.startswith('Bearer '):
         return jsonify({'error': 'Missing or invalid token'}), 401
