@@ -6,6 +6,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 
+def decode_token(token):
+    try:
+        token = token.replace("Bearer ", "")
+        return jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
 # Secret key for JWT (in production, use environment variable)
 JWT_SECRET = 'your-secret-key'
 
