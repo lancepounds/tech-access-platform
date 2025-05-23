@@ -304,3 +304,35 @@ def get_my_rsvps():
     
     return jsonify(events), 200
 
+
+@app.route('/rsvps/<int:rsvp_id>/fulfill', methods=['POST'])
+def fulfill_rsvp(rsvp_id):
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({'error': 'Missing token'}), 401
+
+    decoded = decode_token(token)
+    if not decoded or decoded['role'] != 'company':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    company = Company.query.filter_by(name=decoded['email']).first()
+    if not company or not company.approved:
+        return jsonify({'error': 'Company not found or not approved'}), 403
+
+    rsvp = RSVP.query.get(rsvp_id)
+    if not rsvp:
+        return jsonify({'error': 'RSVP not found'}), 404
+
+    event = Event.query.get(rsvp.event_id)
+    if event.company_id != company.id:
+        return jsonify({'error': 'This RSVP does not belong to one of your events'}), 403
+
+    rsvp.fulfilled = True
+
+    try:
+        db.session.commit()
+        return jsonify({'message': f'RSVP for {rsvp.user_email} marked as fulfilled'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to update RSVP: {str(e)}'}), 500
+
