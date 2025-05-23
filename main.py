@@ -50,6 +50,7 @@ class RSVP(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
     user_email = db.Column(db.String(120), nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    fulfilled = db.Column(db.Boolean, default=False, nullable=False)
     __table_args__ = (db.UniqueConstraint('event_id', 'user_email'),)
 
 with app.app_context():
