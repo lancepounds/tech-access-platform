@@ -29,6 +29,14 @@ class Event(db.Model):
     date = db.Column(db.DateTime, nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    rsvps = db.relationship('RSVP', backref='event', lazy=True)
+
+class RSVP(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
+    user_email = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    __table_args__ = (db.UniqueConstraint('event_id', 'user_email'),)
 
 with app.app_context():
     db.create_all()
@@ -154,6 +162,32 @@ def events():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to create event: {str(e)}'}), 500
+
+@app.route('/events/<int:event_id>/rsvp', methods=['POST'])
+def rsvp_event(event_id):
+    token = request.headers.get('Authorization')
+    if not token or not token.startswith('Bearer '):
+        return jsonify({'error': 'Missing or invalid token'}), 401
+    
+    user_email = token.split('Bearer ')[1]
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    event = Event.query.get(event_id)
+    if not event:
+        return jsonify({'error': 'Event not found'}), 404
+
+    try:
+        new_rsvp = RSVP(event_id=event_id, user_email=user_email)
+        db.session.add(new_rsvp)
+        db.session.commit()
+        return jsonify({'message': 'RSVP successful'}), 201
+    except Exception as e:
+        db.session.rollback()
+        if 'UNIQUE constraint failed' in str(e):
+            return jsonify({'error': 'You have already RSVP\'d for this event'}), 400
+        return jsonify({'error': f'Failed to RSVP: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
