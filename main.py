@@ -65,5 +65,32 @@ def list_pending_companies():
     result = [{'id': c.id, 'name': c.name} for c in pending]
     return jsonify(result), 200
 
+@app.route('/admin/approve_company', methods=['POST'])
+def approve_company():
+    token = request.headers.get('Authorization')
+    if token != f"Bearer {ADMIN_TOKEN}":
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    data = request.get_json()
+    company_name = data.get('name')
+
+    if not company_name:
+        return jsonify({'error': 'Missing company name'}), 400
+
+    company = Company.query.filter_by(name=company_name).first()
+    if not company:
+        return jsonify({'error': 'Company not found'}), 404
+
+    if company.approved:
+        return jsonify({'message': 'Company already approved'}), 200
+
+    company.approved = True
+    try:
+        db.session.commit()
+        return jsonify({'message': f'Company {company_name} approved'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to approve company: {str(e)}'}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
