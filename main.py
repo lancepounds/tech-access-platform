@@ -1,5 +1,6 @@
 
 from flask import Flask, request, jsonify
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash
 
@@ -19,6 +20,15 @@ class Company(db.Model):
     name = db.Column(db.String(120), unique=True, nullable=False)
     role = db.Column(db.String(80), nullable=False, default='company')
     approved = db.Column(db.Boolean, default=False)
+    events = db.relationship('Event', backref='company', lazy=True)
+
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
 with app.app_context():
     db.create_all()
@@ -91,6 +101,48 @@ def approve_company():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to approve company: {str(e)}'}), 500
+
+@app.route('/events', methods=['POST'])
+def create_event():
+    token = request.headers.get('Authorization')
+    if not token or not token.startswith('Bearer '):
+        return jsonify({'error': 'Missing or invalid token'}), 401
+    
+    company_name = token.split('Bearer ')[1]
+    company = Company.query.filter_by(name=company_name).first()
+    
+    if not company:
+        return jsonify({'error': 'Company not found'}), 404
+    if not company.approved:
+        return jsonify({'error': 'Company not approved'}), 403
+    
+    data = request.get_json()
+    required_fields = ['title', 'description', 'date']
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    try:
+        event_date = datetime.fromisoformat(data['date'].replace('Z', '+00:00'))
+    except ValueError:
+        return jsonify({'error': 'Invalid date format. Use ISO format'}), 400
+    
+    new_event = Event(
+        title=data['title'],
+        description=data['description'],
+        date=event_date,
+        company_id=company.id
+    )
+    
+    try:
+        db.session.add(new_event)
+        db.session.commit()
+        return jsonify({
+            'message': 'Event created successfully',
+            'id': new_event.id
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to create event: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
