@@ -267,7 +267,8 @@ def get_event_rsvps(event_id):
     rsvps = RSVP.query.filter_by(event_id=event_id).all()
     return jsonify([{
         'user_email': rsvp.user_email,
-        'timestamp': rsvp.created_at.isoformat()
+        'timestamp': rsvp.created_at.isoformat(),
+        'fulfilled': rsvp.fulfilled
     } for rsvp in rsvps]), 200
 
 
