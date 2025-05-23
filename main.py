@@ -235,7 +235,7 @@ def rsvp_event(event_id):
         return jsonify({'error': 'Event not found'}), 404
 
     try:
-        new_rsvp = RSVP(event_id=event_id, user_email=user_email)
+        new_rsvp = RSVP(event_id=event_id, user_email=decoded['email'])
         db.session.add(new_rsvp)
         db.session.commit()
         return jsonify({'message': 'RSVP successful'}), 201
