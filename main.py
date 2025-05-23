@@ -271,3 +271,35 @@ def get_event_rsvps(event_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
+
+
+@app.route('/my-rsvps', methods=['GET'])
+def get_my_rsvps():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({'error': 'Missing token'}), 401
+        
+    decoded = decode_token(token)
+    if not decoded:
+        return jsonify({'error': 'Invalid token'}), 401
+    
+    if decoded['role'] != 'user':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    rsvps = RSVP.query.filter_by(user_email=decoded['email']).all()
+    events = []
+    for rsvp in rsvps:
+        event = Event.query.get(rsvp.event_id)
+        if event:
+            events.append({
+                'id': event.id,
+                'title': event.title,
+                'description': event.description,
+                'date': event.date.isoformat(),
+                'company_name': event.company.name,
+                'rsvp_date': rsvp.created_at.isoformat()
+            })
+    
+    return jsonify(events), 200
+
