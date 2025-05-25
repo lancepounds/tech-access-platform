@@ -8,6 +8,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'  # Use in-memory for simplicity
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key'  # Replace with a strong, secret key
+app.secret_key = 'your-secret-key'
 db = SQLAlchemy(app)
 
 JWT_SECRET = 'your-jwt-secret'  # Replace with a strong, secret key
