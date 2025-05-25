@@ -1,4 +1,4 @@
-  # For companies, we use their name as both email and password
+# For companies, we use their name as both email and password
         if data['password'] == data['email']:
             token = jwt.encode({
                 'email': company.name,
@@ -13,20 +13,20 @@
 @app.route('/user/register', methods=['POST'])
 def register():
     data = request.get_json()
-    
+
     if not data or not data.get('email') or not data.get('password'):
         return jsonify({'error': 'Missing email or password'}), 400
-    
+
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already registered'}), 400
-    
+
     hashed_password = generate_password_hash(data['password'])
     new_user = User(
         email=data['email'],
         password=hashed_password,
         role='user'
     )
-    
+
     try:
         db.session.add(new_user)
         db.session.commit()
@@ -86,42 +86,42 @@ def events():
             'date': event.date.isoformat(),
             'company_name': event.company.name
         } for event in events]), 200
-        
+
     # POST method handling
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({'error': 'Missing token'}), 401
-    
+
     decoded = decode_token(token)
     if not decoded:
         return jsonify({'error': 'Invalid token'}), 401
-    
+
     if decoded['role'] != 'company':
         return jsonify({'error': 'Unauthorized'}), 403
-        
+
     company = Company.query.filter_by(name=decoded['email']).first()
     if not company:
         return jsonify({'error': 'Company not found'}), 404
     if not company.approved:
         return jsonify({'error': 'Company not approved'}), 403
-    
+
     data = request.get_json()
     required_fields = ['title', 'description', 'date']
     if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required fields'}), 400
-    
+
     try:
         event_date = datetime.fromisoformat(data['date'].replace('Z', '+00:00'))
     except ValueError:
         return jsonify({'error': 'Invalid date format. Use ISO format'}), 400
-    
+
     new_event = Event(
         title=data['title'],
         description=data['description'],
         date=event_date,
         company_id=company.id
     )
-    
+
     try:
         db.session.add(new_event)
         db.session.commit()
@@ -138,14 +138,14 @@ def rsvp_event(event_id):
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({'error': 'Missing token'}), 401
-        
+
     decoded = decode_token(token)
     if not decoded:
         return jsonify({'error': 'Invalid token'}), 401
-    
+
     if decoded['role'] != 'user':
         return jsonify({'error': 'Unauthorized'}), 403
-        
+
     user = User.query.filter_by(email=decoded['email']).first()
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -233,11 +233,11 @@ def get_my_rsvps():
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({'error': 'Missing token'}), 401
-        
+
     decoded = decode_token(token)
     if not decoded:
         return jsonify({'error': 'Invalid token'}), 401
-    
+
     if decoded['role'] != 'user':
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -254,38 +254,5 @@ def get_my_rsvps():
                 'company_name': event.company.name,
                 'rsvp_date': rsvp.created_at.isoformat()
             })
-    
+
     return jsonify(events), 200
-
-
-@app.route('/rsvps/<int:rsvp_id>/fulfill', methods=['POST'])
-def fulfill_rsvp(rsvp_id):
-    token = request.headers.get('Authorization')
-    if not token:
-        return jsonify({'error': 'Missing token'}), 401
-
-    decoded = decode_token(token)
-    if not decoded or decoded['role'] != 'company':
-        return jsonify({'error': 'Unauthorized'}), 403
-
-    company = Company.query.filter_by(name=decoded['email']).first()
-    if not company or not company.approved:
-        return jsonify({'error': 'Company not found or not approved'}), 403
-
-    rsvp = RSVP.query.get(rsvp_id)
-    if not rsvp:
-        return jsonify({'error': 'RSVP not found'}), 404
-
-    event = Event.query.get(rsvp.event_id)
-    if event.company_id != company.id:
-        return jsonify({'error': 'This RSVP does not belong to one of your events'}), 403
-
-    rsvp.fulfilled = True
-
-    try:
-        db.session.commit()
-        return jsonify({'message': f'RSVP for {rsvp.user_email} marked as fulfilled'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': f'Failed to update RSVP: {str(e)}'}), 500
-
