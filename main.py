@@ -351,6 +351,11 @@ def login_page():
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         }, JWT_SECRET, algorithm='HS256')
         
+        # Store login info in session
+        session['token'] = token
+        session['email'] = user.email
+        session['role'] = user.role
+        
         flash('Logged in successfully', 'success')
         return redirect(url_for('show_events'))
 
@@ -364,6 +369,11 @@ def login_page():
                 'approved': company.approved,
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
             }, JWT_SECRET, algorithm='HS256')
+            
+            # Store login info in session
+            session['token'] = token
+            session['email'] = company.name
+            session['role'] = company.role
             
             flash('Logged in successfully', 'success')
             return redirect(url_for('show_events'))
