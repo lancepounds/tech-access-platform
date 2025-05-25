@@ -678,6 +678,12 @@ def create_event():
         flash('Failed to create event. Please try again.', 'danger')
         return redirect(url_for('create_event_page'))
 
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    flash('You have been logged out successfully.', 'success')
+    return redirect(url_for('index'))
+
 def decode_token(token):
     try:
         decoded = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
