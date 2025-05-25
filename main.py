@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, url_for, flash, redirect
+from flask import Flask, request, jsonify, render_template, url_for, flash, redirect, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -417,6 +417,63 @@ def show_register():
 def show_events():
     events = Event.query.order_by(Event.date).all()
     return render_template('events.html', events=events)
+
+@app.route('/create-event', methods=['GET'])
+def create_event_page():
+    return render_template('create_event.html')
+
+@app.route('/create-event', methods=['POST'])
+def create_event():
+    # Get form data
+    title = request.form.get('title')
+    description = request.form.get('description')
+    date = request.form.get('date')
+    
+    # Validation
+    if not title or not description or not date:
+        flash('All fields are required.', 'danger')
+        return redirect(url_for('create_event_page'))
+    
+    # For now, we'll need to implement session-based authentication
+    # This is a simplified version - you'll need to store JWT tokens in session
+    # during login and decode them here
+    
+    # Parse the date
+    try:
+        event_date = datetime.datetime.fromisoformat(date)
+    except ValueError:
+        flash('Invalid date format.', 'danger')
+        return redirect(url_for('create_event_page'))
+    
+    # For demo purposes, assuming we have a way to get the current company
+    # In a real implementation, you'd get this from the session token
+    company = Company.query.first()  # This is temporary - replace with actual session logic
+    
+    if not company:
+        flash('Company not found.', 'danger')
+        return redirect(url_for('create_event_page'))
+    
+    if not company.approved:
+        flash('Company not approved.', 'danger')
+        return redirect(url_for('create_event_page'))
+    
+    # Create the event
+    new_event = Event(
+        title=title,
+        description=description,
+        date=event_date,
+        company_id=company.id
+    )
+    
+    try:
+        db.session.add(new_event)
+        db.session.commit()
+        flash('Event created successfully!', 'success')
+        return redirect(url_for('show_events'))
+    except Exception as e:
+        db.session.rollback()
+        flash('Failed to create event. Please try again.', 'danger')
+        return redirect(url_for('create_event_page'))
 
 def decode_token(token):
     try:
