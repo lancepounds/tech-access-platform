@@ -45,6 +45,15 @@ class RSVP(db.Model):
         db.UniqueConstraint('event_id', 'user_email', name='unique_rsvp'),
     )
 
+class Reward(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    rsvp_id = db.Column(db.Integer, db.ForeignKey('rsvp.id'), nullable=False)
+    code = db.Column(db.String(36), unique=True, nullable=False)
+    value_cents = db.Column(db.Integer, nullable=False, default=1000)  # $10
+    issued_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    redeemed = db.Column(db.Boolean, default=False)
+    rsvp = db.relationship('RSVP', backref='reward', uselist=False)
+
 with app.app_context():
     db.create_all()
 
