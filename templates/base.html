@@ -86,6 +86,12 @@
       transform: translateY(-1px);
     }
     
+    .nav-link.active {
+      color: var(--primary-color) !important;
+      background: rgba(99, 102, 241, 0.15);
+      font-weight: 600;
+    }
+    
     .btn {
       border-radius: 12px;
       font-weight: 500;
@@ -228,7 +234,7 @@
       <div class="collapse navbar-collapse" id="navMenu">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('index') }}">
+            <a class="nav-link {{ 'active' if request.endpoint == 'index' else '' }}" href="{{ url_for('index') }}">
               <i class="bi bi-house-fill me-1"></i>Home
             </a>
           </li>
@@ -236,24 +242,24 @@
           {% if not session.get('role') %}
             <!-- Not logged in -->
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('login_page') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'login_page' else '' }}" href="{{ url_for('login_page') }}">
                 <i class="bi bi-box-arrow-in-right me-1"></i>Login
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('show_register') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'show_register' else '' }}" href="{{ url_for('show_register') }}">
                 <i class="bi bi-person-plus-fill me-1"></i>Register
               </a>
             </li>
           {% elif session.get('role') == 'user' %}
             <!-- User logged in -->
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('show_events') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'show_events' else '' }}" href="{{ url_for('show_events') }}">
                 <i class="bi bi-calendar-event me-1"></i>Events
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('show_my_rsvps') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'show_my_rsvps' else '' }}" href="{{ url_for('show_my_rsvps') }}">
                 <i class="bi bi-check-circle me-1"></i>My RSVPs
               </a>
             </li>
@@ -267,13 +273,18 @@
           {% elif session.get('role') == 'company' %}
             <!-- Company logged in -->
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('company_dashboard') }}">
-                <i class="bi bi-speedometer2 me-1"></i>Dashboard
+              <a class="nav-link {{ 'active' if request.endpoint == 'show_events' else '' }}" href="{{ url_for('show_events') }}">
+                <i class="bi bi-calendar-event me-1"></i>Events
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('create_event_page') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'create_event_page' else '' }}" href="{{ url_for('create_event_page') }}">
                 <i class="bi bi-plus-circle me-1"></i>Create Event
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {{ 'active' if request.endpoint == 'company_dashboard' else '' }}" href="{{ url_for('company_dashboard') }}">
+                <i class="bi bi-speedometer2 me-1"></i>Dashboard
               </a>
             </li>
             <li class="nav-item">
