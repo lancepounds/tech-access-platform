@@ -1,0 +1,42 @@
+
+{% extends "base.html" %}
+
+{% block title %}My RSVPs – Tech Access{% endblock %}
+
+{% block content %}
+  <h2 class="mb-4">My RSVPs</h2>
+  
+  {% if rsvps %}
+    <div class="row">
+      {% for rsvp in rsvps %}
+        <div class="col-md-6 mb-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">{{ rsvp.event.title }}</h5>
+              <h6 class="card-subtitle mb-2 text-muted">
+                {{ rsvp.event.date.strftime('%b %d, %Y %H:%M') }} &mdash; {{ rsvp.event.company.name }}
+              </h6>
+              <p class="card-text">
+                <small class="text-muted">
+                  RSVP'd on: {{ rsvp.created_at.strftime('%b %d, %Y %H:%M') }}
+                </small>
+              </p>
+              <div class="mt-auto">
+                {% if rsvp.fulfilled %}
+                  <span class="badge bg-success">Fulfilled</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info" role="alert">
+      <h4 class="alert-heading">No RSVPs yet!</h4>
+      <p>You haven't RSVP'd to any events yet. Check out our <a href="{{ url_for('show_events') }}" class="alert-link">upcoming events</a> to get started.</p>
+    </div>
+  {% endif %}
+{% endblock %}
