@@ -4,29 +4,57 @@
 {% block title %}My RSVPs – Tech Access{% endblock %}
 
 {% block content %}
-  <h2 class="mb-4">My RSVPs</h2>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-check-circle me-2 text-success"></i>My RSVPs
+    </h2>
+    <a href="{{ url_for('show_events') }}" class="btn btn-primary">
+      <i class="bi bi-calendar-event me-2"></i>Browse Events
+    </a>
+  </div>
   
   {% if rsvps %}
     <div class="row">
       {% for rsvp in rsvps %}
-        <div class="col-md-6 mb-4">
+        <div class="col-lg-6 mb-4">
           <div class="card h-100">
             <div class="card-body">
-              <h5 class="card-title">{{ rsvp.event.title }}</h5>
-              <h6 class="card-subtitle mb-2 text-muted">
-                {{ rsvp.event.date.strftime('%b %d, %Y %H:%M') }} &mdash; {{ rsvp.event.company.name }}
-              </h6>
-              <p class="card-text">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5 class="card-title mb-0">{{ rsvp.event.title }}</h5>
+                {% if rsvp.fulfilled %}
+                  <span class="badge bg-success">
+                    <i class="bi bi-check-circle-fill me-1"></i>Fulfilled
+                  </span>
+                {% else %}
+                  <span class="badge bg-warning">
+                    <i class="bi bi-clock-fill me-1"></i>Pending
+                  </span>
+                {% endif %}
+              </div>
+              
+              <div class="mb-3">
                 <small class="text-muted">
+                  <i class="bi bi-building me-1"></i>
+                  {{ rsvp.event.company.name }}
+                </small>
+              </div>
+              
+              <div class="mb-3">
+                <small class="text-muted">
+                  <i class="bi bi-calendar3 me-1"></i>
+                  {{ rsvp.event.date.strftime('%b %d, %Y') }}
+                </small>
+                <small class="text-muted ms-3">
+                  <i class="bi bi-clock me-1"></i>
+                  {{ rsvp.event.date.strftime('%H:%M') }}
+                </small>
+              </div>
+              
+              <div class="mt-auto">
+                <small class="text-muted">
+                  <i class="bi bi-calendar-check me-1"></i>
                   RSVP'd on: {{ rsvp.created_at.strftime('%b %d, %Y %H:%M') }}
                 </small>
-              </p>
-              <div class="mt-auto">
-                {% if rsvp.fulfilled %}
-                  <span class="badge bg-success">Fulfilled</span>
-                {% else %}
-                  <span class="badge bg-warning text-dark">Pending</span>
-                {% endif %}
               </div>
             </div>
           </div>
@@ -34,9 +62,13 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="alert alert-info" role="alert">
-      <h4 class="alert-heading">No RSVPs yet!</h4>
-      <p>You haven't RSVP'd to any events yet. Check out our <a href="{{ url_for('show_events') }}" class="alert-link">upcoming events</a> to get started.</p>
+    <div class="text-center py-5">
+      <i class="bi bi-calendar-check text-muted mb-3" style="font-size: 4rem;"></i>
+      <h4 class="text-muted">No RSVPs yet!</h4>
+      <p class="text-muted mb-4">You haven't RSVP'd to any events yet. Discover exciting tech demos and user testing opportunities!</p>
+      <a href="{{ url_for('show_events') }}" class="btn btn-primary">
+        <i class="bi bi-calendar-event me-2"></i>Browse Events
+      </a>
     </div>
   {% endif %}
 {% endblock %}

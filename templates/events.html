@@ -4,25 +4,66 @@
 {% block title %}Events – Tech Access{% endblock %}
 
 {% block content %}
-  <h2 class="mb-4">Upcoming Events</h2>
-  <div class="row">
-    {% for event in events %}
-      <div class="col-md-6 mb-4">
-        <div class="card h-100">
-          <div class="card-body">
-            <h5 class="card-title">{{ event.title }}</h5>
-            <h6 class="card-subtitle mb-2 text-muted">
-              {{ event.date.strftime('%b %d, %Y %H:%M') }} &mdash; {{ event.company.name }}
-            </h6>
-            <p class="card-text">{{ event.description }}</p>
-            <form method="post" action="{{ url_for('rsvp_event_ui', event_id=event.id) }}" style="display: inline;">
-              <button type="submit" class="btn btn-success">RSVP</button>
-            </form>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-calendar-event me-2 text-primary"></i>Upcoming Events
+    </h2>
+    {% if session.get('role') == 'company' %}
+      <a href="{{ url_for('create_event_page') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Create Event
+      </a>
+    {% endif %}
+  </div>
+  
+  {% if events %}
+    <div class="row">
+      {% for event in events %}
+        <div class="col-lg-6 mb-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5 class="card-title mb-0">{{ event.title }}</h5>
+                <span class="badge bg-primary">{{ event.company.name }}</span>
+              </div>
+              <div class="mb-3">
+                <small class="text-muted">
+                  <i class="bi bi-calendar3 me-1"></i>
+                  {{ event.date.strftime('%b %d, %Y') }}
+                </small>
+                <small class="text-muted ms-3">
+                  <i class="bi bi-clock me-1"></i>
+                  {{ event.date.strftime('%H:%M') }}
+                </small>
+              </div>
+              <p class="card-text">{{ event.description }}</p>
+              {% if session.get('role') == 'user' %}
+                <form method="post" action="{{ url_for('rsvp_event_ui', event_id=event.id) }}" class="mt-auto">
+                  <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle me-2"></i>RSVP
+                  </button>
+                </form>
+              {% elif not session.get('role') %}
+                <div class="mt-auto">
+                  <a href="{{ url_for('login_page') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login to RSVP
+                  </a>
+                </div>
+              {% endif %}
+            </div>
           </div>
         </div>
-      </div>
-    {% else %}
-      <p>No upcoming events.</p>
-    {% endfor %}
-  </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-calendar-x text-muted mb-3" style="font-size: 4rem;"></i>
+      <h4 class="text-muted">No upcoming events</h4>
+      <p class="text-muted">Check back later for exciting tech demos and user testing opportunities!</p>
+      {% if session.get('role') == 'company' %}
+        <a href="{{ url_for('create_event_page') }}" class="btn btn-primary mt-3">
+          <i class="bi bi-plus-circle me-2"></i>Create Your First Event
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
 {% endblock %}
