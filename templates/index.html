@@ -4,56 +4,279 @@
 {% block title %}Home – Tech Access{% endblock %}
 
 {% block content %}
-  <div class="text-center py-5">
-    <div class="mb-4">
-      <i class="bi bi-lightning-charge-fill" style="font-size: 4rem; color: var(--primary-color);"></i>
-    </div>
-    <h1 class="display-4 fw-bold mb-4">Welcome to Tech Access</h1>
-    <p class="lead mb-5 text-muted">Join technology demos and user tests, earn gift cards, and connect with innovative companies.</p>
-    
-    <div class="row justify-content-center">
-      <div class="col-md-8">
-        <div class="row g-4">
-          <div class="col-md-4">
-            <div class="card h-100 text-center">
-              <div class="card-body">
-                <i class="bi bi-calendar-event text-primary mb-3" style="font-size: 2.5rem;"></i>
-                <h5 class="card-title">Discover Events</h5>
-                <p class="card-text">Find exciting tech demos and user testing opportunities.</p>
-              </div>
-            </div>
+  <!-- Hero Section -->
+  <div class="hero-section text-center py-5 mb-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="hero-icon mb-4">
+            <i class="bi bi-lightning-charge-fill" style="font-size: 5rem; color: var(--primary-color); filter: drop-shadow(0 10px 20px rgba(99, 102, 241, 0.3));"></i>
           </div>
-          <div class="col-md-4">
-            <div class="card h-100 text-center">
-              <div class="card-body">
-                <i class="bi bi-gift text-success mb-3" style="font-size: 2.5rem;"></i>
-                <h5 class="card-title">Earn Rewards</h5>
-                <p class="card-text">Get gift cards and rewards for your participation.</p>
-              </div>
-            </div>
+          <h1 class="hero-title display-3 fw-bold mb-4">
+            Welcome to <span class="text-gradient">Tech Access</span>
+          </h1>
+          <p class="hero-subtitle lead mb-5 text-muted fs-4">
+            Join technology demos and user tests, earn gift cards, and connect with innovative companies building the future.
+          </p>
+          
+          {% if not session.get('role') %}
+          <div class="hero-cta mb-5">
+            <a href="{{ url_for('show_register') }}" class="btn btn-primary btn-lg me-3 cta-button">
+              <i class="bi bi-person-plus-fill me-2"></i>Get Started Free
+            </a>
+            <a href="{{ url_for('show_events') }}" class="btn btn-outline-primary btn-lg cta-button">
+              <i class="bi bi-calendar-event me-2"></i>Browse Events
+            </a>
           </div>
-          <div class="col-md-4">
-            <div class="card h-100 text-center">
-              <div class="card-body">
-                <i class="bi bi-people text-warning mb-3" style="font-size: 2.5rem;"></i>
-                <h5 class="card-title">Connect</h5>
-                <p class="card-text">Network with innovative companies and tech enthusiasts.</p>
+          {% else %}
+          <div class="hero-cta mb-5">
+            <a href="{{ url_for('show_events') }}" class="btn btn-primary btn-lg me-3 cta-button">
+              <i class="bi bi-calendar-event me-2"></i>View All Events
+            </a>
+            {% if session.get('role') == 'user' %}
+            <a href="{{ url_for('show_my_rsvps') }}" class="btn btn-success btn-lg cta-button">
+              <i class="bi bi-check-circle me-2"></i>My RSVPs
+            </a>
+            {% elif session.get('role') == 'company' %}
+            <a href="{{ url_for('create_event_page') }}" class="btn btn-success btn-lg cta-button">
+              <i class="bi bi-plus-circle me-2"></i>Create Event
+            </a>
+            {% endif %}
+          </div>
+          {% endif %}
+          
+          <div class="hero-stats">
+            <div class="row text-center">
+              <div class="col-md-4">
+                <div class="stat-item">
+                  <h3 class="stat-number text-primary">500+</h3>
+                  <p class="stat-label text-muted">Active Users</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="stat-item">
+                  <h3 class="stat-number text-success">50+</h3>
+                  <p class="stat-label text-muted">Tech Companies</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="stat-item">
+                  <h3 class="stat-number text-warning">$10k+</h3>
+                  <p class="stat-label text-muted">Rewards Earned</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    
-    {% if not session.get('role') %}
-    <div class="mt-5">
-      <a href="{{ url_for('show_register') }}" class="btn btn-primary btn-lg me-3">
-        <i class="bi bi-person-plus-fill me-2"></i>Get Started
-      </a>
-      <a href="{{ url_for('show_events') }}" class="btn btn-outline-primary btn-lg">
-        <i class="bi bi-calendar-event me-2"></i>View Events
-      </a>
-    </div>
-    {% endif %}
   </div>
+
+  <!-- Features Section -->
+  <div class="features-section">
+    <div class="container">
+      <div class="row justify-content-center mb-5">
+        <div class="col-lg-8 text-center">
+          <h2 class="section-title fw-bold mb-3">How It Works</h2>
+          <p class="section-subtitle text-muted">Simple steps to start earning rewards</p>
+        </div>
+      </div>
+      
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="feature-card card h-100 text-center border-0">
+            <div class="card-body p-4">
+              <div class="feature-icon mb-3">
+                <i class="bi bi-calendar-event text-primary" style="font-size: 3rem;"></i>
+              </div>
+              <h5 class="card-title fw-bold">Discover Events</h5>
+              <p class="card-text text-muted">Find exciting tech demos, product tests, and user research opportunities from innovative companies.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="feature-card card h-100 text-center border-0">
+            <div class="card-body p-4">
+              <div class="feature-icon mb-3">
+                <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+              </div>
+              <h5 class="card-title fw-bold">Participate</h5>
+              <p class="card-text text-muted">RSVP for events that interest you and participate in meaningful technology testing sessions.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="feature-card card h-100 text-center border-0">
+            <div class="card-body p-4">
+              <div class="feature-icon mb-3">
+                <i class="bi bi-gift text-warning" style="font-size: 3rem;"></i>
+              </div>
+              <h5 class="card-title fw-bold">Earn Rewards</h5>
+              <p class="card-text text-muted">Get gift cards and rewards for your valuable feedback and participation in tech events.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA Section -->
+  {% if not session.get('role') %}
+  <div class="cta-section text-center py-5 mt-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-6">
+          <h3 class="fw-bold mb-3">Ready to Get Started?</h3>
+          <p class="text-muted mb-4">Join thousands of users earning rewards by testing cutting-edge technology.</p>
+          <a href="{{ url_for('show_register') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-rocket-takeoff me-2"></i>Join Tech Access Today
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <style>
+    .hero-section {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+      border-radius: 20px;
+      margin: -2rem -15px 0 -15px;
+      padding: 4rem 15px 3rem 15px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="%236366f1" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="%2310b981" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+      pointer-events: none;
+    }
+    
+    .text-gradient {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .cta-button {
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      border-radius: 15px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .cta-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .hero-stats {
+      margin-top: 3rem;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 0;
+    }
+    
+    .features-section {
+      padding: 4rem 0;
+    }
+    
+    .section-title {
+      font-size: 2.5rem;
+      color: var(--text-dark);
+    }
+    
+    .section-subtitle {
+      font-size: 1.2rem;
+    }
+    
+    .feature-card {
+      transition: all 0.3s ease;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #ffffff, #f8fafc);
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .feature-icon {
+      padding: 1rem;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.1);
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+    
+    .cta-section {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      border-radius: 20px;
+      margin: 0 -15px;
+      color: white;
+    }
+    
+    .cta-section h3,
+    .cta-section p {
+      color: white;
+    }
+    
+    .cta-section .btn-primary {
+      background: white;
+      color: var(--primary-color);
+      border: none;
+    }
+    
+    .cta-section .btn-primary:hover {
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--primary-dark);
+    }
+    
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .cta-button {
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+      }
+      
+      .stat-number {
+        font-size: 2rem;
+      }
+      
+      .section-title {
+        font-size: 2rem;
+      }
+    }
+  </style>
 {% endblock %}
