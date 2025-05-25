@@ -321,7 +321,7 @@ def get_my_rsvps():
 
 @app.route('/')
 def index():
-    return render_template('base.html')
+    return render_template('index.html')
 
 def decode_token(token):
     try:
