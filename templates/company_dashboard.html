@@ -30,8 +30,8 @@
                         <span class="badge bg-success">Fulfilled</span>
                       {% else %}
                         <span class="badge bg-warning text-dark">Pending</span>
-                        <form method="POST" action="{{ url_for('fulfill_rsvp_ui', rsvp_id=rsvp.id) }}" class="d-inline">
-                          <button type="submit" class="btn btn-sm btn-outline-success">Mark Fulfilled</button>
+                        <form method="POST" action="{{ url_for('issue_gift', rsvp_id=rsvp.id) }}" class="d-inline">
+                          <button type="submit" class="btn btn-sm btn-outline-primary">Issue Gift</button>
                         </form>
                       {% endif %}
                     </div>
