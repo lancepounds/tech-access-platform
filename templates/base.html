@@ -25,6 +25,9 @@
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('show_events') }}">Events</a></li>
+          {% if session.get('role') == 'user' %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('show_my_rsvps') }}">My RSVPs</a></li>
+          {% endif %}
           <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('show_register') }}">Register</a></li>
         </ul>
