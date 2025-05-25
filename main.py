@@ -384,8 +384,17 @@ def show_my_rsvps():
     
     return render_template('my_rsvps.html', rsvps=rsvps)
 
-@app.route('/company-dashboard')
+@app.route('/dashboard')
 def company_dashboard():
+    if session.get('role') != 'company':
+        flash('Please log in as a company.', 'danger')
+        return redirect(url_for('login_page'))
+    decoded = decode_token(session['token'])
+    company = Company.query.filter_by(name=decoded['email']).first()
+    return render_template('company_dashboard.html', events=company.events)
+
+@app.route('/company-dashboard')
+def company_dashboard_legacy():
     # Check if company is logged in via session
     if 'token' not in session or 'role' not in session:
         flash('Please log in to view your dashboard.', 'danger')
