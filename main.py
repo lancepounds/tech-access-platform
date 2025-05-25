@@ -323,6 +323,11 @@ def get_my_rsvps():
 def index():
     return render_template('index.html')
 
+@app.route('/events-page')
+def show_events():
+    events = Event.query.all()
+    return render_template('events.html', events=events)
+
 def decode_token(token):
     try:
         decoded = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
