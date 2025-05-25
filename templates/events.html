@@ -1,32 +1,28 @@
+
 {% extends "base.html" %}
 
 {% block title %}Events – Tech Access{% endblock %}
 
 {% block content %}
-  <h1>Upcoming Events</h1>
-
-  {% if events %}
-    <div class="row">
-      {% for event in events %}
-        <div class="col-md-6 mb-4">
-          <div class="card h-100">
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title">{{ event.title }}</h5>
-              <h6 class="card-subtitle mb-2 text-muted">
-                {{ event.date.strftime('%b %d, %Y %H:%M') }} • {{ event.company.name }}
-              </h6>
-              <p class="card-text">{{ event.description }}</p>
-              <div class="mt-auto">
-                <a href="/events/{{ event.id }}/rsvp" class="btn btn-primary">RSVP</a>
-              </div>
-            </div>
+  <h2 class="mb-4">Upcoming Events</h2>
+  <div class="row">
+    {% for event in events %}
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">{{ event.title }}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">
+              {{ event.date.strftime('%b %d, %Y %H:%M') }} &mdash; {{ event.company.name }}
+            </h6>
+            <p class="card-text">{{ event.description }}</p>
+            <a href="{{ url_for('rsvp_event', event_id=event.id) }}" class="btn btn-primary">
+              RSVP
+            </a>
           </div>
         </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="alert alert-info" role="alert">
-      No events are currently available. Check back later!
-    </div>
-  {% endif %}
+      </div>
+    {% else %}
+      <p>No upcoming events.</p>
+    {% endfor %}
+  </div>
 {% endblock %}
