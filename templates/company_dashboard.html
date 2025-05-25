@@ -1,0 +1,57 @@
+
+{% extends "base.html" %}
+
+{% block title %}Company Dashboard – Tech Access{% endblock %}
+
+{% block content %}
+  <h2 class="mb-4">Company Dashboard</h2>
+  
+  {% if events %}
+    {% for event in events %}
+      <div class="mb-5">
+        <h3 class="mb-3">{{ event.title }}</h3>
+        <p class="text-muted mb-3">{{ event.date.strftime('%b %d, %Y %H:%M') }}</p>
+        
+        {% if event.rsvps %}
+          <h5 class="mb-3">RSVPs ({{ event.rsvps|length }})</h5>
+          <div class="row">
+            {% for rsvp in event.rsvps %}
+              <div class="col-md-6 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-title">{{ rsvp.user_email }}</h6>
+                    <p class="card-text">
+                      <small class="text-muted">
+                        RSVP'd on: {{ rsvp.created_at.strftime('%b %d, %Y %H:%M') }}
+                      </small>
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                      {% if rsvp.fulfilled %}
+                        <span class="badge bg-success">Fulfilled</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                        <form method="POST" action="{{ url_for('fulfill_rsvp_ui', rsvp_id=rsvp.id) }}" class="d-inline">
+                          <button type="submit" class="btn btn-sm btn-outline-success">Mark Fulfilled</button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info" role="alert">
+            No RSVPs for this event yet.
+          </div>
+        {% endif %}
+      </div>
+      <hr class="my-4">
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info" role="alert">
+      <h4 class="alert-heading">No events created yet!</h4>
+      <p>You haven't created any events yet. <a href="{{ url_for('create_event_page') }}" class="alert-link">Create your first event</a> to get started.</p>
+    </div>
+  {% endif %}
+{% endblock %}

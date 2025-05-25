@@ -384,6 +384,88 @@ def show_my_rsvps():
     
     return render_template('my_rsvps.html', rsvps=rsvps)
 
+@app.route('/company-dashboard')
+def company_dashboard():
+    # Check if company is logged in via session
+    if 'token' not in session or 'role' not in session:
+        flash('Please log in to view your dashboard.', 'danger')
+        return redirect(url_for('login_page'))
+    
+    if session['role'] != 'company':
+        flash('Only companies can view the dashboard.', 'danger')
+        return redirect(url_for('show_events'))
+    
+    # Decode token to get company info
+    decoded = decode_token(session['token'])
+    if not decoded:
+        flash('Session expired. Please log in again.', 'danger')
+        return redirect(url_for('login_page'))
+    
+    company = Company.query.filter_by(name=decoded['email']).first()
+    if not company:
+        flash('Company not found.', 'danger')
+        return redirect(url_for('show_events'))
+    
+    if not company.approved:
+        flash('Company not approved.', 'danger')
+        return redirect(url_for('show_events'))
+    
+    # Query events for the logged-in company with their RSVPs
+    events = Event.query.filter_by(company_id=company.id).all()
+    
+    # Load RSVPs for each event
+    for event in events:
+        event.rsvps = RSVP.query.filter_by(event_id=event.id).all()
+    
+    return render_template('company_dashboard.html', events=events)
+
+@app.route('/rsvps/<int:rsvp_id>/fulfill-ui', methods=['POST'])
+def fulfill_rsvp_ui(rsvp_id):
+    # Check if company is logged in via session
+    if 'token' not in session or 'role' not in session:
+        flash('Please log in to fulfill RSVPs.', 'danger')
+        return redirect(url_for('login_page'))
+    
+    if session['role'] != 'company':
+        flash('Only companies can fulfill RSVPs.', 'danger')
+        return redirect(url_for('show_events'))
+    
+    # Decode token to get company info
+    decoded = decode_token(session['token'])
+    if not decoded:
+        flash('Session expired. Please log in again.', 'danger')
+        return redirect(url_for('login_page'))
+    
+    company = Company.query.filter_by(name=decoded['email']).first()
+    if not company or not company.approved:
+        flash('Company not found or not approved.', 'danger')
+        return redirect(url_for('show_events'))
+    
+    rsvp = RSVP.query.get(rsvp_id)
+    if not rsvp:
+        flash('RSVP not found.', 'danger')
+        return redirect(url_for('company_dashboard'))
+    
+    event = Event.query.get(rsvp.event_id)
+    if event.company_id != company.id:
+        flash('This RSVP does not belong to one of your events.', 'danger')
+        return redirect(url_for('company_dashboard'))
+    
+    if rsvp.fulfilled:
+        flash('RSVP is already fulfilled.', 'info')
+        return redirect(url_for('company_dashboard'))
+    
+    rsvp.fulfilled = True
+    
+    try:
+        db.session.commit()
+        flash(f'RSVP for {rsvp.user_email} marked as fulfilled!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Failed to update RSVP. Please try again.', 'danger')
+    
+    return redirect(url_for('company_dashboard'))
+
 @app.route('/')
 def index():
     return render_template('index.html')
