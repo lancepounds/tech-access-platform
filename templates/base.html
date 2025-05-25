@@ -1,0 +1,24 @@
+
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Tech Access{% endblock %}</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    header { margin-bottom: 2rem; }
+    a { margin-right: 1rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="{{ url_for('index') }}">Home</a>
+    <a href="{{ url_for('show_events') }}">Events</a>
+    <a href="{{ url_for('show_login') }}">Login</a>
+    <a href="{{ url_for('show_register') }}">Register</a>
+  </header>
+  {% block content %}{% endblock %}
+</body>
+</html>

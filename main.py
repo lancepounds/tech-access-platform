@@ -1,5 +1,72 @@
-# For companies, we use their name as both email and password
-        if data['password'] == data['email']:
+from flask import Flask, request, jsonify, render_template, url_for
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'  # Use in-memory for simplicity
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+JWT_SECRET = 'your-jwt-secret'  # Replace with a strong, secret key
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(60), nullable=False)
+    role = db.Column(db.String(20), default='user')
+
+class Company(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(60), nullable=False)
+    role = db.Column(db.String(20), default='company')
+    approved = db.Column(db.Boolean, default=False)
+
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company = db.relationship('Company', backref=db.backref('events', lazy=True))
+
+class RSVP(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
+    user_email = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    fulfilled = db.Column(db.Boolean, default=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('event_id', 'user_email', name='unique_rsvp'),
+    )
+
+with app.app_context():
+    db.create_all()
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({'error': 'Missing credentials'}), 400
+
+    user = User.query.filter_by(email=data['email']).first()
+    company = Company.query.filter_by(name=data['email']).first()
+
+    if user and check_password_hash(user.password, data['password']):
+        token = jwt.encode({
+            'email': user.email,
+            'role': user.role,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }, JWT_SECRET, algorithm='HS256')
+        return jsonify({'token': token, 'role': 'user'}), 200
+
+    if company and data['password'] == company.password:
+    # For companies, we use their name as both email and password
+        if data['password'] == company.name:
             token = jwt.encode({
                 'email': company.name,
                 'role': company.role,
@@ -223,11 +290,6 @@ def fulfill_rsvp(rsvp_id):
         return jsonify({'error': f'Failed to update RSVP: {str(e)}'}), 500
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-
-
-
 @app.route('/my-rsvps', methods=['GET'])
 def get_my_rsvps():
     token = request.headers.get('Authorization')
@@ -256,3 +318,19 @@ def get_my_rsvps():
             })
 
     return jsonify(events), 200
+
+@app.route('/')
+def index():
+    return render_template('base.html')
+
+def decode_token(token):
+    try:
+        decoded = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+        return decoded
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
