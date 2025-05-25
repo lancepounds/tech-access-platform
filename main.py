@@ -323,6 +323,14 @@ def get_my_rsvps():
 def index():
     return render_template('index.html')
 
+@app.route('/login')
+def login_page():
+    return render_template('login.html')
+
+@app.route('/register')
+def register_page():
+    return render_template('register.html')
+
 @app.route('/events-page')
 def show_events():
     events = Event.query.order_by(Event.date).all()
