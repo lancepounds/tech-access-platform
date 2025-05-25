@@ -325,7 +325,7 @@ def index():
 
 @app.route('/events-page')
 def show_events():
-    events = Event.query.join(Company).all()
+    events = Event.query.order_by(Event.date).all()
     return render_template('events.html', events=events)
 
 def decode_token(token):
