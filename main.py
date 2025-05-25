@@ -325,8 +325,34 @@ def get_my_rsvps():
 def index():
     return render_template('index.html')
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login_page():
+    if request.method == 'GET':
+        return render_template('login.html')
+    
+    # Handle POST request from form
+    email = request.form.get('email')
+    password = request.form.get('password')
+    
+    # Validation
+    if not email or not password:
+        flash('Missing credentials', 'danger')
+        return render_template('login.html')
+
+    user = User.query.filter_by(email=email).first()
+    company = Company.query.filter_by(name=email).first()
+
+    if user and check_password_hash(user.password, password):
+        flash('Login successful!', 'success')
+        return redirect(url_for('show_events'))
+
+    if company and password == company.password:
+        # For companies, we use their name as both email and password
+        if password == company.name:
+            flash('Login successful!', 'success')
+            return redirect(url_for('show_events'))  # For now, redirect to events page
+
+    flash('Invalid credentials', 'danger')
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
