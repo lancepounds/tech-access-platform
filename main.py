@@ -487,43 +487,30 @@ def fulfill_rsvp_ui(rsvp_id):
 
 @app.route('/rsvps/<int:rsvp_id>/issue-gift', methods=['POST'])
 def issue_gift(rsvp_id):
-    # auth: ensure session['role']=='company'
-    if 'token' not in session or 'role' not in session:
-        flash('Please log in to issue gifts.', 'danger')
+    # Only companies can issue gifts
+    if session.get('role') != 'company':
+        flash('Please log in as a company.', 'danger')
         return redirect(url_for('login_page'))
-    
-    if session['role'] != 'company':
-        flash('Only companies can issue gifts.', 'danger')
-        return redirect(url_for('show_events'))
-    
-    # Decode token to get company info
+
     decoded = decode_token(session['token'])
-    if not decoded:
-        flash('Session expired. Please log in again.', 'danger')
-        return redirect(url_for('login_page'))
-    
     company = Company.query.filter_by(name=decoded['email']).first()
     if not company or not company.approved:
-        flash('Company not found or not approved.', 'danger')
-        return redirect(url_for('show_events'))
-    
+        flash('Not authorized.', 'danger')
+        return redirect(url_for('login_page'))
+
     rsvp = RSVP.query.get_or_404(rsvp_id)
-    
-    # Verify the RSVP belongs to the company's event
-    event = Event.query.get(rsvp.event_id)
-    if event.company_id != company.id:
-        flash('This RSVP does not belong to one of your events.', 'danger')
-        return redirect(url_for('company_dashboard'))
-    
     if rsvp.fulfilled:
         flash('Gift already issued.', 'warning')
         return redirect(url_for('company_dashboard'))
-    
+
+    # Generate and save gift code
     code = str(uuid.uuid4())
     reward = Reward(rsvp_id=rsvp.id, code=code)
     rsvp.fulfilled = True
-    db.session.add(reward)
+
+    db.session.add_all([reward, rsvp])
     db.session.commit()
+
     flash(f'Gift code issued: {code}', 'success')
     return redirect(url_for('company_dashboard'))
 
