@@ -15,9 +15,9 @@
               {{ event.date.strftime('%b %d, %Y %H:%M') }} &mdash; {{ event.company.name }}
             </h6>
             <p class="card-text">{{ event.description }}</p>
-            <a href="{{ url_for('rsvp_event', event_id=event.id) }}" class="btn btn-primary">
-              RSVP
-            </a>
+            <form method="post" action="{{ url_for('rsvp_event_ui', event_id=event.id) }}" style="display: inline;">
+              <button type="submit" class="btn btn-success">RSVP</button>
+            </form>
           </div>
         </div>
       </div>

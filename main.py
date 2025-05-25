@@ -292,6 +292,47 @@ def fulfill_rsvp(rsvp_id):
         return jsonify({'error': f'Failed to update RSVP: {str(e)}'}), 500
 
 
+@app.route('/events/<int:event_id>/rsvp-ui', methods=['POST'])
+def rsvp_event_ui(event_id):
+    # Check if user is logged in via session
+    if 'token' not in session or 'role' not in session:
+        flash('Please log in to RSVP for events.', 'danger')
+        return redirect(url_for('login_page'))
+    
+    if session['role'] != 'user':
+        flash('Only users can RSVP for events.', 'danger')
+        return redirect(url_for('show_events'))
+    
+    # Decode token to get user info
+    decoded = decode_token(session['token'])
+    if not decoded:
+        flash('Session expired. Please log in again.', 'danger')
+        return redirect(url_for('login_page'))
+    
+    user = User.query.filter_by(email=decoded['email']).first()
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('show_events'))
+    
+    event = Event.query.get(event_id)
+    if not event:
+        flash('Event not found.', 'danger')
+        return redirect(url_for('show_events'))
+    
+    try:
+        new_rsvp = RSVP(event_id=event_id, user_email=decoded['email'])
+        db.session.add(new_rsvp)
+        db.session.commit()
+        flash('RSVP successful!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        if 'UNIQUE constraint failed' in str(e):
+            flash('You have already RSVP\'d for this event.', 'warning')
+        else:
+            flash('Failed to RSVP. Please try again.', 'danger')
+    
+    return redirect(url_for('show_events'))
+
 @app.route('/my-rsvps', methods=['GET'])
 def get_my_rsvps():
     token = request.headers.get('Authorization')
