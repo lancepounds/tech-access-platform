@@ -339,18 +339,34 @@ def login_page():
         flash('Missing credentials', 'danger')
         return render_template('login.html')
 
+    # Use existing JWT login logic
     user = User.query.filter_by(email=email).first()
     company = Company.query.filter_by(name=email).first()
 
     if user and check_password_hash(user.password, password):
-        flash('Login successful!', 'success')
+        # Generate JWT token for user
+        token = jwt.encode({
+            'email': user.email,
+            'role': user.role,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }, JWT_SECRET, algorithm='HS256')
+        
+        flash('Logged in successfully', 'success')
         return redirect(url_for('show_events'))
 
     if company and password == company.password:
         # For companies, we use their name as both email and password
         if password == company.name:
-            flash('Login successful!', 'success')
-            return redirect(url_for('show_events'))  # For now, redirect to events page
+            # Generate JWT token for company
+            token = jwt.encode({
+                'email': company.name,
+                'role': company.role,
+                'approved': company.approved,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+            }, JWT_SECRET, algorithm='HS256')
+            
+            flash('Logged in successfully', 'success')
+            return redirect(url_for('show_events'))
 
     flash('Invalid credentials', 'danger')
     return render_template('login.html')
