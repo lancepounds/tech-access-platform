@@ -362,6 +362,28 @@ def get_my_rsvps():
 
     return jsonify(events), 200
 
+@app.route('/my-rsvps-page')
+def show_my_rsvps():
+    # Check if user is logged in via session
+    if 'token' not in session or 'role' not in session:
+        flash('Please log in to view your RSVPs.', 'danger')
+        return redirect(url_for('login_page'))
+    
+    if session['role'] != 'user':
+        flash('Only users can view RSVPs.', 'danger')
+        return redirect(url_for('show_events'))
+    
+    # Decode token to get user info
+    decoded = decode_token(session['token'])
+    if not decoded:
+        flash('Session expired. Please log in again.', 'danger')
+        return redirect(url_for('login_page'))
+    
+    # Query RSVPs for the logged-in user
+    rsvps = RSVP.query.filter_by(user_email=decoded['email']).join(Event).join(Company).all()
+    
+    return render_template('my_rsvps.html', rsvps=rsvps)
+
 @app.route('/')
 def index():
     return render_template('index.html')
