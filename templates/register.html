@@ -11,7 +11,7 @@
         <h3 class="text-center">Create Account</h3>
       </div>
       <div class="card-body">
-        <form id="registerForm">
+        <form method="POST">
           <div class="mb-3">
             <label for="email" class="form-label">Email Address</label>
             <input type="email" class="form-control" id="email" name="email" required>
@@ -31,53 +31,8 @@
         <div class="text-center mt-3">
           <p>Already have an account? <a href="/login">Login here</a></p>
         </div>
-        <div id="message" class="mt-3"></div>
-      </div>
+        </div>
     </div>
   </div>
 </div>
-
-<script>
-document.getElementById('registerForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const messageDiv = document.getElementById('message');
-    
-    // Clear previous messages
-    messageDiv.innerHTML = '';
-    
-    // Validate passwords match
-    if (password !== confirmPassword) {
-        messageDiv.innerHTML = '<div class="alert alert-danger">Passwords do not match!</div>';
-        return;
-    }
-    
-    try {
-        const response = await fetch('/user/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email: email,
-                password: password
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            messageDiv.innerHTML = '<div class="alert alert-success">Registration successful! <a href="/login">Login here</a></div>';
-            document.getElementById('registerForm').reset();
-        } else {
-            messageDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
-        }
-    } catch (error) {
-        messageDiv.innerHTML = '<div class="alert alert-danger">Registration failed. Please try again.</div>';
-    }
-});
-</script>
 {% endblock %}

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, url_for
+from flask import Flask, request, jsonify, render_template, url_for, flash, redirect
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -7,6 +7,7 @@ import datetime
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'  # Use in-memory for simplicity
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'your-secret-key'  # Replace with a strong, secret key
 db = SQLAlchemy(app)
 
 JWT_SECRET = 'your-jwt-secret'  # Replace with a strong, secret key
@@ -327,9 +328,47 @@ def index():
 def login_page():
     return render_template('login.html')
 
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def show_register():
-    return render_template('register.html')
+    if request.method == 'GET':
+        return render_template('register.html')
+    
+    # Handle POST request from form
+    email = request.form.get('email')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirmPassword')
+    
+    # Validation
+    if not email or not password or not confirm_password:
+        flash('All fields are required.', 'danger')
+        return render_template('register.html')
+    
+    if password != confirm_password:
+        flash('Passwords do not match.', 'danger')
+        return render_template('register.html')
+    
+    # Check if email already exists
+    if User.query.filter_by(email=email).first():
+        flash('Email already registered.', 'danger')
+        return render_template('register.html')
+    
+    # Create new user
+    try:
+        hashed_password = generate_password_hash(password)
+        new_user = User(
+            email=email,
+            password=hashed_password,
+            role='user'
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('login_page'))
+    except Exception as e:
+        db.session.rollback()
+        flash('Registration failed. Please try again.', 'danger')
+        return render_template('register.html')
 
 @app.route('/events-page')
 def show_events():
