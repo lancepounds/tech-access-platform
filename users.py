@@ -11,16 +11,48 @@ import os
 users_bp = Blueprint('users', __name__)
 
 # Validation schemas
-class RegisterSchema(Schema):
-    email = fields.Email(required=True)
-    password = fields.Str(required=True, validate=validate.Length(min=6))
+class RegistrationSchema(Schema):
+    email = fields.Email(
+        required=True,
+        error_messages={
+            'required': 'Email is required.',
+            'invalid': 'Not a valid email address.'
+        }
+    )
+    password = fields.Str(
+        required=True,
+        validate=validate.Length(min=8),
+        error_messages={
+            'required': 'Password is required.',
+            'validator_failed': 'Password must be at least 8 characters.'
+        }
+    )
 
 class LoginSchema(Schema):
-    email = fields.Email(required=True)
-    password = fields.Str(required=True)
+    email = fields.Email(
+        required=True,
+        error_messages={
+            'required': 'Email is required.',
+            'invalid': 'Not a valid email address.'
+        }
+    )
+    password = fields.Str(
+        required=True,
+        error_messages={
+            'required': 'Password is required.'
+        }
+    )
 
-register_schema = RegisterSchema()
+class ProfileSchema(Schema):
+    id = fields.Int()
+    email = fields.Email()
+    role = fields.Str()
+    created_at = fields.DateTime()
+    updated_at = fields.DateTime()
+
+registration_schema = RegistrationSchema()
 login_schema = LoginSchema()
+profile_schema = ProfileSchema()
 
 @users_bp.route('/register', methods=['POST'])
 def register():
@@ -30,9 +62,12 @@ def register():
 
     try:
         # Validate input using Marshmallow schema
-        validated_data = register_schema.load(data)
+        validated_data = registration_schema.load(data)
     except ValidationError as e:
-        return jsonify({'errors': e.messages}), 400
+        return jsonify({
+            'error': 'Validation failed',
+            'details': e.messages
+        }), 400
 
     if User.query.filter_by(email=validated_data['email']).first():
         return jsonify({'error': 'Email already registered'}), 400
@@ -64,7 +99,10 @@ def login():
         # Validate input using Marshmallow schema
         validated_data = login_schema.load(data)
     except ValidationError as e:
-        return jsonify({'errors': e.messages}), 400
+        return jsonify({
+            'error': 'Validation failed',
+            'details': e.messages
+        }), 400
 
     user = User.query.filter_by(email=validated_data['email']).first()
 
@@ -89,10 +127,6 @@ def get_profile():
     # User is now available in g.current_user thanks to the decorator
     user = g.current_user
     
-    return jsonify({
-        'id': user.id,
-        'email': user.email,
-        'role': user.role,
-        'created_at': user.created_at.isoformat() if user.created_at else None,
-        'updated_at': user.updated_at.isoformat() if user.updated_at else None
-    }), 200
+    # Use ProfileSchema to serialize the user data
+    result = profile_schema.dump(user)
+    return jsonify(result), 200
