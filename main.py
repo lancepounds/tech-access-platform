@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template, url_for, flash, redirect, session
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
@@ -14,6 +15,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///:memory:')
 db = SQLAlchemy(app)
+ma = Marshmallow(app)
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
 
