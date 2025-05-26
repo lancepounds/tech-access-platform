@@ -2,7 +2,7 @@
 from functools import wraps
 from flask import request, jsonify, g
 import jwt
-from main import JWT_SECRET
+import os
 
 def get_user_model():
     """Import User model to avoid circular imports"""
@@ -38,6 +38,7 @@ def jwt_required(f):
         
         try:
             # Decode the JWT token
+            JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
             decoded = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
             user_id = decoded.get('sub')
             

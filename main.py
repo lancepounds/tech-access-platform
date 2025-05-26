@@ -4,15 +4,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 import uuid
+import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'  # Use in-memory for simplicity
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your-secret-key'  # Replace with a strong, secret key
-app.secret_key = 'your-secret-key'
+import os
+
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
+app.secret_key = os.environ.get('SECRET_KEY', 'fallback-secret-key')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///:memory:')
 db = SQLAlchemy(app)
 
-JWT_SECRET = 'your-jwt-secret'  # Replace with a strong, secret key
+JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
 
 # User model will be defined inline to avoid circular imports
 

@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from auth import jwt_required
 import jwt
 import datetime
+import os
 
 users_bp = Blueprint('users', __name__)
 
@@ -54,7 +55,7 @@ def register():
 @users_bp.route('/login', methods=['POST'])
 def login():
     User, db = get_user_model()
-    from main import JWT_SECRET
+    JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
     
     data = request.get_json()
 
@@ -70,6 +71,7 @@ def login():
         return jsonify({'error': 'Invalid credentials'}), 401
 
     token = jwt.encode({
+        'sub': user.id,
         'email': user.email,
         'role': user.role,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
@@ -77,7 +79,7 @@ def login():
     
     return jsonify({'token': token, 'role': user.role}), 200
 
-@users_bp.route('/me', methods=['GET'])
+@users_bp.route('/profile', methods=['GET'])
 @jwt_required
 def get_profile():
     # User is now available in g.current_user thanks to the decorator
@@ -87,18 +89,6 @@ def get_profile():
         'id': user.id,
         'email': user.email,
         'role': user.role,
-        'created_at': user.created_at.isoformat() if user.created_at else None
-    }), 200
-
-@users_bp.route('/profile', methods=['GET'])
-@jwt_required
-def get_user_profile():
-    # User is now available in g.current_user thanks to the decorator
-    user = g.current_user
-    
-    return jsonify({
-        'id': user.id,
-        'email': user.email,
-        'role': user.role,
-        'created_at': user.created_at.isoformat() if user.created_at else None
+        'created_at': user.created_at.isoformat() if user.created_at else None,
+        'updated_at': user.updated_at.isoformat() if user.updated_at else None
     }), 200
