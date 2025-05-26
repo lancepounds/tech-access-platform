@@ -2,11 +2,35 @@
 from flask import Blueprint, request, jsonify, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from auth import jwt_required
+from marshmallow import Schema, fields, validate, ValidationError
 import jwt
 import datetime
 import os
 
 users_bp = Blueprint('users', __name__)
+
+# Validation schemas
+class RegisterSchema(Schema):
+    email = fields.Email(required=True, error_messages={
+        'required': 'Email is required',
+        'invalid': 'Invalid email format'
+    })
+    password = fields.Str(required=True, validate=validate.Length(min=6), error_messages={
+        'required': 'Password is required',
+        'invalid': 'Password must be at least 6 characters long'
+    })
+
+class LoginSchema(Schema):
+    email = fields.Email(required=True, error_messages={
+        'required': 'Email is required',
+        'invalid': 'Invalid email format'
+    })
+    password = fields.Str(required=True, error_messages={
+        'required': 'Password is required'
+    })
+
+register_schema = RegisterSchema()
+login_schema = LoginSchema()
 
 def get_user_model():
     """Import User model to avoid circular imports"""
@@ -30,16 +54,21 @@ def register():
     User, db = get_user_model()
     
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
 
-    if not data or not data.get('email') or not data.get('password'):
-        return jsonify({'error': 'Missing email or password'}), 400
+    # Validate input using Marshmallow schema
+    try:
+        validated_data = register_schema.load(data)
+    except ValidationError as err:
+        return jsonify({'error': 'Validation failed', 'details': err.messages}), 400
 
-    if User.query.filter_by(email=data['email']).first():
+    if User.query.filter_by(email=validated_data['email']).first():
         return jsonify({'error': 'Email already registered'}), 400
 
-    hashed_password = generate_password_hash(data['password'])
+    hashed_password = generate_password_hash(validated_data['password'])
     new_user = User(
-        email=data['email'],
+        email=validated_data['email'],
         password=hashed_password,
         role='user'
     )
@@ -58,16 +87,21 @@ def login():
     JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
     
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
 
-    if not data or not data.get('email') or not data.get('password'):
-        return jsonify({'error': 'Missing credentials'}), 400
+    # Validate input using Marshmallow schema
+    try:
+        validated_data = login_schema.load(data)
+    except ValidationError as err:
+        return jsonify({'error': 'Validation failed', 'details': err.messages}), 400
 
-    user = User.query.filter_by(email=data['email']).first()
+    user = User.query.filter_by(email=validated_data['email']).first()
 
     if not user:
         return jsonify({'error': 'Invalid credentials'}), 401
 
-    if not check_password_hash(user.password, data['password']):
+    if not check_password_hash(user.password, validated_data['password']):
         return jsonify({'error': 'Invalid credentials'}), 401
 
     token = jwt.encode({
