@@ -11,23 +11,12 @@ users_bp = Blueprint('users', __name__)
 
 # Validation schemas
 class RegisterSchema(Schema):
-    email = fields.Email(required=True, error_messages={
-        'required': 'Email is required',
-        'invalid': 'Invalid email format'
-    })
-    password = fields.Str(required=True, validate=validate.Length(min=6), error_messages={
-        'required': 'Password is required',
-        'invalid': 'Password must be at least 6 characters long'
-    })
+    email = fields.Email(required=True)
+    password = fields.Str(required=True, validate=validate.Length(min=6))
 
 class LoginSchema(Schema):
-    email = fields.Email(required=True, error_messages={
-        'required': 'Email is required',
-        'invalid': 'Invalid email format'
-    })
-    password = fields.Str(required=True, error_messages={
-        'required': 'Password is required'
-    })
+    email = fields.Email(required=True)
+    password = fields.Str(required=True)
 
 register_schema = RegisterSchema()
 login_schema = LoginSchema()
