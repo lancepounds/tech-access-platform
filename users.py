@@ -3,13 +3,30 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
-from main import db, JWT_SECRET
-from users.models import User
 
 users_bp = Blueprint('users', __name__)
 
+def get_user_model():
+    """Import User model to avoid circular imports"""
+    from main import db
+    
+    class User(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        email = db.Column(db.String(120), unique=True, nullable=False)
+        password = db.Column(db.String(128), nullable=False)
+        role = db.Column(db.String(20), default='user')
+        created_at = db.Column(db.DateTime, server_default=db.func.now())
+        updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+        def __repr__(self):
+            return f'<User {self.email}>'
+    
+    return User, db
+
 @users_bp.route('/register', methods=['POST'])
 def register():
+    User, db = get_user_model()
+    
     data = request.get_json()
 
     if not data or not data.get('email') or not data.get('password'):
@@ -35,6 +52,9 @@ def register():
 
 @users_bp.route('/login', methods=['POST'])
 def login():
+    User, db = get_user_model()
+    from main import JWT_SECRET
+    
     data = request.get_json()
 
     if not data or not data.get('email') or not data.get('password'):
@@ -54,6 +74,9 @@ def login():
 
 @users_bp.route('/profile', methods=['GET'])
 def get_profile():
+    User, db = get_user_model()
+    from main import JWT_SECRET
+    
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({'error': 'Missing token'}), 401

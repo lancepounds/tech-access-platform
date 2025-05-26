@@ -14,8 +14,18 @@ db = SQLAlchemy(app)
 
 JWT_SECRET = 'your-jwt-secret'  # Replace with a strong, secret key
 
-# Import User model from users.models
-from users.models import User
+# User model will be defined inline to avoid circular imports
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(128), nullable=False)
+    role = db.Column(db.String(20), default='user')
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+    def __repr__(self):
+        return f'<User {self.email}>'
 
 class Company(db.Model):
     id = db.Column(db.Integer, primary_key=True)
