@@ -14,11 +14,8 @@ db = SQLAlchemy(app)
 
 JWT_SECRET = 'your-jwt-secret'  # Replace with a strong, secret key
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(60), nullable=False)
-    role = db.Column(db.String(20), default='user')
+# Import User model from users.models
+from users.models import User
 
 class Company(db.Model):
     id = db.Column(db.Integer, primary_key=True)
