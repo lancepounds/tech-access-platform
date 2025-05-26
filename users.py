@@ -62,17 +62,22 @@ def login():
 
     user = User.query.filter_by(email=data['email']).first()
 
-    if user and check_password_hash(user.password, data['password']):
-        token = jwt.encode({
-            'email': user.email,
-            'role': user.role,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-        }, JWT_SECRET, algorithm='HS256')
-        return jsonify({'token': token, 'role': 'user'}), 200
+    if not user:
+        return jsonify({'error': 'Invalid credentials'}), 401
 
-    return jsonify({'error': 'Invalid credentials'}), 401
+    if not check_password_hash(user.password, data['password']):
+        return jsonify({'error': 'Invalid credentials'}), 401
 
-@users_bp.route('/profile', methods=['GET'])
+    token = jwt.encode({
+        'sub': user.id,
+        'email': user.email,
+        'role': user.role,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+    }, JWT_SECRET, algorithm='HS256')
+    
+    return jsonify({'token': token, 'role': user.role}), 200
+
+@users_bp.route('/me', methods=['GET'])
 def get_profile():
     User, db = get_user_model()
     from main import JWT_SECRET
@@ -81,16 +86,27 @@ def get_profile():
     if not token:
         return jsonify({'error': 'Missing token'}), 401
 
+    # Remove 'Bearer ' prefix if present
+    if token.startswith('Bearer '):
+        token = token[7:]
+
     try:
         decoded = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
-        user = User.query.filter_by(email=decoded['email']).first()
+        user_id = decoded.get('sub')
+        
+        if not user_id:
+            return jsonify({'error': 'Invalid token format'}), 401
+            
+        user = User.query.get(user_id)
         
         if not user:
             return jsonify({'error': 'User not found'}), 404
             
         return jsonify({
+            'id': user.id,
             'email': user.email,
-            'role': user.role
+            'role': user.role,
+            'created_at': user.created_at.isoformat() if user.created_at else None
         }), 200
     except jwt.ExpiredSignatureError:
         return jsonify({'error': 'Token expired'}), 401
