@@ -90,3 +90,16 @@ def get_profile():
         'role': user.role,
         'created_at': user.created_at.isoformat() if user.created_at else None
     }), 200
+
+@users_bp.route('/profile', methods=['GET'])
+@jwt_required
+def get_user_profile():
+    # User is now available in g.current_user thanks to the decorator
+    user = g.current_user
+    
+    return jsonify({
+        'id': user.id,
+        'email': user.email,
+        'role': user.role,
+        'created_at': user.created_at.isoformat() if user.created_at else None
+    }), 200
