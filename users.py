@@ -61,7 +61,7 @@ def register():
         # Validate input using Marshmallow schema
         validated_data = register_schema.load(data)
     except ValidationError as e:
-        return jsonify({'error': 'Validation failed', 'details': e.messages}), 400
+        return jsonify({'errors': e.messages}), 400
 
     if User.query.filter_by(email=validated_data['email']).first():
         return jsonify({'error': 'Email already registered'}), 400
@@ -94,7 +94,7 @@ def login():
         # Validate input using Marshmallow schema
         validated_data = login_schema.load(data)
     except ValidationError as e:
-        return jsonify({'error': 'Validation failed', 'details': e.messages}), 400
+        return jsonify({'errors': e.messages}), 400
 
     user = User.query.filter_by(email=validated_data['email']).first()
 

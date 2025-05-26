@@ -68,12 +68,7 @@ class Reward(db.Model):
 with app.app_context():
     db.create_all()
 
-# Global error handler for Marshmallow ValidationError
-from marshmallow import ValidationError
-
-@app.errorhandler(ValidationError)
-def handle_validation_error(e):
-    return jsonify({'error': 'Validation failed', 'details': e.messages}), 400
+# ValidationError is now handled manually in each route
 
 # Register Blueprint
 from users import users_bp
