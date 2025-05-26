@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from auth import jwt_required
 from marshmallow import Schema, fields, validate, ValidationError
+from main import db, User
 import jwt
 import datetime
 import os
@@ -21,27 +22,8 @@ class LoginSchema(Schema):
 register_schema = RegisterSchema()
 login_schema = LoginSchema()
 
-def get_user_model():
-    """Import User model to avoid circular imports"""
-    from main import db
-    
-    class User(db.Model):
-        id = db.Column(db.Integer, primary_key=True)
-        email = db.Column(db.String(120), unique=True, nullable=False)
-        password = db.Column(db.String(128), nullable=False)
-        role = db.Column(db.String(20), default='user')
-        created_at = db.Column(db.DateTime, server_default=db.func.now())
-        updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
-
-        def __repr__(self):
-            return f'<User {self.email}>'
-    
-    return User, db
-
 @users_bp.route('/register', methods=['POST'])
 def register():
-    User, db = get_user_model()
-    
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No JSON data provided'}), 400
@@ -72,7 +54,6 @@ def register():
 
 @users_bp.route('/login', methods=['POST'])
 def login():
-    User, db = get_user_model()
     JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
     
     data = request.get_json()
