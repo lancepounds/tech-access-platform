@@ -43,7 +43,7 @@ def jwt_required(f):
             user_id = decoded.get('sub')
             
             if not user_id:
-                return jsonify({'error': 'Invalid token format'}), 401
+                return jsonify({'error': 'Invalid token'}), 401
             
             # Load user by ID
             user = User.query.get(user_id)
@@ -54,7 +54,7 @@ def jwt_required(f):
             g.current_user = user
             
         except jwt.ExpiredSignatureError:
-            return jsonify({'error': 'Token expired'}), 401
+            return jsonify({'error': 'Invalid token'}), 401
         except jwt.InvalidTokenError:
             return jsonify({'error': 'Invalid token'}), 401
         
