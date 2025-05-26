@@ -1,7 +1,7 @@
 
 from functools import wraps
 from flask import request, jsonify, g
-from main import User
+from main import db, User
 import jwt
 import os
 
