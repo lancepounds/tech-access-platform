@@ -58,6 +58,10 @@ class Reward(db.Model):
 with app.app_context():
     db.create_all()
 
+# Register Blueprint
+from users import users_bp
+app.register_blueprint(users_bp, url_prefix='/api/users')
+
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
