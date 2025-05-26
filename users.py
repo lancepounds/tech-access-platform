@@ -58,10 +58,7 @@ def register():
         return jsonify({'error': 'No JSON data provided'}), 400
 
     # Validate input using Marshmallow schema
-    try:
-        validated_data = register_schema.load(data)
-    except ValidationError as err:
-        return jsonify({'error': 'Validation failed', 'details': err.messages}), 400
+    validated_data = register_schema.load(data)
 
     if User.query.filter_by(email=validated_data['email']).first():
         return jsonify({'error': 'Email already registered'}), 400
@@ -91,10 +88,7 @@ def login():
         return jsonify({'error': 'No JSON data provided'}), 400
 
     # Validate input using Marshmallow schema
-    try:
-        validated_data = login_schema.load(data)
-    except ValidationError as err:
-        return jsonify({'error': 'Validation failed', 'details': err.messages}), 400
+    validated_data = login_schema.load(data)
 
     user = User.query.filter_by(email=validated_data['email']).first()
 
