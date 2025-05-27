@@ -307,7 +307,7 @@
 <body>
   <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container">
-      <a class="navbar-brand" href="{{ url_for('index') }}">
+      <a class="navbar-brand" href="{{ url_for('main.index') }}">
         <i class="bi bi-lightning-charge-fill me-2"></i>Tech Access
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -322,7 +322,7 @@
             </button>
           </li>
           <li class="nav-item">
-            <a class="nav-link {{ 'active' if request.endpoint == 'index' else '' }}" href="{{ url_for('index') }}">
+            <a class="nav-link {{ 'active' if request.endpoint == 'main.index' else '' }}" href="{{ url_for('main.index') }}">
               <i class="bi bi-house-fill me-1"></i>Home
             </a>
           </li>
@@ -330,34 +330,34 @@
           {% if not session.get('role') %}
             <!-- Not logged in -->
             <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'login_page' else '' }}" href="{{ url_for('login_page') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'auth.login_page' else '' }}" href="{{ url_for('auth.login_page') }}">
                 <i class="bi bi-box-arrow-in-right me-1"></i>Login
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'show_register' else '' }}" href="{{ url_for('show_register') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'auth.show_register' else '' }}" href="{{ url_for('auth.show_register') }}">
                 <i class="bi bi-person-plus-fill me-1"></i>Register
               </a>
             </li>
           {% elif session.get('role') == 'user' %}
             <!-- User logged in -->
             <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'show_events' else '' }}" href="{{ url_for('show_events') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'main.show_events' else '' }}" href="{{ url_for('main.show_events') }}">
                 <i class="bi bi-calendar-event me-1"></i>Events
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'show_my_rsvps' else '' }}" href="{{ url_for('show_my_rsvps') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'main.show_my_rsvps' else '' }}" href="{{ url_for('main.show_my_rsvps') }}">
                 <i class="bi bi-check-circle me-1"></i>My RSVPs
               </a>
             </li>
              <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'testing_opportunities' else '' }}" href="{{ url_for('testing_opportunities') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'main.testing_opportunities' else '' }}" href="{{ url_for('main.testing_opportunities') }}">
                 <i class="bi bi-calendar-event me-1"></i>Testing Opportunities
               </a>
             </li>
             <li class="nav-item">
-              <form method="post" action="{{ url_for('logout') }}" style="display: inline;">
+              <form method="post" action="{{ url_for('auth.logout') }}" style="display: inline;">
                 <button type="submit" class="logout-btn">
                   <i class="bi bi-box-arrow-left me-1"></i>Logout
                 </button>
@@ -366,27 +366,27 @@
           {% elif session.get('role') == 'company' %}
             <!-- Company logged in -->
             <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'show_events' else '' }}" href="{{ url_for('show_events') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'main.show_events' else '' }}" href="{{ url_for('main.show_events') }}">
                 <i class="bi bi-calendar-event me-1"></i>Events
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'create_event_page' else '' }}" href="{{ url_for('create_event_page') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'main.create_event_page' else '' }}" href="{{ url_for('main.create_event_page') }}">
                 <i class="bi bi-plus-circle me-1"></i>Create Event
               </a>
             </li>
              <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'testing_opportunities' else '' }}" href="{{ url_for('testing_opportunities') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'main.testing_opportunities' else '' }}" href="{{ url_for('main.testing_opportunities') }}">
                 <i class="bi bi-calendar-event me-1"></i>Testing Opportunities
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'company_dashboard' else '' }}" href="{{ url_for('company_dashboard') }}">
+              <a class="nav-link {{ 'active' if request.endpoint == 'main.company_dashboard' else '' }}" href="{{ url_for('main.company_dashboard') }}">
                 <i class="bi bi-speedometer2 me-1"></i>Dashboard
               </a>
             </li>
             <li class="nav-item">
-              <form method="post" action="{{ url_for('logout') }}" style="display: inline;">
+              <form method="post" action="{{ url_for('auth.logout') }}" style="display: inline;">
                 <button type="submit" class="logout-btn">
                   <i class="bi bi-box-arrow-left me-1"></i>Logout
                 </button>
@@ -436,12 +436,12 @@
               <h6 class="mb-3">Quick Links</h6>
               <ul class="list-unstyled footer-links">
                 <li class="mb-2">
-                  <a href="{{ url_for('index') }}" class="text-muted text-decoration-none footer-link">
+                  <a href="{{ url_for('main.index') }}" class="text-muted text-decoration-none footer-link">
                     <i class="bi bi-house me-1"></i>Home
                   </a>
                 </li>
                 <li class="mb-2">
-                  <a href="{{ url_for('show_events') }}" class="text-muted text-decoration-none footer-link">
+                  <a href="{{ url_for('main.show_events') }}" class="text-muted text-decoration-none footer-link">
                     <i class="bi bi-calendar-event me-1"></i>Events
                   </a>
                 </li>

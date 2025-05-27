@@ -21,24 +21,24 @@
           
           {% if not session.get('role') %}
           <div class="hero-cta mb-5">
-            <a href="{{ url_for('show_register') }}" class="btn btn-primary btn-lg me-3 cta-button">
+            <a href="{{ url_for('auth.show_register') }}" class="btn btn-primary btn-lg me-3 cta-button">
               <i class="bi bi-person-plus-fill me-2"></i>Get Started Free
             </a>
-            <a href="{{ url_for('show_events') }}" class="btn btn-outline-primary btn-lg cta-button">
+            <a href="{{ url_for('main.show_events') }}" class="btn btn-outline-primary btn-lg cta-button">
               <i class="bi bi-calendar-event me-2"></i>Browse Events
             </a>
           </div>
           {% else %}
           <div class="hero-cta mb-5">
-            <a href="{{ url_for('show_events') }}" class="btn btn-primary btn-lg me-3 cta-button">
+            <a href="{{ url_for('main.show_events') }}" class="btn btn-primary btn-lg me-3 cta-button">
               <i class="bi bi-calendar-event me-2"></i>View All Events
             </a>
             {% if session.get('role') == 'user' %}
-            <a href="{{ url_for('show_my_rsvps') }}" class="btn btn-success btn-lg cta-button">
+            <a href="{{ url_for('main.show_my_rsvps') }}" class="btn btn-success btn-lg cta-button">
               <i class="bi bi-check-circle me-2"></i>My RSVPs
             </a>
             {% elif session.get('role') == 'company' %}
-            <a href="{{ url_for('create_event_page') }}" class="btn btn-success btn-lg cta-button">
+            <a href="{{ url_for('main.create_event_page') }}" class="btn btn-success btn-lg cta-button">
               <i class="bi bi-plus-circle me-2"></i>Create Event
             </a>
             {% endif %}
@@ -128,7 +128,7 @@
         <div class="col-lg-6">
           <h3 class="fw-bold mb-3">Ready to Make a Difference?</h3>
           <p class="text-muted mb-4">Join our community of people with disabilities helping to shape accessible technology.</p>
-          <a href="{{ url_for('show_register') }}" class="btn btn-primary btn-lg">
+          <a href="{{ url_for('auth.show_register') }}" class="btn btn-primary btn-lg">
             <i class="bi bi-heart me-2"></i>Join Our Community Today
           </a>
         </div>
