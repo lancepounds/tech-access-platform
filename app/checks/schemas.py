@@ -94,17 +94,18 @@ class CheckResultCreateSchema(ma.Schema):
     )
     status = fields.String(
         required=True,
-        validate=validate.OneOf(['success', 'failure', 'timeout', 'error']),
+        validate=validate.OneOf(['up', 'down']),
         error_messages={
             "required": "Status is required.",
-            "validator_failed": "Status must be one of: success, failure, timeout, error."
+            "validator_failed": "Status must be one of: up, down."
         }
     )
     latency_ms = fields.Integer(
+        required=True,
         validate=validate.Range(min=0),
-        allow_none=True,
         error_messages={
-            "validator_failed": "Latency must be a positive integer or null."
+            "required": "Latency is required.",
+            "validator_failed": "Latency must be a positive integer."
         }
     )
 
@@ -113,5 +114,5 @@ class CheckResultResponseSchema(ma.Schema):
     id = fields.Integer(dump_only=True)
     check_id = fields.Integer()
     status = fields.String()
-    latency_ms = fields.Integer(allow_none=True)
+    latency_ms = fields.Integer()
     timestamp = fields.DateTime(format='%Y-%m-%dT%H:%M:%S.%fZ')
