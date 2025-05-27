@@ -10,7 +10,7 @@ import os
 
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='../templates')
     
     # Configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
