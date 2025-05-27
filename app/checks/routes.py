@@ -1,9 +1,10 @@
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from marshmallow import ValidationError
 from datetime import datetime, timedelta
 from app.models import Check, CheckResult
 from app.extensions import db
+from app.auth.decorators import jwt_required
 from app.checks.schemas import (
     CheckCreateSchema, 
     CheckUpdateSchema, 
@@ -24,6 +25,7 @@ check_result_response_schema = CheckResultResponseSchema()
 
 
 @checks_bp.route('', methods=['POST'])
+@jwt_required
 def create_check():
     try:
         data = check_create_schema.load(request.get_json() or {})
@@ -46,12 +48,14 @@ def create_check():
 
 
 @checks_bp.route('', methods=['GET'])
+@jwt_required
 def get_checks():
     checks = Check.query.all()
     return jsonify(check_results_response_schema.dump(checks)), 200
 
 
 @checks_bp.route('/<int:check_id>', methods=['GET'])
+@jwt_required
 def get_check(check_id):
     check = Check.query.get(check_id)
     if not check:
@@ -61,6 +65,7 @@ def get_check(check_id):
 
 
 @checks_bp.route('/<int:check_id>', methods=['PUT'])
+@jwt_required
 def update_check(check_id):
     check = Check.query.get(check_id)
     if not check:
@@ -84,6 +89,7 @@ def update_check(check_id):
 
 
 @checks_bp.route('/<int:check_id>', methods=['DELETE'])
+@jwt_required
 def delete_check(check_id):
     check = Check.query.get(check_id)
     if not check:
@@ -99,6 +105,7 @@ def delete_check(check_id):
 
 
 @checks_bp.route('/<int:check_id>/results', methods=['POST'])
+@jwt_required
 def create_check_result(check_id):
     # Verify check exists
     check = Check.query.get(check_id)
@@ -128,6 +135,7 @@ def create_check_result(check_id):
 
 
 @checks_bp.route('/<int:check_id>/results', methods=['GET'])
+@jwt_required
 def get_check_results(check_id):
     # Verify check exists
     check = Check.query.get(check_id)
@@ -164,6 +172,7 @@ def get_check_results(check_id):
 
 
 @checks_bp.route('/summary', methods=['GET'])
+@jwt_required
 def get_checks_summary():
     """Get summary statistics for all checks over the past 24 hours."""
     # Calculate timestamp for 24 hours ago
