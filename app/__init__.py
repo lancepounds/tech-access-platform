@@ -24,7 +24,7 @@ def create_app():
     
     # Register blueprints
     app.register_blueprint(auth_bp)
-    app.register_blueprint(users_bp, url_prefix='/api/users')
+    app.register_blueprint(users_bp)
     app.register_blueprint(companies_bp, url_prefix='/api/companies')
     app.register_blueprint(events_bp, url_prefix='/api/events')
     app.register_blueprint(main_bp)
