@@ -1,6 +1,7 @@
 
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
+from datetime import datetime, timedelta
 from app.models import Check, CheckResult
 from app.extensions import db
 from app.checks.schemas import (
@@ -160,3 +161,60 @@ def get_check_results(check_id):
                   .all()
     
     return jsonify(CheckResultResponseSchema(many=True).dump(results)), 200
+
+
+@checks_bp.route('/summary', methods=['GET'])
+def get_checks_summary():
+    """Get summary statistics for all checks over the past 24 hours."""
+    # Calculate timestamp for 24 hours ago
+    twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+    
+    # Get all checks
+    checks = Check.query.all()
+    
+    summary_data = []
+    
+    for check in checks:
+        # Get all results for this check in the past 24 hours
+        results = CheckResult.query.filter(
+            CheckResult.check_id == check.id,
+            CheckResult.timestamp >= twenty_four_hours_ago
+        ).all()
+        
+        if not results:
+            # No data in past 24 hours
+            summary_data.append({
+                'check_id': check.id,
+                'check_name': check.name,
+                'uptime_percentage': None,
+                'average_latency_ms': None,
+                'current_status': None
+            })
+            continue
+        
+        # Calculate uptime percentage
+        up_count = sum(1 for result in results if result.status == 'up')
+        total_count = len(results)
+        uptime_percentage = round((up_count / total_count) * 100, 2) if total_count > 0 else 0.0
+        
+        # Calculate average latency
+        total_latency = sum(result.latency_ms for result in results)
+        average_latency_ms = round(total_latency / total_count, 2) if total_count > 0 else 0.0
+        
+        # Get current status (most recent result)
+        most_recent_result = max(results, key=lambda r: r.timestamp)
+        current_status = most_recent_result.status
+        
+        summary_data.append({
+            'check_id': check.id,
+            'check_name': check.name,
+            'uptime_percentage': uptime_percentage,
+            'average_latency_ms': average_latency_ms,
+            'current_status': current_status
+        })
+    
+    return jsonify({
+        'summary': summary_data,
+        'period_hours': 24,
+        'generated_at': datetime.utcnow().isoformat() + 'Z'
+    }), 200
