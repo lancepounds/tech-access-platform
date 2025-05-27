@@ -59,7 +59,7 @@ class Check(db.Model):
     name = db.Column(db.String(100), nullable=False)
     target = db.Column(db.String(255), nullable=False)
     interval_sec = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     def __repr__(self):
         return f'<Check {self.name}>'
@@ -68,10 +68,10 @@ class Check(db.Model):
 class CheckResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     check_id = db.Column(db.Integer, db.ForeignKey('check.id'), nullable=False)
-    status = db.Column(db.String(50), nullable=False)
-    latency_ms = db.Column(db.Integer, nullable=True)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    check = db.relationship('Check', backref=db.backref('results', lazy=True))
+    status = db.Column(db.Enum('up', 'down', name='check_status'), nullable=False)
+    latency_ms = db.Column(db.Integer, nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+    check = db.relationship('Check', backref='results')
 
     def __repr__(self):
         return f'<CheckResult {self.check_id} - {self.status}>'
