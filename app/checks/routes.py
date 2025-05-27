@@ -1,22 +1,33 @@
 
 from flask import Blueprint, request, jsonify
-from app.models import Check
+from marshmallow import ValidationError
+from app.models import Check, CheckResult
 from app.extensions import db
+from app.checks.schemas import (
+    CheckCreateSchema, 
+    CheckUpdateSchema, 
+    CheckResponseSchema,
+    CheckResultCreateSchema,
+    CheckResultResponseSchema
+)
 
 checks_bp = Blueprint('checks', __name__)
+
+# Initialize schemas
+check_create_schema = CheckCreateSchema()
+check_update_schema = CheckUpdateSchema()
+check_response_schema = CheckResponseSchema()
+check_results_response_schema = CheckResponseSchema(many=True)
+check_result_create_schema = CheckResultCreateSchema()
+check_result_response_schema = CheckResultResponseSchema()
 
 
 @checks_bp.route('', methods=['POST'])
 def create_check():
-    data = request.get_json()
-    
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
-    
-    required_fields = ['name', 'target', 'interval_sec']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f'Missing required field: {field}'}), 400
+    try:
+        data = check_create_schema.load(request.get_json() or {})
+    except ValidationError as err:
+        return jsonify({'errors': err.messages}), 400
     
     check = Check(
         name=data['name'],
@@ -27,13 +38,7 @@ def create_check():
     try:
         db.session.add(check)
         db.session.commit()
-        return jsonify({
-            'id': check.id,
-            'name': check.name,
-            'target': check.target,
-            'interval_sec': check.interval_sec,
-            'created_at': check.created_at.isoformat()
-        }), 201
+        return jsonify(check_response_schema.dump(check)), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to create check: {str(e)}'}), 500
@@ -42,13 +47,7 @@ def create_check():
 @checks_bp.route('', methods=['GET'])
 def get_checks():
     checks = Check.query.all()
-    return jsonify([{
-        'id': check.id,
-        'name': check.name,
-        'target': check.target,
-        'interval_sec': check.interval_sec,
-        'created_at': check.created_at.isoformat()
-    } for check in checks]), 200
+    return jsonify(check_results_response_schema.dump(checks)), 200
 
 
 @checks_bp.route('/<int:check_id>', methods=['GET'])
@@ -57,13 +56,7 @@ def get_check(check_id):
     if not check:
         return jsonify({'error': 'Check not found'}), 404
     
-    return jsonify({
-        'id': check.id,
-        'name': check.name,
-        'target': check.target,
-        'interval_sec': check.interval_sec,
-        'created_at': check.created_at.isoformat()
-    }), 200
+    return jsonify(check_response_schema.dump(check)), 200
 
 
 @checks_bp.route('/<int:check_id>', methods=['PUT'])
@@ -72,27 +65,18 @@ def update_check(check_id):
     if not check:
         return jsonify({'error': 'Check not found'}), 404
     
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
+    try:
+        data = check_update_schema.load(request.get_json() or {})
+    except ValidationError as err:
+        return jsonify({'errors': err.messages}), 400
     
     # Update fields if provided
-    if 'name' in data:
-        check.name = data['name']
-    if 'target' in data:
-        check.target = data['target']
-    if 'interval_sec' in data:
-        check.interval_sec = data['interval_sec']
+    for field, value in data.items():
+        setattr(check, field, value)
     
     try:
         db.session.commit()
-        return jsonify({
-            'id': check.id,
-            'name': check.name,
-            'target': check.target,
-            'interval_sec': check.interval_sec,
-            'created_at': check.created_at.isoformat()
-        }), 200
+        return jsonify(check_response_schema.dump(check)), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to update check: {str(e)}'}), 500
@@ -111,3 +95,55 @@ def delete_check(check_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to delete check: {str(e)}'}), 500
+
+
+@checks_bp.route('/<int:check_id>/results', methods=['POST'])
+def create_check_result(check_id):
+    # Verify check exists
+    check = Check.query.get(check_id)
+    if not check:
+        return jsonify({'error': 'Check not found'}), 404
+    
+    try:
+        data = check_result_create_schema.load(request.get_json() or {})
+        # Override check_id from URL parameter
+        data['check_id'] = check_id
+    except ValidationError as err:
+        return jsonify({'errors': err.messages}), 400
+    
+    check_result = CheckResult(
+        check_id=data['check_id'],
+        status=data['status'],
+        latency_ms=data.get('latency_ms')
+    )
+    
+    try:
+        db.session.add(check_result)
+        db.session.commit()
+        return jsonify(check_result_response_schema.dump(check_result)), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to create check result: {str(e)}'}), 500
+
+
+@checks_bp.route('/<int:check_id>/results', methods=['GET'])
+def get_check_results(check_id):
+    # Verify check exists
+    check = Check.query.get(check_id)
+    if not check:
+        return jsonify({'error': 'Check not found'}), 404
+    
+    # Get query parameters for pagination
+    limit = request.args.get('limit', 50, type=int)
+    offset = request.args.get('offset', 0, type=int)
+    
+    # Limit maximum results per request
+    limit = min(limit, 100)
+    
+    results = CheckResult.query.filter_by(check_id=check_id)\
+                             .order_by(CheckResult.timestamp.desc())\
+                             .offset(offset)\
+                             .limit(limit)\
+                             .all()
+    
+    return jsonify(CheckResultResponseSchema(many=True).dump(results)), 200
