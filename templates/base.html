@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +15,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+
   <style>
     :root {
       --primary-color: #6366f1;
@@ -29,7 +28,7 @@
       --bg-light: #f8fafc;
       --border-light: #e5e7eb;
     }
-    
+
     [data-theme="dark"] {
       --primary-color: #818cf8;
       --primary-dark: #6366f1;
@@ -41,11 +40,11 @@
       --bg-light: #111827;
       --border-light: #374151;
     }
-    
+
     * {
       box-sizing: border-box;
     }
-    
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -53,11 +52,11 @@
       color: var(--text-dark);
       transition: all 0.3s ease;
     }
-    
+
     [data-theme="dark"] body {
       background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
     }
-    
+
     .main-content {
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
@@ -66,7 +65,7 @@
       margin: 2rem 0;
       min-height: calc(100vh - 4rem);
     }
-    
+
     .navbar {
       background: rgba(255, 255, 255, 0.95) !important;
       backdrop-filter: blur(10px);
@@ -74,20 +73,20 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       padding: 1rem 0;
     }
-    
+
     .navbar-brand {
       font-weight: 700;
       font-size: 1.5rem;
       color: var(--primary-color) !important;
       text-decoration: none;
     }
-    
+
     .navbar-brand:hover {
       color: var(--primary-dark) !important;
       transform: translateY(-1px);
       transition: all 0.3s ease;
     }
-    
+
     .nav-link {
       font-weight: 500;
       color: var(--text-dark) !important;
@@ -96,19 +95,19 @@
       margin: 0 0.25rem;
       padding: 0.5rem 1rem !important;
     }
-    
+
     .nav-link:hover {
       color: var(--primary-color) !important;
       background: rgba(99, 102, 241, 0.1);
       transform: translateY(-1px);
     }
-    
+
     .nav-link.active {
       color: var(--primary-color) !important;
       background: rgba(99, 102, 241, 0.15);
       font-weight: 600;
     }
-    
+
     .btn {
       border-radius: 12px;
       font-weight: 500;
@@ -116,32 +115,32 @@
       border: none;
       padding: 0.75rem 1.5rem;
     }
-    
+
     .btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
-    
+
     .btn-primary {
       background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
       color: white;
     }
-    
+
     .btn-success {
       background: linear-gradient(135deg, var(--secondary-color), #059669);
       color: white;
     }
-    
+
     .btn-warning {
       background: linear-gradient(135deg, var(--accent-color), #d97706);
       color: white;
     }
-    
+
     .btn-danger {
       background: linear-gradient(135deg, var(--danger-color), #dc2626);
       color: white;
     }
-    
+
     .card {
       border: none;
       border-radius: 16px;
@@ -149,12 +148,12 @@
       transition: all 0.3s ease;
       overflow: hidden;
     }
-    
+
     .card:hover {
       transform: translateY(-5px);
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     }
-    
+
     .card-header {
       background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
       color: white;
@@ -162,18 +161,18 @@
       padding: 1.5rem;
       font-weight: 600;
     }
-    
+
     .card-body {
       padding: 1.5rem;
     }
-    
+
     .alert {
       border: none;
       border-radius: 12px;
       padding: 1rem 1.5rem;
       margin-bottom: 1.5rem;
     }
-    
+
     .form-control {
       border: 2px solid var(--border-light);
       border-radius: 10px;
@@ -181,34 +180,34 @@
       transition: all 0.3s ease;
       background: white;
     }
-    
+
     .form-control:focus {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
       transform: translateY(-1px);
     }
-    
+
     .form-label {
       font-weight: 500;
       color: var(--text-dark);
       margin-bottom: 0.5rem;
     }
-    
+
     .badge {
       border-radius: 20px;
       padding: 0.5rem 1rem;
       font-weight: 500;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
       font-weight: 600;
       color: var(--text-dark);
     }
-    
+
     .text-muted {
       color: var(--text-light) !important;
     }
-    
+
     .logout-btn {
       background: none !important;
       border: none !important;
@@ -219,40 +218,40 @@
       margin: 0 0.25rem;
       padding: 0.5rem 1rem !important;
     }
-    
+
     .logout-btn:hover {
       color: var(--danger-color) !important;
       background: rgba(239, 68, 68, 0.1) !important;
       transform: translateY(-1px);
     }
-    
+
     .footer {
       margin-top: auto;
     }
-    
+
     .footer-link {
       transition: all 0.3s ease;
     }
-    
+
     .footer-link:hover {
       color: var(--primary-color) !important;
       transform: translateX(3px);
     }
-    
+
     .footer-links li {
       transition: all 0.3s ease;
     }
-    
+
     .social-links a {
       font-size: 1.2rem;
       transition: all 0.3s ease;
     }
-    
+
     .social-links a:hover {
       color: var(--primary-color) !important;
       transform: translateY(-2px);
     }
-    
+
     .theme-toggle {
       background: none;
       border: 2px solid var(--border-light);
@@ -267,38 +266,38 @@
       align-items: center;
       justify-content: center;
     }
-    
+
     .theme-toggle:hover {
       background: var(--bg-light);
       border-color: var(--primary-color);
       color: var(--primary-color);
       transform: scale(1.1);
     }
-    
+
     .theme-toggle i {
       font-size: 1.1rem;
       transition: all 0.3s ease;
     }
-    
+
     @media (max-width: 768px) {
       .main-content {
         margin: 1rem 0;
         border-radius: 15px;
       }
-      
+
       .card {
         margin-bottom: 1rem;
       }
-      
+
       .footer {
         text-align: center;
       }
-      
+
       .footer .col-md-6:last-child {
         text-align: center !important;
         margin-top: 1rem;
       }
-      
+
       .theme-toggle {
         margin-left: 0.5rem;
       }
@@ -327,7 +326,7 @@
               <i class="bi bi-house-fill me-1"></i>Home
             </a>
           </li>
-          
+
           {% if not session.get('role') %}
             <!-- Not logged in -->
             <li class="nav-item">
@@ -352,6 +351,11 @@
                 <i class="bi bi-check-circle me-1"></i>My RSVPs
               </a>
             </li>
+             <li class="nav-item">
+              <a class="nav-link {{ 'active' if request.endpoint == 'testing_opportunities' else '' }}" href="{{ url_for('testing_opportunities') }}">
+                <i class="bi bi-calendar-event me-1"></i>Testing Opportunities
+              </a>
+            </li>
             <li class="nav-item">
               <form method="post" action="{{ url_for('logout') }}" style="display: inline;">
                 <button type="submit" class="logout-btn">
@@ -369,6 +373,11 @@
             <li class="nav-item">
               <a class="nav-link {{ 'active' if request.endpoint == 'create_event_page' else '' }}" href="{{ url_for('create_event_page') }}">
                 <i class="bi bi-plus-circle me-1"></i>Create Event
+              </a>
+            </li>
+             <li class="nav-item">
+              <a class="nav-link {{ 'active' if request.endpoint == 'testing_opportunities' else '' }}" href="{{ url_for('testing_opportunities') }}">
+                <i class="bi bi-calendar-event me-1"></i>Testing Opportunities
               </a>
             </li>
             <li class="nav-item">
@@ -403,12 +412,12 @@
             {% endfor %}
           {% endif %}
         {% endwith %}
-        
+
         {% block content %}{% endblock %}
       </div>
     </div>
   </div>
-  
+
   <!-- Footer -->
   <footer class="footer bg-dark text-light py-4 mt-5">
     <div class="container">
@@ -479,18 +488,18 @@
       </div>
     </div>
   </footer>
-  
+
   <!-- Bootstrap 5 JS bundle (for navbar toggling) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
           integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-  
+
   <script>
     // Dark mode functionality
     function toggleTheme() {
       const html = document.documentElement;
       const themeIcon = document.getElementById('theme-icon');
       const currentTheme = html.getAttribute('data-theme');
-      
+
       if (currentTheme === 'dark') {
         html.removeAttribute('data-theme');
         themeIcon.className = 'bi bi-moon-fill';
@@ -501,12 +510,12 @@
         localStorage.setItem('theme', 'dark');
       }
     }
-    
+
     // Load saved theme on page load
     document.addEventListener('DOMContentLoaded', function() {
       const savedTheme = localStorage.getItem('theme');
       const themeIcon = document.getElementById('theme-icon');
-      
+
       if (savedTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
         themeIcon.className = 'bi bi-sun-fill';

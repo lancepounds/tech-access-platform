@@ -1,0 +1,265 @@
+
+{% extends "base.html" %}
+
+{% block title %}Testing Opportunities – Tech Access{% endblock %}
+
+{% block content %}
+  <!-- Hero Section -->
+  <div class="hero-section text-center py-5 mb-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="hero-icon mb-4">
+            <i class="bi bi-search" style="font-size: 5rem; color: var(--primary-color); filter: drop-shadow(0 10px 20px rgba(99, 102, 241, 0.3));"></i>
+          </div>
+          <h1 class="hero-title display-3 fw-bold mb-4">
+            <span class="text-gradient">Testing Opportunities</span>
+          </h1>
+          <p class="hero-subtitle lead mb-5 text-muted fs-4">
+            Discover meaningful ways to test and improve accessibility in technology. Your feedback helps create a more inclusive digital world.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Testing Categories -->
+  <div class="container mb-5">
+    <h2 class="text-center mb-5 fw-bold">What Can You Test?</h2>
+    
+    <div class="row g-4">
+      <!-- Website & App Testing -->
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i class="bi bi-laptop text-primary" style="font-size: 3rem;"></i>
+            </div>
+            <h5 class="card-title fw-bold">Website & Mobile Apps</h5>
+            <p class="card-text text-muted">Test navigation, screen reader compatibility, keyboard accessibility, and user interface design for websites and mobile applications.</p>
+            <div class="mt-3">
+              <span class="badge bg-light text-primary me-2">Screen Readers</span>
+              <span class="badge bg-light text-primary me-2">Navigation</span>
+              <span class="badge bg-light text-primary">UI/UX</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hardware Testing -->
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i class="bi bi-phone text-success" style="font-size: 3rem;"></i>
+            </div>
+            <h5 class="card-title fw-bold">Hardware & Devices</h5>
+            <p class="card-text text-muted">Evaluate assistive technology devices, smart home products, wearables, and other hardware for accessibility and usability.</p>
+            <div class="mt-3">
+              <span class="badge bg-light text-success me-2">Smart Devices</span>
+              <span class="badge bg-light text-success me-2">Wearables</span>
+              <span class="badge bg-light text-success">Assistive Tech</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Software Testing -->
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i class="bi bi-gear text-warning" style="font-size: 3rem;"></i>
+            </div>
+            <h5 class="card-title fw-bold">Software & Tools</h5>
+            <p class="card-text text-muted">Test desktop applications, productivity software, games, and specialized accessibility tools to ensure they work for everyone.</p>
+            <div class="mt-3">
+              <span class="badge bg-light text-warning me-2">Desktop Apps</span>
+              <span class="badge bg-light text-warning me-2">Games</span>
+              <span class="badge bg-light text-warning">Productivity</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Voice & AI Testing -->
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i class="bi bi-mic text-info" style="font-size: 3rem;"></i>
+            </div>
+            <h5 class="card-title fw-bold">Voice & AI Systems</h5>
+            <p class="card-text text-muted">Test voice assistants, AI chatbots, speech recognition software, and other emerging technologies for accessibility.</p>
+            <div class="mt-3">
+              <span class="badge bg-light text-info me-2">Voice UI</span>
+              <span class="badge bg-light text-info me-2">AI Assistants</span>
+              <span class="badge bg-light text-info">Speech Tech</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documentation Testing -->
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i class="bi bi-file-text text-purple" style="font-size: 3rem;"></i>
+            </div>
+            <h5 class="card-title fw-bold">Documentation & Content</h5>
+            <p class="card-text text-muted">Review user manuals, help documentation, tutorials, and educational content for clarity and accessibility.</p>
+            <div class="mt-3">
+              <span class="badge bg-light text-purple me-2">User Guides</span>
+              <span class="badge bg-light text-purple me-2">Tutorials</span>
+              <span class="badge bg-light text-purple">Content</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service Testing -->
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i class="bi bi-headset text-danger" style="font-size: 3rem;"></i>
+            </div>
+            <h5 class="card-title fw-bold">Customer Services</h5>
+            <p class="card-text text-muted">Evaluate customer support processes, accessibility of service interactions, and communication channels.</p>
+            <div class="mt-3">
+              <span class="badge bg-light text-danger me-2">Support</span>
+              <span class="badge bg-light text-danger me-2">Communication</span>
+              <span class="badge bg-light text-danger">Processes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benefits Section -->
+  <div class="bg-light py-5 mb-5">
+    <div class="container">
+      <h2 class="text-center mb-5 fw-bold">Why Your Testing Matters</h2>
+      
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="d-flex align-items-start">
+            <div class="flex-shrink-0 me-3">
+              <i class="bi bi-award text-primary" style="font-size: 2rem;"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold">Real-World Impact</h5>
+              <p class="text-muted mb-0">Your feedback directly influences product development, helping create technology that works for millions of people with disabilities worldwide.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="d-flex align-items-start">
+            <div class="flex-shrink-0 me-3">
+              <i class="bi bi-people text-success" style="font-size: 2rem;"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold">Community Building</h5>
+              <p class="text-muted mb-0">Connect with other testers and advocates, sharing experiences and building a stronger disability community in tech.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="d-flex align-items-start">
+            <div class="flex-shrink-0 me-3">
+              <i class="bi bi-cash-coin text-warning" style="font-size: 2rem;"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold">Fair Compensation</h5>
+              <p class="text-muted mb-0">Get paid for your valuable time and expertise through gift cards, monetary compensation, and other rewards.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="d-flex align-items-start">
+            <div class="flex-shrink-0 me-3">
+              <i class="bi bi-lightbulb text-info" style="font-size: 2rem;"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold">Early Access</h5>
+              <p class="text-muted mb-0">Be among the first to experience new products and features, helping shape them before they reach the public.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Getting Started -->
+  <div class="container mb-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 text-center">
+        <h2 class="fw-bold mb-4">Ready to Start Testing?</h2>
+        <p class="text-muted mb-4 fs-5">Join our community of accessibility testers and start making a difference today. Browse current opportunities or create your profile to get matched with relevant testing projects.</p>
+        
+        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+          {% if not session.get('role') %}
+            <a href="{{ url_for('show_register') }}" class="btn btn-primary btn-lg">
+              <i class="bi bi-person-plus me-2"></i>Join as Tester
+            </a>
+            <a href="{{ url_for('show_events') }}" class="btn btn-outline-primary btn-lg">
+              <i class="bi bi-calendar-event me-2"></i>Browse Opportunities
+            </a>
+          {% else %}
+            <a href="{{ url_for('show_events') }}" class="btn btn-primary btn-lg">
+              <i class="bi bi-calendar-event me-2"></i>View Current Opportunities
+            </a>
+            {% if session.get('role') == 'user' %}
+              <a href="{{ url_for('show_my_rsvps') }}" class="btn btn-outline-primary btn-lg">
+                <i class="bi bi-list-check me-2"></i>My Testing Sessions
+              </a>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .hero-section {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+      border-radius: 20px;
+      margin: -2rem -15px 0 -15px;
+      padding: 4rem 15px 3rem 15px;
+    }
+    
+    .text-gradient {
+      background: linear-gradient(45deg, #6366f1, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .text-purple {
+      color: #8b5cf6 !important;
+    }
+    
+    .bg-light.text-purple {
+      background-color: #f3f4f6 !important;
+      color: #8b5cf6 !important;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      transition: all 0.3s ease;
+    }
+    
+    .feature-icon {
+      transition: transform 0.3s ease;
+    }
+    
+    .card:hover .feature-icon {
+      transform: scale(1.1);
+    }
+  </style>
+{% endblock %}

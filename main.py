@@ -639,6 +639,10 @@ def show_events():
     events = Event.query.order_by(Event.date).all()
     return render_template('events.html', events=events)
 
+@app.route('/testing-opportunities')
+def testing_opportunities():
+    return render_template('testing_opportunities.html')
+
 @app.route('/create-event', methods=['GET'])
 def create_event_page():
     return render_template('create_event.html')
