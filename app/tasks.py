@@ -28,6 +28,9 @@ def initialize_scheduler(app):
         
         scheduler.start()
         atexit.register(lambda: scheduler.shutdown())
+        
+        # Schedule the poll_all_checks job to run every minute
+        schedule_poll_all_checks()
 
 
 def schedule_health_checks():
@@ -96,3 +99,50 @@ def remove_check_job(check_id):
     job_id = f"health_check_{check_id}"
     if scheduler.get_job(job_id):
         scheduler.remove_job(job_id)
+
+
+def poll_all_checks():
+    """Poll all active checks and save results to database."""
+    from app import create_app
+    
+    # Create application context for database operations
+    app = create_app()
+    with app.app_context():
+        try:
+            # Query all active Check records
+            checks = Check.query.all()
+            
+            for check in checks:
+                try:
+                    # Run the check and get result
+                    result = run_check(check)
+                    
+                    # Add and commit the result to database
+                    db.session.add(result)
+                    db.session.commit()
+                    
+                except Exception as e:
+                    # Rollback this specific check's transaction
+                    db.session.rollback()
+                    print(f"Error polling check {check.name} (ID: {check.id}): {str(e)}")
+                    
+        except Exception as e:
+            print(f"Error in poll_all_checks: {str(e)}")
+
+
+def schedule_poll_all_checks():
+    """Schedule the poll_all_checks function to run every minute."""
+    job_id = "poll_all_checks"
+    
+    # Remove existing job if it exists
+    if scheduler.get_job(job_id):
+        scheduler.remove_job(job_id)
+    
+    # Add job to run every minute
+    scheduler.add_job(
+        func=poll_all_checks,
+        trigger="interval",
+        seconds=60,  # Run every minute
+        id=job_id,
+        replace_existing=True
+    )
