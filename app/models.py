@@ -52,3 +52,26 @@ class Reward(db.Model):
     issued_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     redeemed = db.Column(db.Boolean, default=False)
     rsvp = db.relationship('RSVP', backref='reward', uselist=False)
+
+
+class Check(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    target = db.Column(db.String(255), nullable=False)
+    interval_sec = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Check {self.name}>'
+
+
+class CheckResult(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    check_id = db.Column(db.Integer, db.ForeignKey('check.id'), nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    latency_ms = db.Column(db.Integer, nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    check = db.relationship('Check', backref=db.backref('results', lazy=True))
+
+    def __repr__(self):
+        return f'<CheckResult {self.check_id} - {self.status}>'
