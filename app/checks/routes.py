@@ -133,17 +133,30 @@ def get_check_results(check_id):
     if not check:
         return jsonify({'error': 'Check not found'}), 404
     
-    # Get query parameters for pagination
-    limit = request.args.get('limit', 50, type=int)
+    # Get query parameters for pagination and filtering
+    limit = request.args.get('limit', 100, type=int)
     offset = request.args.get('offset', 0, type=int)
+    since = request.args.get('since')
     
     # Limit maximum results per request
     limit = min(limit, 100)
     
-    results = CheckResult.query.filter_by(check_id=check_id)\
-                             .order_by(CheckResult.timestamp.desc())\
-                             .offset(offset)\
-                             .limit(limit)\
-                             .all()
+    # Build query
+    query = CheckResult.query.filter_by(check_id=check_id)
+    
+    # Add timestamp filter if 'since' parameter is provided
+    if since:
+        try:
+            from datetime import datetime
+            # Parse ISO timestamp
+            since_datetime = datetime.fromisoformat(since.replace('Z', '+00:00'))
+            query = query.filter(CheckResult.timestamp >= since_datetime)
+        except ValueError:
+            return jsonify({'error': 'Invalid timestamp format. Use ISO format (e.g., 2024-01-01T00:00:00Z)'}), 400
+    
+    results = query.order_by(CheckResult.timestamp.desc())\
+                  .offset(offset)\
+                  .limit(limit)\
+                  .all()
     
     return jsonify(CheckResultResponseSchema(many=True).dump(results)), 200
