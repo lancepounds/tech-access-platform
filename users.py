@@ -1,9 +1,8 @@
-
 from flask import Blueprint, request, jsonify, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from auth import jwt_required
-from marshmallow import Schema, fields, validate, ValidationError
-from main import db, User
+from marshmallow import fields, validate, ValidationError
+from main import db, User, ma
 import jwt
 import datetime
 import os
@@ -11,42 +10,29 @@ import os
 users_bp = Blueprint('users', __name__)
 
 # Validation schemas
-class RegistrationSchema(Schema):
-    email = fields.Email(
-        required=True,
+class RegistrationSchema(ma.Schema):
+    email = fields.Email(required=True,
         error_messages={
-            'required': 'Email is required.',
-            'invalid': 'Not a valid email address.'
-        }
-    )
-    password = fields.Str(
-        required=True,
+          "required": "Email is required.",
+          "invalid": "Not a valid email address."
+        })
+    password = fields.String(required=True,
         validate=validate.Length(min=8),
         error_messages={
-            'required': 'Password is required.',
-            'validator_failed': 'Password must be at least 8 characters.'
-        }
-    )
+          "required": "Password is required.",
+          "validator_failed": "Password must be at least 8 characters."
+        })
 
-class LoginSchema(Schema):
-    email = fields.Email(
-        required=True,
-        error_messages={
-            'required': 'Email is required.',
-            'invalid': 'Not a valid email address.'
-        }
-    )
-    password = fields.Str(
-        required=True,
-        error_messages={
-            'required': 'Password is required.'
-        }
-    )
+class LoginSchema(ma.Schema):
+    email = fields.Email(required=True,
+        error_messages={"required": "Email is required."})
+    password = fields.String(required=True,
+        error_messages={"required": "Password is required."})
 
-class ProfileSchema(Schema):
-    id = fields.Int()
+class ProfileSchema(ma.Schema):
+    id = fields.Int(dump_only=True)
     email = fields.Email()
-    role = fields.Str()
+    role = fields.String()
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
 
@@ -90,7 +76,7 @@ def register():
 @users_bp.route('/login', methods=['POST'])
 def login():
     JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
-    
+
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No JSON data provided'}), 400
@@ -118,7 +104,7 @@ def login():
         'role': user.role,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
     }, JWT_SECRET, algorithm='HS256')
-    
+
     return jsonify({'token': token, 'role': user.role}), 200
 
 @users_bp.route('/profile', methods=['GET'])
@@ -126,7 +112,7 @@ def login():
 def get_profile():
     # User is now available in g.current_user thanks to the decorator
     user = g.current_user
-    
+
     # Use ProfileSchema to serialize the user data
     result = profile_schema.dump(user)
     return jsonify(result), 200
