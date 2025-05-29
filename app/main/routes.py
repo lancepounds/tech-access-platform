@@ -1,5 +1,5 @@
 
-from flask import Blueprint, render_template, request, session, flash, redirect, url_for
+from flask import Blueprint, render_template, request, session, flash, redirect, url_for, current_app, jsonify
 from app.models import Event, Company, User, RSVP, Reward
 from app.extensions import db
 from app.auth.decorators import decode_token
@@ -12,6 +12,19 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     return render_template('index.html')
+
+
+@main_bp.route('/_db_health')
+def db_health():
+    try:
+        if not current_app.supabase:
+            return {"status": "error", "message": "Supabase not configured"}, 500
+            
+        # Test connectivity by querying information schema
+        response = current_app.supabase.table("information_schema.tables").select("*").execute()
+        return {"status": "ok", "tables_count": len(response.data)}, 200
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
 
 
 @main_bp.route('/events-page')

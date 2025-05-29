@@ -21,6 +21,17 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     ma.init_app(app)
+    
+    # Initialize Supabase
+    from supabase import create_client
+    if app.config['SUPABASE_URL'] and app.config['SUPABASE_KEY']:
+        supabase = create_client(
+            app.config['SUPABASE_URL'],
+            app.config['SUPABASE_KEY']
+        )
+        app.supabase = supabase
+    else:
+        app.supabase = None
 
     # Initialize scheduler
     from app.tasks import initialize_scheduler
