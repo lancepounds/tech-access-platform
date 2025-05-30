@@ -1,10 +1,12 @@
 
 from app.extensions import db
 import datetime
+import uuid
 
 
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    __tablename__ = "users"
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), default='user')
@@ -24,24 +26,21 @@ class Company(db.Model):
 
 
 class Event(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
+    __tablename__ = "events"
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = db.Column(db.String(128), nullable=False)
     description = db.Column(db.Text, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
-    company = db.relationship('Company', backref=db.backref('events', lazy=True))
+    company_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    rsvps = db.relationship("RSVP", backref="event", cascade="all, delete-orphan")
 
 
 class RSVP(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id'), nullable=False)
-    user_email = db.Column(db.String(120), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    fulfilled = db.Column(db.Boolean, default=False)
-
-    __table_args__ = (
-        db.UniqueConstraint('event_id', 'user_email', name='unique_rsvp'),
-    )
+    __tablename__ = "rsvps"
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    event_id = db.Column(db.String, db.ForeignKey("events.id"), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 
 class Reward(db.Model):

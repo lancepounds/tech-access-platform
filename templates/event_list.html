@@ -1,0 +1,19 @@
+
+<!doctype html>
+<html>
+<head>
+  <title>Events</title>
+</head>
+<body>
+  <h1>Available Events</h1>
+  <ul>
+    {% for e in events %}
+      <li>{{e.name}} on {{e.date}} — <a href="/events/{{e.id}}">Details</a>
+          <form action="/events/{{e.id}}/rsvp" method="post" style="display: inline;">
+            <button type="submit">RSVP</button>
+          </form>
+      </li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
