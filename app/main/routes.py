@@ -42,24 +42,9 @@ def create_event_page():
     return render_template('create_event.html')
 
 
-@main_bp.route('/test-sendgrid')
+@main_bp.route('/test-sendgrid', methods=['GET'])
 def test_sendgrid():
-    """Test SendGrid API configuration"""
-    from app.mail import send_email
-
-    # Get email from query parameter
-    to = request.args.get('email')
-    if not to:
-        return jsonify({'error': 'Provide email as ?email=your@email.com'}), 400
-
-    try:
-        success = send_email(to, 'Test SendGrid Email', '<p>This is a test email from your Flask app.</p>')
-        if success:
-            return jsonify({'msg': f'Email sent to {to}'}), 200
-        else:
-            return jsonify({'msg': 'Email failed'}), 500
-    except Exception as e:
-        return jsonify({'error': f'SendGrid error: {str(e)}'}), 500
+    return {'msg': 'route is working'}, 200
 
 
 @main_bp.route('/create-event', methods=['POST'])
