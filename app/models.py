@@ -43,6 +43,16 @@ class RSVP(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 
+class GiftCard(db.Model):
+    __tablename__ = "gift_cards"
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    event_id = db.Column(db.String, db.ForeignKey("events.id"), nullable=False)
+    amount_cents = db.Column(db.Integer, nullable=False)
+    stripe_charge_id = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+
 class Reward(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     rsvp_id = db.Column(db.Integer, db.ForeignKey('rsvp.id'), nullable=False)

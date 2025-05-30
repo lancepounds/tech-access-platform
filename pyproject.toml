@@ -21,6 +21,7 @@ requests = "^2.32.3"
 supabase = "^2.15.2"
 bcrypt = "^4.3.0"
 flask-jwt-extended = "^4.7.1"
+stripe = "^12.2.0"
 
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
