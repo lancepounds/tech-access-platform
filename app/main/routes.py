@@ -48,7 +48,7 @@ def test_sendgrid():
     from app.mail import send_email
 
     # Test email parameters
-    test_email = "test@example.com"  # You can change this to your email
+    test_email = request.args.get('email', 'your-email@example.com')  # Pass ?email=your@email.com in URL
     subject = "SendGrid Test Email"
     html_content = """
     <h2>SendGrid Test Successful!</h2>
