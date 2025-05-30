@@ -44,7 +44,26 @@ def create_event_page():
 
 @main_bp.route('/test-sendgrid', methods=['GET'])
 def test_sendgrid():
-    return {'msg': 'route is working'}, 200
+    """Test SendGrid API configuration"""
+    from app.mail import send_email
+    
+    # Get email from query parameter
+    to = request.args.get('email')
+    if not to:
+        return jsonify({'error': 'Provide email as ?email=your@email.com'}), 400
+    
+    try:
+        success = send_email(
+            to=to, 
+            subject='SendGrid Test Email', 
+            html_content='<h2>Test Successful!</h2><p>Your SendGrid API key is working correctly.</p>'
+        )
+        if success:
+            return jsonify({'msg': f'Test email sent successfully to {to}'}), 200
+        else:
+            return jsonify({'msg': 'Email failed to send'}), 500
+    except Exception as e:
+        return jsonify({'error': f'SendGrid error: {str(e)}'}), 500
 
 
 @main_bp.route('/create-event', methods=['POST'])
