@@ -3,7 +3,7 @@ from app.extensions import db, ma
 from app.auth.routes import auth_bp
 from app.users.routes import users_bp
 from app.companies.routes import companies_bp
-from app.events.routes import events_bp
+from app.events.routes import evt_bp as events_bp
 from app.main.routes import main_bp
 from app.checks.routes import checks_bp
 import os
