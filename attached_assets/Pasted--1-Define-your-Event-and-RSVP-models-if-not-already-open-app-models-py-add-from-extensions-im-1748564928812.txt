@@ -1,0 +1,108 @@
+# 1) Define your Event and RSVP models (if not already)
+open app/models.py
+add:
+
+from .extensions import db
+import uuid
+
+class Event(db.Model):
+    __tablename__ = "events"
+    id          = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name        = db.Column(db.String(128), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    date        = db.Column(db.DateTime, nullable=False)
+    company_id  = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    rsvps       = db.relationship("RSVP", backref="event", cascade="all, delete-orphan")
+
+class RSVP(db.Model):
+    __tablename__ = "rsvps"
+    id        = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id   = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    event_id  = db.Column(db.String, db.ForeignKey("events.id"), nullable=False)
+    created_at= db.Column(db.DateTime, server_default=db.func.now())
+
+# 2) Auto-generate a migration (if you use Flask-Migrate)
+#    Otherwise, just let SQLAlchemy create tables on startup.
+
+# 3) Create an "events" blueprint
+create file app/events.py
+add:
+
+from flask import Blueprint, request, jsonify, abort, current_app as app, render_template
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from .models import Event, RSVP
+from .extensions import db
+
+evt_bp = Blueprint("events", __name__, url_prefix="/events")
+
+def require_role(role):
+    from flask_jwt_extended import get_jwt
+    if get_jwt().get("role") != role:
+        abort(403)
+
+@evt_bp.route("", methods=["POST"])
+@jwt_required()
+def create_event():
+    require_role("company")
+    data = request.get_json() or {}
+    evt = Event(
+        name=data.get("name"),
+        description=data.get("description"),
+        date=data.get("date"),          # ISO string parsed by SQLAlchemy
+        company_id=get_jwt_identity()
+    )
+    db.session.add(evt)
+    db.session.commit()
+    return jsonify({"id": evt.id}), 201
+
+@evt_bp.route("", methods=["GET"])
+@jwt_required(optional=True)
+def list_events():
+    # public listing for members
+    evts = Event.query.order_by(Event.date).all()
+    return jsonify([{
+        "id": e.id,
+        "name": e.name,
+        "description": e.description,
+        "date": e.date.isoformat(),
+        "company_id": e.company_id
+    } for e in evts]), 200
+
+@evt_bp.route("/<evt_id>/rsvp", methods=["POST"])
+@jwt_required()
+def rsvp(evt_id):
+    require_role("member")
+    user_id = get_jwt_identity()
+    if RSVP.query.filter_by(event_id=evt_id, user_id=user_id).first():
+        return jsonify({"msg":"already RSVPed"}), 400
+    r = RSVP(user_id=user_id, event_id=evt_id)
+    db.session.add(r)
+    db.session.commit()
+    return jsonify({"msg":"RSVP confirmed"}), 201
+
+# 4) Register blueprint
+open app/__init__.py
+after registering dashboard, add:
+
+from .events import evt_bp
+app.register_blueprint(evt_bp)
+
+# 5) Create minimal templates (optional):
+create file templates/event_list.html
+add:
+<!doctype html>
+<ul>
+  {% for e in events %}
+    <li>{{e.name}} on {{e.date}} — <a href="/events/{{e.id}}">Details</a>
+        <form action="/events/{{e.id}}/rsvp" method="post">
+          <button type="submit">RSVP</button>
+        </form>
+    </li>
+  {% endfor %}
+</ul>
+
+# 6) Save and deploy
+# 7) Test with curl/Postman:
+#    POST /events         (company token) → create event
+#    GET  /events         → list all events
+#    POST /events/:id/rsvp (member token) → RSVP
