@@ -74,6 +74,20 @@ def rsvp(evt_id):
     db.session.add(gift)
     db.session.commit()
 
+    # Notify the company
+    from app.mail import send_email
+
+    # Fetch event and company info
+    evt = Event.query.get(evt_id)
+    company = User.query.get(evt.company_id)
+    member = User.query.get(user_id)
+    subject = f"New RSVP for your event: {evt.name}"
+    html = (
+        f"<p>{member.email} just RSVPed for <strong>{evt.name}</strong> on {evt.date}.</p>"
+        "<p>Log in to your dashboard to view details.</p>"
+    )
+    send_email(company.email, subject, html)
+
     return jsonify({"msg":"RSVP confirmed and gift card issued"}), 201
 
 @evt_bp.route("/<evt_id>/issue_gift", methods=["POST"])

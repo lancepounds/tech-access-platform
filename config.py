@@ -10,6 +10,8 @@ class Config:
     JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
     SUPABASE_URL = os.environ.get('SUPABASE_URL')
     SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+    SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+    SENDGRID_MOCK = SENDGRID_API_KEY is None
 
     # JWT configuration
     JWT_SECRET_KEY = os.getenv("SECRET_KEY", 'fallback-secret-key')
