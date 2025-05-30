@@ -138,3 +138,29 @@ def logout():
     session.clear()
     flash('You have been logged out successfully.', 'success')
     return redirect(url_for('main.index'))
+
+
+@auth_bp.route('/protected', methods=['GET'])
+def protected():
+    """Protected endpoint that requires valid JWT token"""
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({'error': 'Missing Authorization header'}), 401
+    
+    # Extract token (remove 'Bearer ' prefix if present)
+    token = auth_header
+    if token.startswith('Bearer '):
+        token = token[7:]
+    
+    decoded = decode_token(token)
+    if not decoded:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+    
+    return jsonify({
+        'message': 'Access granted to protected resource',
+        'user': {
+            'email': decoded.get('email'),
+            'role': decoded.get('role')
+        },
+        'token_expires': decoded.get('exp')
+    }), 200
