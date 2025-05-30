@@ -1,0 +1,80 @@
+# 1) Create dashboard blueprint
+create file app/dashboard.py
+add:
+
+from flask import Blueprint, render_template, abort, current_app as app
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
+
+dash_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
+
+def require_role(required_role):
+    claims = get_jwt()
+    if claims.get("role") != required_role:
+        abort(403)
+
+@dash_bp.route("/member")
+@jwt_required()
+def member_dashboard():
+    require_role("member")
+    events = app.supabase.table("events").select("*").execute().data
+    return render_template("member_dashboard.html", events=events)
+
+@dash_bp.route("/company")
+@jwt_required()
+def company_dashboard():
+    require_role("company")
+    company_id = get_jwt_identity()
+    my_events = app.supabase.table("events") \
+        .select("*") \
+        .eq("company_id", company_id) \
+        .execute().data
+    return render_template("company_dashboard.html", events=my_events)
+
+# 2) Register blueprint
+open app/__init__.py
+after app creation, add:
+
+from .dashboard import dash_bp
+app.register_blueprint(dash_bp)
+
+# 3) Create member dashboard template
+create file templates/member_dashboard.html
+add:
+<!doctype html>
+<html>
+<head><title>Member Dashboard</title></head>
+<body>
+  <h1>Welcome, Member!</h1>
+  <ul>
+    {% for e in events %}
+      <li>{{ e.name }} on {{ e.date }} — <a href="/events/{{ e.id }}">View</a></li>
+    {% else %}
+      <li>No upcoming demos/tests.</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
+
+# 4) Create company dashboard template
+create file templates/company_dashboard.html
+add:
+<!doctype html>
+<html>
+<head><title>Company Dashboard</title></head>
+<body>
+  <h1>Your Scheduled Demos & Tests</h1>
+  <ul>
+    {% for e in events %}
+      <li>{{ e.name }} on {{ e.date }} — <a href="/events/{{ e.id }}/edit">Edit</a></li>
+    {% else %}
+      <li>You haven’t scheduled any sessions yet.</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
+
+# 5) Save and deploy your Repl
+# Then test:
+# - Member JWT → GET /dashboard/member should render
+# - Company JWT → GET /dashboard/company should render
+# - Cross-access should return 403
