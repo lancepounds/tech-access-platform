@@ -1,0 +1,58 @@
+
+{% extends "base.html" %}
+
+{% block title %}Member Dashboard - Tech Access{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h1 class="mb-0">
+            <i class="bi bi-person-circle me-2"></i>
+            Welcome, Member!
+          </h1>
+        </div>
+        <div class="card-body">
+          <h3 class="mb-4">Upcoming Events & Testing Opportunities</h3>
+          
+          {% if events %}
+            <div class="row g-3">
+              {% for event in events %}
+                <div class="col-md-6 col-lg-4">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ event.title }}</h5>
+                      <p class="card-text">{{ event.description[:100] }}{% if event.description|length > 100 %}...{% endif %}</p>
+                      <p class="text-muted">
+                        <i class="bi bi-calendar me-1"></i>
+                        {{ event.date.strftime('%B %d, %Y at %I:%M %p') }}
+                      </p>
+                      <p class="text-muted">
+                        <i class="bi bi-building me-1"></i>
+                        {{ event.company.name }}
+                      </p>
+                    </div>
+                    <div class="card-footer">
+                      <a href="/events/{{ event.id }}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-eye me-1"></i>View Details
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <i class="bi bi-calendar-x" style="font-size: 3rem; color: var(--text-light);"></i>
+              <h4 class="mt-3 text-muted">No upcoming events</h4>
+              <p class="text-muted">Check back later for new testing opportunities and demos.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

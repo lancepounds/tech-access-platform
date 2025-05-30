@@ -48,7 +48,9 @@ def create_app():
 
     # Register blueprints
     from app.auth import auth_bp as new_auth_bp
+    from app.dashboard import dash_bp
     app.register_blueprint(new_auth_bp)
+    app.register_blueprint(dash_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(companies_bp, url_prefix='/api/companies')
     app.register_blueprint(events_bp, url_prefix='/api/events')
