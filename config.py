@@ -9,6 +9,13 @@ class Config:
     JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
     SUPABASE_URL = os.environ.get('SUPABASE_URL')
     SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+    
+    # Secret key for session & JWT signing
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    JWT_SECRET_KEY = os.getenv("SECRET_KEY")  # reuse the same
+    JWT_TOKEN_LOCATION = ["headers"]
+    JWT_HEADER_NAME = "Authorization"
+    JWT_HEADER_TYPE = "Bearer"
 
 
 class DevelopmentConfig(Config):

@@ -24,7 +24,7 @@ def create_app():
     
     # Initialize Supabase
     from supabase import create_client
-    if app.config['SUPABASE_URL'] and app.config['SUPABASE_KEY']:
+    if app.config.get('SUPABASE_URL') and app.config.get('SUPABASE_KEY'):
         supabase = create_client(
             app.config['SUPABASE_URL'],
             app.config['SUPABASE_KEY']
@@ -33,11 +33,24 @@ def create_app():
     else:
         app.supabase = None
 
+    from flask_bcrypt import Bcrypt
+    from flask_jwt_extended import JWTManager
+
+    # initialize extensions
+    bcrypt = Bcrypt(app)
+    jwt = JWTManager(app)
+
+    # attach to app context if you like
+    app.bcrypt = bcrypt
+    app.jwt = jwt
+
     # Initialize scheduler
     from app.tasks import initialize_scheduler
     initialize_scheduler(app)
 
     # Register blueprints
+    from app.auth import auth_bp as new_auth_bp
+    app.register_blueprint(new_auth_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(companies_bp, url_prefix='/api/companies')
