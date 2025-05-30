@@ -47,33 +47,19 @@ def test_sendgrid():
     """Test SendGrid API configuration"""
     from app.mail import send_email
 
-    # Test email parameters
-    test_email = request.args.get('email', 'your-email@example.com')  # Pass ?email=your@email.com in URL
-    subject = "SendGrid Test Email"
-    html_content = """
-    <h2>SendGrid Test Successful!</h2>
-    <p>Your SendGrid API key is configured correctly.</p>
-    <p>This is a test email sent from your Flask application.</p>
-    """
+    # Get email from query parameter
+    to = request.args.get('email')
+    if not to:
+        return jsonify({'error': 'Provide email as ?email=your@email.com'}), 400
 
     try:
-        result = send_email(test_email, subject, html_content)
-        if result:
-            return jsonify({
-                "status": "success",
-                "message": "Test email sent successfully!",
-                "mock_mode": current_app.config.get("SENDGRID_MOCK", False)
-            }), 200
+        success = send_email(to, 'Test SendGrid Email', '<p>This is a test email from your Flask app.</p>')
+        if success:
+            return jsonify({'msg': f'Email sent to {to}'}), 200
         else:
-            return jsonify({
-                "status": "error", 
-                "message": "Failed to send test email"
-            }), 500
+            return jsonify({'msg': 'Email failed'}), 500
     except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": f"SendGrid error: {str(e)}"
-        }), 500
+        return jsonify({'error': f'SendGrid error: {str(e)}'}), 500
 
 
 @main_bp.route('/create-event', methods=['POST'])
