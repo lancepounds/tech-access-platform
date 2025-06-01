@@ -15,12 +15,20 @@ def require_role(role):
 @jwt_required()
 def create_event():
     require_role("company")
+    claims = get_jwt()
+    company_email = claims.get("email")
+    
+    # Find the company user
+    company_user = User.query.filter_by(email=company_email, role="company").first()
+    if not company_user:
+        return jsonify({"error": "Company user not found"}), 404
+    
     data = request.get_json() or {}
     evt = Event(
         name=data.get("name"),
         description=data.get("description"),
-        date=data.get("date"),          # ISO string parsed by SQLAlchemy
-        company_id=get_jwt_identity()
+        date=data.get("date"),
+        company_id=company_user.id
     )
     db.session.add(evt)
     db.session.commit()

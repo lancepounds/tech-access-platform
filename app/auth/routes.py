@@ -13,6 +13,10 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback-jwt-secret')
 
 
+@auth_bp.route('/signup', methods=['GET'])
+def signup_page():
+    return render_template('signup.html')
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -28,6 +32,10 @@ def register():
     # Create new user
     hashed_password = generate_password_hash(data['password'])
     role = data.get('role', 'user')  # Default to 'user' if no role specified
+    
+    # Map 'member' to 'user' and 'company' to 'company'
+    if role == 'member':
+        role = 'user'
     
     new_user = User(
         email=data['email'],

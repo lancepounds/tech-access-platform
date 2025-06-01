@@ -41,6 +41,11 @@ class RSVP(db.Model):
     user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
     event_id = db.Column(db.String, db.ForeignKey("events.id"), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    fulfilled = db.Column(db.Boolean, default=False)
+    
+    # Add relationships
+    user = db.relationship("User", backref="rsvps")
+    event = db.relationship("Event")
 
 
 class GiftCard(db.Model):
