@@ -1,8 +1,10 @@
-from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for
-from app.models import Event, RSVP, Company, User
+
+from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for, current_app
+from app.models import Event, RSVP, Company, User, Reward
 from app.auth.decorators import decode_token
 from app.extensions import db
-import json
+import datetime
+import uuid
 
 main_bp = Blueprint('main', __name__)
 
@@ -11,20 +13,9 @@ def login_redirect():
     """Redirect /login to /auth/login"""
     return redirect(url_for('auth.login'))
 
-from flask import Blueprint, render_template, request, session, flash, redirect, url_for, current_app, jsonify
-from app.models import Event, Company, User, RSVP, Reward
-from app.extensions import db
-from app.auth.decorators import decode_token
-import datetime
-import uuid
-
-main_bp = Blueprint('main', __name__)
-
-
 @main_bp.route('/')
 def index():
     return render_template('index.html')
-
 
 @main_bp.route('/_db_health')
 def db_health():
@@ -38,22 +29,18 @@ def db_health():
     except Exception as e:
         return {"status": "error", "message": str(e)}, 500
 
-
 @main_bp.route('/events-page')
 def show_events():
     events = Event.query.order_by(Event.date).all()
     return render_template('events.html', events=events)
 
-
 @main_bp.route('/testing-opportunities')
 def testing_opportunities():
     return render_template('testing_opportunities.html')
 
-
 @main_bp.route('/create-event', methods=['GET'])
 def create_event_page():
     return render_template('create_event.html')
-
 
 @main_bp.route('/test-sendgrid', methods=['GET'])
 def test_sendgrid():
@@ -77,7 +64,6 @@ def test_sendgrid():
             return jsonify({'msg': 'Email failed to send'}), 500
     except Exception as e:
         return jsonify({'error': f'SendGrid error: {str(e)}'}), 500
-
 
 @main_bp.route('/create-event', methods=['POST'])
 def create_event():
@@ -128,13 +114,12 @@ def create_event():
         flash('Failed to create event. Please try again.', 'danger')
         return redirect(url_for('main.create_event_page'))
 
-
 @main_bp.route('/my-rsvps-page')
 def show_my_rsvps():
     # Check if user is logged in via session
     if 'token' not in session or 'role' not in session:
         flash('Please log in to view your RSVPs.', 'danger')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
 
     if session['role'] != 'user':
         flash('Only users can view RSVPs.', 'danger')
@@ -144,30 +129,28 @@ def show_my_rsvps():
     decoded = decode_token(session['token'])
     if not decoded:
         flash('Session expired. Please log in again.', 'danger')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
 
     # Query RSVPs for the logged-in user
     rsvps = RSVP.query.filter_by(user_email=decoded['email']).join(Event).join(Company).all()
 
     return render_template('my_rsvps.html', rsvps=rsvps)
 
-
 @main_bp.route('/dashboard')
 def company_dashboard():
     if session.get('role') != 'company':
         flash('Please log in as a company.', 'danger')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
     decoded = decode_token(session['token'])
     company = Company.query.filter_by(name=decoded['email']).first()
     return render_template('company_dashboard.html', events=company.events)
-
 
 @main_bp.route('/company-dashboard')
 def company_dashboard_legacy():
     # Check if company is logged in via session
     if 'token' not in session or 'role' not in session:
         flash('Please log in to view your dashboard.', 'danger')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
 
     if session['role'] != 'company':
         flash('Only companies can view the dashboard.', 'danger')
@@ -177,7 +160,7 @@ def company_dashboard_legacy():
     decoded = decode_token(session['token'])
     if not decoded:
         flash('Session expired. Please log in again.', 'danger')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
 
     company = Company.query.filter_by(name=decoded['email']).first()
     if not company:
@@ -197,13 +180,12 @@ def company_dashboard_legacy():
 
     return render_template('company_dashboard.html', events=events)
 
-
 @main_bp.route('/rsvps/<int:rsvp_id>/fulfill-ui', methods=['POST'])
 def fulfill_rsvp_ui(rsvp_id):
     # Check if company is logged in via session
     if 'token' not in session or 'role' not in session:
         flash('Please log in to fulfill RSVPs.', 'danger')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
 
     if session['role'] != 'company':
         flash('Only companies can fulfill RSVPs.', 'danger')
@@ -213,7 +195,7 @@ def fulfill_rsvp_ui(rsvp_id):
     decoded = decode_token(session['token'])
     if not decoded:
         flash('Session expired. Please log in again.', 'danger')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
 
     company = Company.query.filter_by(name=decoded['email']).first()
     if not company or not company.approved:
@@ -245,19 +227,18 @@ def fulfill_rsvp_ui(rsvp_id):
 
     return redirect(url_for('main.company_dashboard'))
 
-
 @main_bp.route('/rsvps/<int:rsvp_id>/issue-gift', methods=['POST'])
 def issue_gift(rsvp_id):
     # Only companies can issue gifts
     if session.get('role') != 'company':
         flash('Please log in as a company.', 'danger')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
 
     decoded = decode_token(session['token'])
     company = Company.query.filter_by(name=decoded['email']).first()
     if not company or not company.approved:
         flash('Not authorized.', 'danger')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
 
     rsvp = RSVP.query.get_or_404(rsvp_id)
     if rsvp.fulfilled:
@@ -274,7 +255,6 @@ def issue_gift(rsvp_id):
 
     flash(f'Gift code issued: {code}', 'success')
     return redirect(url_for('main.company_dashboard'))
-
 
 @main_bp.route('/my-rsvps', methods=['GET'])
 def get_my_rsvps():
@@ -304,7 +284,6 @@ def get_my_rsvps():
             })
 
     return jsonify(events), 200
-
 
 @main_bp.route('/rsvps/<int:rsvp_id>/fulfill', methods=['POST'])
 def fulfill_rsvp(rsvp_id):
