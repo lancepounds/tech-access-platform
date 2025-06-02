@@ -23,114 +23,174 @@
     </div>
   </div>
 
+  <!-- Search and Filter Section -->
+  <div class="container mb-5">
+    <div class="row justify-content-center mb-4">
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <div class="col-md-8">
+                <div class="input-group">
+                  <span class="input-group-text bg-primary text-white border-0">
+                    <i class="bi bi-search"></i>
+                  </span>
+                  <input type="text" class="form-control border-0" placeholder="Search testing categories..." id="categorySearch">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <select class="form-select border-0" id="difficultyFilter">
+                  <option value="">All Difficulty Levels</option>
+                  <option value="beginner">Beginner Friendly</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Testing Categories -->
   <div class="container mb-5">
     <h2 class="text-center mb-5 fw-bold">What Can You Test?</h2>
     
     <div class="row g-4">
       <!-- Website & App Testing -->
-      <div class="col-lg-4 col-md-6">
-        <div class="card h-100 border-0 shadow-sm">
+      <div class="col-lg-4 col-md-6 testing-category" data-category="website mobile apps navigation screen readers ui ux" data-difficulty="beginner">
+        <div class="card h-100 border-0 shadow-sm category-card">
           <div class="card-body text-center p-4">
             <div class="feature-icon mb-3">
               <i class="bi bi-laptop text-primary" style="font-size: 3rem;"></i>
             </div>
             <h5 class="card-title fw-bold">Website & Mobile Apps</h5>
             <p class="card-text text-muted">Test navigation, screen reader compatibility, keyboard accessibility, and user interface design for websites and mobile applications.</p>
-            <div class="mt-3">
+            <div class="mt-3 mb-3">
               <span class="badge bg-light text-primary me-2">Screen Readers</span>
               <span class="badge bg-light text-primary me-2">Navigation</span>
               <span class="badge bg-light text-primary">UI/UX</span>
+            </div>
+            <div class="difficulty-indicator">
+              <small class="text-success fw-bold">
+                <i class="bi bi-star-fill me-1"></i>Beginner Friendly
+              </small>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Hardware Testing -->
-      <div class="col-lg-4 col-md-6">
-        <div class="card h-100 border-0 shadow-sm">
+      <div class="col-lg-4 col-md-6 testing-category" data-category="hardware devices smart home wearables assistive technology" data-difficulty="intermediate">
+        <div class="card h-100 border-0 shadow-sm category-card">
           <div class="card-body text-center p-4">
             <div class="feature-icon mb-3">
               <i class="bi bi-phone text-success" style="font-size: 3rem;"></i>
             </div>
             <h5 class="card-title fw-bold">Hardware & Devices</h5>
             <p class="card-text text-muted">Evaluate assistive technology devices, smart home products, wearables, and other hardware for accessibility and usability.</p>
-            <div class="mt-3">
+            <div class="mt-3 mb-3">
               <span class="badge bg-light text-success me-2">Smart Devices</span>
               <span class="badge bg-light text-success me-2">Wearables</span>
               <span class="badge bg-light text-success">Assistive Tech</span>
+            </div>
+            <div class="difficulty-indicator">
+              <small class="text-warning fw-bold">
+                <i class="bi bi-star-fill me-1"></i><i class="bi bi-star-fill me-1"></i>Intermediate
+              </small>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Software Testing -->
-      <div class="col-lg-4 col-md-6">
-        <div class="card h-100 border-0 shadow-sm">
+      <div class="col-lg-4 col-md-6 testing-category" data-category="software tools desktop apps games productivity" data-difficulty="intermediate">
+        <div class="card h-100 border-0 shadow-sm category-card">
           <div class="card-body text-center p-4">
             <div class="feature-icon mb-3">
               <i class="bi bi-gear text-warning" style="font-size: 3rem;"></i>
             </div>
             <h5 class="card-title fw-bold">Software & Tools</h5>
             <p class="card-text text-muted">Test desktop applications, productivity software, games, and specialized accessibility tools to ensure they work for everyone.</p>
-            <div class="mt-3">
+            <div class="mt-3 mb-3">
               <span class="badge bg-light text-warning me-2">Desktop Apps</span>
               <span class="badge bg-light text-warning me-2">Games</span>
               <span class="badge bg-light text-warning">Productivity</span>
+            </div>
+            <div class="difficulty-indicator">
+              <small class="text-warning fw-bold">
+                <i class="bi bi-star-fill me-1"></i><i class="bi bi-star-fill me-1"></i>Intermediate
+              </small>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Voice & AI Testing -->
-      <div class="col-lg-4 col-md-6">
-        <div class="card h-100 border-0 shadow-sm">
+      <div class="col-lg-4 col-md-6 testing-category" data-category="voice ai assistants speech recognition chatbots" data-difficulty="advanced">
+        <div class="card h-100 border-0 shadow-sm category-card">
           <div class="card-body text-center p-4">
             <div class="feature-icon mb-3">
               <i class="bi bi-mic text-info" style="font-size: 3rem;"></i>
             </div>
             <h5 class="card-title fw-bold">Voice & AI Systems</h5>
             <p class="card-text text-muted">Test voice assistants, AI chatbots, speech recognition software, and other emerging technologies for accessibility.</p>
-            <div class="mt-3">
+            <div class="mt-3 mb-3">
               <span class="badge bg-light text-info me-2">Voice UI</span>
               <span class="badge bg-light text-info me-2">AI Assistants</span>
               <span class="badge bg-light text-info">Speech Tech</span>
+            </div>
+            <div class="difficulty-indicator">
+              <small class="text-danger fw-bold">
+                <i class="bi bi-star-fill me-1"></i><i class="bi bi-star-fill me-1"></i><i class="bi bi-star-fill me-1"></i>Advanced
+              </small>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Documentation Testing -->
-      <div class="col-lg-4 col-md-6">
-        <div class="card h-100 border-0 shadow-sm">
+      <div class="col-lg-4 col-md-6 testing-category" data-category="documentation content user guides tutorials manuals" data-difficulty="beginner">
+        <div class="card h-100 border-0 shadow-sm category-card">
           <div class="card-body text-center p-4">
             <div class="feature-icon mb-3">
               <i class="bi bi-file-text text-purple" style="font-size: 3rem;"></i>
             </div>
             <h5 class="card-title fw-bold">Documentation & Content</h5>
             <p class="card-text text-muted">Review user manuals, help documentation, tutorials, and educational content for clarity and accessibility.</p>
-            <div class="mt-3">
+            <div class="mt-3 mb-3">
               <span class="badge bg-light text-purple me-2">User Guides</span>
               <span class="badge bg-light text-purple me-2">Tutorials</span>
               <span class="badge bg-light text-purple">Content</span>
+            </div>
+            <div class="difficulty-indicator">
+              <small class="text-success fw-bold">
+                <i class="bi bi-star-fill me-1"></i>Beginner Friendly
+              </small>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Service Testing -->
-      <div class="col-lg-4 col-md-6">
-        <div class="card h-100 border-0 shadow-sm">
+      <div class="col-lg-4 col-md-6 testing-category" data-category="customer service support communication processes" data-difficulty="intermediate">
+        <div class="card h-100 border-0 shadow-sm category-card">
           <div class="card-body text-center p-4">
             <div class="feature-icon mb-3">
               <i class="bi bi-headset text-danger" style="font-size: 3rem;"></i>
             </div>
             <h5 class="card-title fw-bold">Customer Services</h5>
             <p class="card-text text-muted">Evaluate customer support processes, accessibility of service interactions, and communication channels.</p>
-            <div class="mt-3">
+            <div class="mt-3 mb-3">
               <span class="badge bg-light text-danger me-2">Support</span>
               <span class="badge bg-light text-danger me-2">Communication</span>
               <span class="badge bg-light text-danger">Processes</span>
+            </div>
+            <div class="difficulty-indicator">
+              <small class="text-warning fw-bold">
+                <i class="bi bi-star-fill me-1"></i><i class="bi bi-star-fill me-1"></i>Intermediate
+              </small>
             </div>
           </div>
         </div>
@@ -204,18 +264,18 @@
         
         <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
           {% if not session.get('role') %}
-            <a href="{{ url_for('show_register') }}" class="btn btn-primary btn-lg">
+            <a href="{{ url_for('users.show_register') }}" class="btn btn-primary btn-lg">
               <i class="bi bi-person-plus me-2"></i>Join as Tester
             </a>
-            <a href="{{ url_for('show_events') }}" class="btn btn-outline-primary btn-lg">
+            <a href="{{ url_for('main.show_events') }}" class="btn btn-outline-primary btn-lg">
               <i class="bi bi-calendar-event me-2"></i>Browse Opportunities
             </a>
           {% else %}
-            <a href="{{ url_for('show_events') }}" class="btn btn-primary btn-lg">
+            <a href="{{ url_for('main.show_events') }}" class="btn btn-primary btn-lg">
               <i class="bi bi-calendar-event me-2"></i>View Current Opportunities
             </a>
             {% if session.get('role') == 'user' %}
-              <a href="{{ url_for('show_my_rsvps') }}" class="btn btn-outline-primary btn-lg">
+              <a href="{{ url_for('main.show_my_rsvps') }}" class="btn btn-outline-primary btn-lg">
                 <i class="bi bi-list-check me-2"></i>My Testing Sessions
               </a>
             {% endif %}
@@ -261,5 +321,105 @@
     .card:hover .feature-icon {
       transform: scale(1.1);
     }
+    
+    .category-card {
+      transition: all 0.3s ease;
+    }
+    
+    .category-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+    }
+    
+    .difficulty-indicator {
+      padding-top: 10px;
+      border-top: 1px solid #f8f9fa;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
   </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.getElementById('categorySearch');
+      const difficultyFilter = document.getElementById('difficultyFilter');
+      const categoryCards = document.querySelectorAll('.testing-category');
+      
+      function filterCategories() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const difficulty = difficultyFilter.value;
+        
+        categoryCards.forEach(card => {
+          const categoryText = card.getAttribute('data-category');
+          const cardDifficulty = card.getAttribute('data-difficulty');
+          const cardTitle = card.querySelector('.card-title').textContent.toLowerCase();
+          const cardContent = card.querySelector('.card-text').textContent.toLowerCase();
+          
+          const matchesSearch = searchTerm === '' || 
+                               categoryText.includes(searchTerm) || 
+                               cardTitle.includes(searchTerm) || 
+                               cardContent.includes(searchTerm);
+          
+          const matchesDifficulty = difficulty === '' || cardDifficulty === difficulty;
+          
+          if (matchesSearch && matchesDifficulty) {
+            card.classList.remove('hidden');
+            card.style.animation = 'fadeIn 0.3s ease-in';
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+        
+        // Show "no results" message if no cards are visible
+        const visibleCards = document.querySelectorAll('.testing-category:not(.hidden)');
+        let noResultsMsg = document.getElementById('no-results-message');
+        
+        if (visibleCards.length === 0) {
+          if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'no-results-message';
+            noResultsMsg.className = 'col-12 text-center py-5';
+            noResultsMsg.innerHTML = `
+              <i class="bi bi-search text-muted mb-3" style="font-size: 3rem;"></i>
+              <h4 class="text-muted">No testing opportunities found</h4>
+              <p class="text-muted">Try adjusting your search or filter criteria</p>
+            `;
+            document.querySelector('.row.g-4').appendChild(noResultsMsg);
+          }
+          noResultsMsg.style.display = 'block';
+        } else if (noResultsMsg) {
+          noResultsMsg.style.display = 'none';
+        }
+      }
+      
+      searchInput.addEventListener('input', filterCategories);
+      difficultyFilter.addEventListener('change', filterCategories);
+      
+      // Add smooth scrolling for better UX
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        });
+      });
+    });
+    
+    // Add fade-in animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 {% endblock %}
