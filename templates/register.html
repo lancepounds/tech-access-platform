@@ -27,7 +27,7 @@
           {% endif %}
         {% endwith %}
 
-        <form method="post" action="/register" novalidate class="needs-validation" id="registerForm">
+        <form method="post" action="/register" novalidate class="needs-validation" id="registerForm" enctype="multipart/form-data">
           <!-- Personal Information Section -->
           <div class="mb-4">
             <h5 class="text-primary mb-3">
@@ -76,6 +76,20 @@
                      placeholder="Enter your phone number (optional)">
               <div class="form-text">
                 <i class="bi bi-info-circle me-1"></i>We'll use this to contact you about testing opportunities.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="profilePicture" class="form-label">
+                <i class="bi bi-image me-1"></i>Profile Picture (Optional)
+              </label>
+              <input type="file" class="form-control" id="profilePicture" name="profilePicture" 
+                     accept="image/*" onchange="previewImage(this)">
+              <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>Upload a profile picture (PNG, JPG, GIF, WebP - max 5MB)
+              </div>
+              <div id="imagePreview" class="mt-2" style="display: none;">
+                <img id="preview" src="" alt="Profile Preview" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">
               </div>
             </div>
           </div>
@@ -269,6 +283,33 @@
 </div>
 
 <script>
+// Image preview function
+function previewImage(input) {
+  const preview = document.getElementById('preview');
+  const previewContainer = document.getElementById('imagePreview');
+  
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      input.value = '';
+      previewContainer.style.display = 'none';
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      previewContainer.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    previewContainer.style.display = 'none';
+  }
+}
+
 // Enhanced Bootstrap form validation with password matching
 (function() {
   'use strict';

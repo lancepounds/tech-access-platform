@@ -1,15 +1,26 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from app.models import User
 from app.extensions import db
 import jwt
 import datetime
+import os
+import uuid
 from config import Config
 
 users_bp = Blueprint('users', __name__)
 
 # JWT secret for token generation
 JWT_SECRET = Config.JWT_SECRET
+
+# Allowed file extensions for profile pictures
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    """Check if file extension is allowed for profile pictures."""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @users_bp.route('/register', methods=['GET'])
 def show_register():
@@ -38,11 +49,32 @@ def register():
     # Process disabilities and interests (handle multiple selections)
     disabilities = []
     interests = []
+    profile_picture_filename = None
     
     if not request.is_json:
         # Handle form data (multiple selections)
         disabilities = request.form.getlist('disabilities') if 'disabilities' in request.form else []
         interests = request.form.getlist('interests') if 'interests' in request.form else []
+        
+        # Handle profile picture upload
+        if 'profilePicture' in request.files:
+            file = request.files['profilePicture']
+            if file and file.filename and allowed_file(file.filename):
+                # Create uploads directory if it doesn't exist
+                upload_dir = os.path.join('static', 'uploads', 'profiles')
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                # Generate unique filename
+                filename = secure_filename(file.filename)
+                name, ext = os.path.splitext(filename)
+                unique_filename = f"{str(uuid.uuid4())}{ext}"
+                file_path = os.path.join(upload_dir, unique_filename)
+                
+                try:
+                    file.save(file_path)
+                    profile_picture_filename = unique_filename
+                except Exception as e:
+                    flash('Error uploading profile picture. Please try again.', 'warning')
     else:
         # Handle JSON data
         disabilities = data.get('disabilities', [])
@@ -62,7 +94,8 @@ def register():
         tech_experience=data.get('techExperience'),
         interests=json.dumps(interests) if interests else None,
         email_notifications=bool(data.get('emailNotifications')),
-        newsletter_subscription=bool(data.get('newsletter'))
+        newsletter_subscription=bool(data.get('newsletter')),
+        profile_picture=profile_picture_filename
     )
 
     try:

@@ -28,6 +28,9 @@ class User(db.Model):
     email_notifications = db.Column(db.Boolean, default=True)
     newsletter_subscription = db.Column(db.Boolean, default=False)
     
+    # Profile Picture
+    profile_picture = db.Column(db.String(255), nullable=True)  # Store filename/path
+    
     # Timestamps
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())

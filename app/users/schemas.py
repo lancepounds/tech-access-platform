@@ -43,6 +43,10 @@ class RegistrationSchema(ma.Schema):
     interests = fields.List(fields.String())
     
     # Communication Preferences
+    emailNotifications = fields.Boolean(missing=True)
+    newsletter = fields.Boolean(missing=False)
+    
+    # Communication Preferences
     emailNotifications = fields.Boolean()
     newsletter = fields.Boolean()
     terms = fields.Boolean(required=True,
