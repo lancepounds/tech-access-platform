@@ -37,7 +37,7 @@
             </div>
           </div>
           
-          <div class="mb-4">
+          <div class="mb-3">
             <label for="role" class="form-label">
               <i class="bi bi-person-badge me-1"></i>Role
             </label>
@@ -48,6 +48,30 @@
             </select>
             <div class="invalid-feedback">
               Please select your role.
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <label class="form-label">
+              <i class="bi bi-wheelchair me-1"></i>Wheelchair Usage
+            </label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="wheelchair_usage" id="wheelchair_fulltime" value="fulltime">
+              <label class="form-check-label" for="wheelchair_fulltime">
+                Full-time wheelchair user
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="wheelchair_usage" id="wheelchair_parttime" value="parttime">
+              <label class="form-check-label" for="wheelchair_parttime">
+                Part-time wheelchair user
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="wheelchair_usage" id="wheelchair_none" value="none">
+              <label class="form-check-label" for="wheelchair_none">
+                Not a wheelchair user
+              </label>
             </div>
           </div>
           
@@ -90,12 +114,13 @@
       const email = form.email.value;
       const password = form.password.value;
       const role = form.role.value;
+      const wheelchairUsage = form.wheelchair_usage ? form.wheelchair_usage.value : null;
       
       try {
         const res = await fetch('/auth/register', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({email, password, role})
+          body: JSON.stringify({email, password, role, wheelchair_usage: wheelchairUsage})
         });
         
         const data = await res.json();

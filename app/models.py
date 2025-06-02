@@ -19,6 +19,7 @@ class User(db.Model):
     # Accessibility Information
     disabilities = db.Column(db.Text, nullable=True)  # JSON string of selected disabilities
     specific_disability = db.Column(db.Text, nullable=True)  # Detailed description of specific disability
+    wheelchair_usage = db.Column(db.String(20), nullable=True)  # fulltime, parttime, or none
     assistive_tech = db.Column(db.Text, nullable=True)
     
     # Experience & Interests
