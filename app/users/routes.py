@@ -57,6 +57,13 @@ def validate_password_strength(password):
     
     return has_number or has_special
 
+@users_bp.route('/list', methods=['GET'])
+def list_users():
+    """Debug endpoint to see registered users"""
+    users = User.query.all()
+    user_list = [{'id': user.id, 'email': user.email, 'name': user.full_name, 'created_at': user.created_at} for user in users]
+    return jsonify({'users': user_list, 'count': len(user_list)})
+
 @users_bp.route('/register', methods=['GET'])
 def show_register():
     return render_template('register.html')
