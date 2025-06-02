@@ -43,12 +43,8 @@ class RegistrationSchema(ma.Schema):
     interests = fields.List(fields.String())
     
     # Communication Preferences
-    emailNotifications = fields.Boolean(missing=True)
-    newsletter = fields.Boolean(missing=False)
-    
-    # Communication Preferences
-    emailNotifications = fields.Boolean()
-    newsletter = fields.Boolean()
+    emailNotifications = fields.Boolean(load_default=True)
+    newsletter = fields.Boolean(load_default=False)
     terms = fields.Boolean(required=True,
         error_messages={
           "required": "You must agree to the terms and conditions."
