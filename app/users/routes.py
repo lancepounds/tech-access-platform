@@ -82,6 +82,23 @@ def register():
         flash(error_msg, 'danger')
         return redirect(url_for('users.show_register'))
 
+    # Sanitize and validate email format
+    email = data.get('email', '').strip().lower()
+    if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+        error_msg = 'Please provide a valid email address'
+        if request.is_json:
+            return jsonify({'error': error_msg}), 400
+        flash(error_msg, 'danger')
+        return redirect(url_for('users.show_register'))
+
+    # Validate password confirmation
+    if data.get('password') != data.get('confirmPassword'):
+        error_msg = 'Passwords do not match'
+        if request.is_json:
+            return jsonify({'error': error_msg}), 400
+        flash(error_msg, 'danger')
+        return redirect(url_for('users.show_register'))
+
     # Validate password strength
     if not validate_password_strength(data['password']):
         error_msg = 'Password must be at least 8 characters and include numbers or special characters'
@@ -91,7 +108,7 @@ def register():
         return redirect(url_for('users.show_register'))
 
     # Check if user already exists
-    existing_user = User.query.filter_by(email=data['email']).first()
+    existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         error_msg = 'User already exists'
         if request.is_json:
@@ -120,8 +137,11 @@ def register():
                     flash('Invalid file type. Please upload PNG, JPG, GIF, or WebP images only.', 'danger')
                     return redirect(url_for('users.show_register'))
                 
-                # Validate file size (5MB limit)
-                if file.content_length and file.content_length > 5 * 1024 * 1024:
+                # Validate file size (5MB limit) - check actual file size
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                file.seek(0)
+                if file_size > 5 * 1024 * 1024:
                     flash('File size must be less than 5MB.', 'danger')
                     return redirect(url_for('users.show_register'))
                 
@@ -155,7 +175,7 @@ def register():
     # Create new user
     hashed_password = generate_password_hash(data['password'])
     new_user = User(
-        email=data['email'],
+        email=email,
         password=hashed_password,
         role='user',
         first_name=data.get('firstName'),
