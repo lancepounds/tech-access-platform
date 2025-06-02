@@ -32,8 +32,26 @@ def register_company():
             flash('Company name, email, and password are required.', 'danger')
             return redirect(url_for('companies.show_register'))
         
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long.', 'danger')
+            return redirect(url_for('companies.show_register'))
+        
         if password != confirm_password:
             flash('Passwords do not match.', 'danger')
+            return redirect(url_for('companies.show_register'))
+        
+        if not request.form.get('contact_name'):
+            flash('Primary contact name is required.', 'danger')
+            return redirect(url_for('companies.show_register'))
+        
+        if not request.form.get('company_description'):
+            flash('Company description is required.', 'danger')
+            return redirect(url_for('companies.show_register'))
+        
+        # Email validation
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, contact_email):
+            flash('Please enter a valid email address.', 'danger')
             return redirect(url_for('companies.show_register'))
         
         # Check if company already exists
@@ -122,3 +140,5 @@ def approve_company():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to approve company: {str(e)}'}), 500
+import json
+import re

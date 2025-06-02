@@ -98,7 +98,8 @@ class Event(db.Model):
     name = db.Column(db.String(128), nullable=False)
     description = db.Column(db.Text, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
-    company_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
+    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=True)  # For user-created events
     rsvps = db.relationship("RSVP", back_populates="event", cascade="all, delete-orphan")
 
 

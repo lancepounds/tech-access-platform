@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify, render_template, session, flash, redirect, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import User, Company
@@ -32,11 +31,11 @@ def register():
     # Create new user
     hashed_password = generate_password_hash(data['password'])
     role = data.get('role', 'user')  # Default to 'user' if no role specified
-    
+
     # Map 'member' to 'user' and 'company' to 'company'
     if role == 'member':
         role = 'user'
-    
+
     new_user = User(
         email=data['email'],
         password=hashed_password,
@@ -88,11 +87,11 @@ def login():
 def login_page():
     if request.method == 'GET':
         return render_template('login.html')
-    
+
     # Handle POST request from form
     email = request.form.get('email')
     password = request.form.get('password')
-    
+
     # Validation
     if not email or not password:
         flash('Missing credentials', 'danger')
@@ -100,7 +99,6 @@ def login_page():
 
     # Use existing JWT login logic
     user = User.query.filter_by(email=email).first()
-    company = Company.query.filter_by(name=email).first()
 
     if user and check_password_hash(user.password, password):
         # Generate JWT token for user
@@ -109,33 +107,39 @@ def login_page():
             'role': user.role,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         }, JWT_SECRET, algorithm='HS256')
-        
+
         # Store login info in session
         session['token'] = token
         session['email'] = user.email
         session['role'] = user.role
-        
+
         flash('Logged in successfully', 'success')
         return redirect(url_for('main.show_events'))
 
-    if company and password == company.password:
-        # For companies, we use their name as both email and password
-        if password == company.name:
-            # Generate JWT token for company
-            token = jwt.encode({
-                'email': company.name,
-                'role': company.role,
-                'approved': company.approved,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-            }, JWT_SECRET, algorithm='HS256')
-            
-            # Store login info in session
-            session['token'] = token
-            session['email'] = company.name
-            session['role'] = company.role
-            
-            flash('Logged in successfully', 'success')
-            return redirect(url_for('main.show_events'))
+    # Check if it's a company login
+    company = Company.query.filter_by(contact_email=email).first()
+    if company and check_password_hash(company.password, password):
+        if not company.approved:
+            flash('Your company account is pending approval. Please wait for admin approval.', 'warning')
+            return render_template('login.html')
+
+        # Generate JWT token for company
+        token = jwt.encode({
+            'email': company.contact_email,
+            'role': company.role,
+            'company_id': company.id,
+            'approved': company.approved,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }, JWT_SECRET, algorithm='HS256')
+
+        # Store login info in session
+        session['token'] = token
+        session['email'] = company.contact_email
+        session['role'] = company.role
+        session['company_id'] = company.id
+
+        flash('Logged in successfully', 'success')
+        return redirect(url_for('dashboard.company_dashboard'))
 
     flash('Invalid credentials', 'danger')
     return render_template('login.html')
@@ -154,16 +158,16 @@ def protected():
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return jsonify({'error': 'Missing Authorization header'}), 401
-    
+
     # Extract token (remove 'Bearer ' prefix if present)
     token = auth_header
     if token.startswith('Bearer '):
         token = token[7:]
-    
+
     decoded = decode_token(token)
     if not decoded:
         return jsonify({'error': 'Invalid or expired token'}), 401
-    
+
     return jsonify({
         'message': 'Access granted to protected resource',
         'user': {

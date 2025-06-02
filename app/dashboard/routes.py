@@ -40,6 +40,28 @@ def member_dashboard():
 @dash_bp.route("/company")
 def company_dashboard():
     """Dashboard for companies"""
+    # Check if user is logged in via session or JWT
+    if 'role' in session:
+        require_role("company")
+        company_id = session.get('company_id')
+    else:
+        # For JWT access
+        jwt_required()(lambda: None)()
+        require_role("company")
+        claims = get_jwt()
+        company_id = claims.get("company_id")
+    
+    # Get company details
+    company = Company.query.get(company_id)
+    if not company:
+        abort(404)
+    
+    # Get company's events if any
+    events = Event.query.filter_by(company_id=str(company_id)).order_by(Event.date.desc()).all()
+    
+    return render_template("company_dashboard.html", company=company, events=events)
+def company_dashboard():
+    """Dashboard for companies"""
     # Check if company is logged in via session or JWT
     if 'role' in session:
         require_role("company")
