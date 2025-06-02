@@ -338,9 +338,11 @@ function previewImage(input) {
       
       if (pwd.length >= 8 && (hasNumber || hasSpecial)) {
         password.setCustomValidity('');
+        password.classList.remove('is-invalid');
         return true;
       } else {
         password.setCustomValidity('Password must be at least 8 characters and include numbers or special characters');
+        password.classList.add('is-invalid');
         return false;
       }
     }
