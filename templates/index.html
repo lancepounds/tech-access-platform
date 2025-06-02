@@ -1,18 +1,225 @@
+
 {% extends "base.html" %}
 
 {% block title %}Welcome - Tech Access Group{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+<!-- Hero Section -->
+<div class="hero-section text-center py-5 mb-5">
+  <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8 text-center">
-            <h1 class="mb-4">Welcome to Tech Access Group</h1>
-
-            <div class="mt-4">
-                <a href="{{ url_for('users.show_register') }}" class="btn btn-primary btn-lg me-3">Register</a>
-                <a href="{{ url_for('auth.login_page') }}" class="btn btn-outline-primary btn-lg">Login</a>
-            </div>
+      <div class="col-lg-8">
+        <div class="hero-icon mb-4">
+          <i class="bi bi-lightning-charge-fill" style="font-size: 5rem; color: var(--primary-color); filter: drop-shadow(0 10px 20px rgba(99, 102, 241, 0.3));"></i>
         </div>
+        <h1 class="hero-title display-3 fw-bold mb-4">
+          <span class="text-gradient">Tech Access Group</span>
+        </h1>
+        <p class="hero-subtitle lead mb-5 text-muted fs-4">
+          Connecting people with disabilities to accessible products and services, fostering inclusive technology development.
+        </p>
+        
+        {% if not session.get('role') %}
+        <div class="hero-actions mb-5">
+          <a href="{{ url_for('users.show_register') }}" class="btn btn-success btn-lg me-3 px-5 py-3">
+            <i class="bi bi-person-plus-fill me-2"></i>Get Started
+          </a>
+          <a href="{{ url_for('auth.login_page') }}" class="btn btn-outline-primary btn-lg px-5 py-3">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+          </a>
+        </div>
+        {% else %}
+        <div class="hero-actions mb-5">
+          <a href="{{ url_for('main.show_events') }}" class="btn btn-primary btn-lg me-3 px-5 py-3">
+            <i class="bi bi-calendar-event me-2"></i>View Events
+          </a>
+          {% if session.get('role') == 'company' %}
+          <a href="{{ url_for('main.create_event_page') }}" class="btn btn-outline-success btn-lg px-5 py-3">
+            <i class="bi bi-plus-circle me-2"></i>Create Event
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- Features Section -->
+<div class="container mb-5">
+  <div class="row text-center mb-5">
+    <div class="col-12">
+      <h2 class="fw-bold mb-3">Why Choose Tech Access?</h2>
+      <p class="text-muted fs-5">Making technology accessible for everyone</p>
+    </div>
+  </div>
+  
+  <div class="row g-4">
+    <!-- Feature 1 -->
+    <div class="col-lg-4 col-md-6">
+      <div class="card h-100 border-0 shadow-sm feature-card">
+        <div class="card-body text-center p-4">
+          <div class="feature-icon mb-4">
+            <i class="bi bi-people-fill" style="font-size: 3rem; color: var(--secondary-color);"></i>
+          </div>
+          <h4 class="fw-bold mb-3">Community Driven</h4>
+          <p class="text-muted">Connect with a vibrant community of users and companies committed to accessibility.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Feature 2 -->
+    <div class="col-lg-4 col-md-6">
+      <div class="card h-100 border-0 shadow-sm feature-card">
+        <div class="card-body text-center p-4">
+          <div class="feature-icon mb-4">
+            <i class="bi bi-calendar-check-fill" style="font-size: 3rem; color: var(--primary-color);"></i>
+          </div>
+          <h4 class="fw-bold mb-3">Testing Events</h4>
+          <p class="text-muted">Participate in accessibility testing events and help improve products for everyone.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Feature 3 -->
+    <div class="col-lg-4 col-md-6">
+      <div class="card h-100 border-0 shadow-sm feature-card">
+        <div class="card-body text-center p-4">
+          <div class="feature-icon mb-4">
+            <i class="bi bi-award-fill" style="font-size: 3rem; color: var(--accent-color);"></i>
+          </div>
+          <h4 class="fw-bold mb-3">Make Impact</h4>
+          <p class="text-muted">Your feedback directly influences product development and creates positive change.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Section -->
+{% if session.get('role') %}
+<div class="container mb-5">
+  <div class="row">
+    <div class="col-12">
+      <div class="card bg-gradient text-white" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));">
+        <div class="card-body text-center py-5">
+          <h3 class="fw-bold mb-4">Welcome back, {{ session.get('email', 'User') }}!</h3>
+          <div class="row">
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="stat-item">
+                <h4 class="fw-bold mb-1">12+</h4>
+                <p class="mb-0 opacity-90">Active Events</p>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="stat-item">
+                <h4 class="fw-bold mb-1">500+</h4>
+                <p class="mb-0 opacity-90">Community Members</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-item">
+                <h4 class="fw-bold mb-1">50+</h4>
+                <p class="mb-0 opacity-90">Partner Companies</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Call to Action Section -->
+{% if not session.get('role') %}
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-lg">
+        <div class="card-body text-center py-5">
+          <h3 class="fw-bold mb-4">Ready to Get Started?</h3>
+          <p class="text-muted mb-4 fs-5">Join our community today and start making a difference in accessibility testing.</p>
+          <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+            <a href="{{ url_for('users.show_register') }}" class="btn btn-success btn-lg px-4">
+              <i class="bi bi-person-plus-fill me-2"></i>Register Now
+            </a>
+            <a href="{{ url_for('main.testing_opportunities') }}" class="btn btn-outline-primary btn-lg px-4">
+              <i class="bi bi-search me-2"></i>Explore Opportunities
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.feature-card {
+  transition: all 0.3s ease;
+  border-radius: 16px;
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+.feature-icon {
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+  transform: scale(1.1);
+}
+
+.hero-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(16, 185, 129, 0.05));
+  border-radius: 20px;
+  z-index: -1;
+}
+
+.stat-item {
+  padding: 1rem;
+}
+
+.hero-actions .btn {
+  min-width: 180px;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem !important;
+  }
+  
+  .hero-actions .btn {
+    min-width: 150px;
+    margin-bottom: 1rem;
+  }
+  
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+</style>
 {% endblock %}
