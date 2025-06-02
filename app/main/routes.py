@@ -1,3 +1,16 @@
+from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for
+from app.models import Event, RSVP, Company, User
+from app.auth.decorators import decode_token
+from app.extensions import db
+import json
+
+main_bp = Blueprint('main', __name__)
+
+@main_bp.route('/login', methods=['GET', 'POST'])
+def login_redirect():
+    """Redirect /login to /auth/login"""
+    return redirect(url_for('auth.login'))
+
 from flask import Blueprint, render_template, request, session, flash, redirect, url_for, current_app, jsonify
 from app.models import Event, Company, User, RSVP, Reward
 from app.extensions import db
@@ -46,12 +59,12 @@ def create_event_page():
 def test_sendgrid():
     """Test SendGrid API configuration"""
     from app.mail import send_email
-    
+
     # Get email from query parameter
     to = request.args.get('email')
     if not to:
         return jsonify({'error': 'Provide email as ?email=your@email.com'}), 400
-    
+
     try:
         success = send_email(
             to=to, 

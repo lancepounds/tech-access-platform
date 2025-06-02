@@ -52,7 +52,7 @@ def register():
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
-def login_page():
+def login():
     if request.method == 'GET':
         return render_template('login.html')
 
