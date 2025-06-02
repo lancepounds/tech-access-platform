@@ -4,9 +4,28 @@
 {% block title %}Sign Up – Tech Access{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-12 col-sm-11 col-md-10 col-lg-8 col-xl-6">
-    <div class="card shadow-lg border-0">
+<style>
+.wide-signup-form {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.wide-signup-form .card {
+  max-width: 900px !important;
+  width: 100% !important;
+  margin: 0 auto;
+}
+
+@media (min-width: 1200px) {
+  .wide-signup-form .card {
+    max-width: 1000px !important;
+  }
+}
+</style>
+
+<div class="row justify-content-center wide-signup-form">
+  <div class="col-12">
+    <div class="card shadow-lg border-0"></div>
       <div class="card-header bg-gradient text-white text-center py-4" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));">
         <h3 class="mb-0 fw-bold">
           <i class="bi bi-person-plus-fill me-2"></i>Sign Up
