@@ -1,51 +1,118 @@
 
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Sign Up</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.4.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="container py-5">
-  <h1>Sign Up</h1>
-  <form id="signup-form" class="mt-4">
-    <div class="mb-3">
-      <label for="email" class="form-label">Email address</label>
-      <input type="email" class="form-control" id="email" required>
-    </div>
-    <div class="mb-3">
-      <label for="password" class="form-label">Password</label>
-      <input type="password" class="form-control" id="password" required>
-    </div>
-    <div class="mb-3">
-      <label for="role" class="form-label">Role</label>
-      <select id="role" class="form-select" required>
-        <option value="member">Member</option>
-        <option value="company">Company Rep</option>
-      </select>
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-  </form>
+{% extends "base.html" %}
 
-  <script>
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = e.target.email.value;
-      const password = e.target.password.value;
-      const role = e.target.role.value;
-      const res = await fetch('/auth/register', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({email, password, role})
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert('Registered! Please log in.');
-        window.location.href = '/login';
-      } else {
-        alert('Error: ' + (data.msg || data.error));
+{% block title %}Sign Up – Tech Access{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+    <div class="card shadow-lg border-0">
+      <div class="card-header bg-gradient text-white text-center py-4" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));">
+        <h3 class="mb-0 fw-bold">
+          <i class="bi bi-person-plus-fill me-2"></i>Sign Up
+        </h3>
+        <p class="mb-0 mt-2 opacity-90">Create your account to get started</p>
+      </div>
+      <div class="card-body p-4 p-md-5">
+        <form id="signup-form" class="needs-validation" novalidate>
+          <div class="mb-3">
+            <label for="email" class="form-label">
+              <i class="bi bi-envelope me-1"></i>Email Address
+            </label>
+            <input type="email" class="form-control" id="email" required
+                   placeholder="Enter your email address">
+            <div class="invalid-feedback">
+              Please provide a valid email address.
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="password" class="form-label">
+              <i class="bi bi-lock me-1"></i>Password
+            </label>
+            <input type="password" class="form-control" id="password" required
+                   placeholder="Create a password">
+            <div class="invalid-feedback">
+              Please provide a password.
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <label for="role" class="form-label">
+              <i class="bi bi-person-badge me-1"></i>Role
+            </label>
+            <select id="role" class="form-select" required>
+              <option value="">Select your role</option>
+              <option value="member">Member</option>
+              <option value="company">Company Representative</option>
+            </select>
+            <div class="invalid-feedback">
+              Please select your role.
+            </div>
+          </div>
+          
+          <div class="d-grid mb-4">
+            <button type="submit" class="btn btn-primary btn-lg py-3">
+              <i class="bi bi-person-plus-fill me-2"></i>Create Account
+            </button>
+          </div>
+        </form>
+
+        <hr class="my-4">
+
+        <div class="text-center">
+          <p class="mb-0 text-muted">Already have an account?</p>
+          <a href="/login" class="btn btn-outline-primary mt-2">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Enhanced Bootstrap form validation
+(function() {
+  'use strict';
+  window.addEventListener('load', function() {
+    var form = document.getElementById('signup-form');
+    
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      
+      if (form.checkValidity() === false) {
+        event.stopPropagation();
+        form.classList.add('was-validated');
+        return;
       }
-    });
-  </script>
-</body>
-</html>
+      
+      const email = form.email.value;
+      const password = form.password.value;
+      const role = form.role.value;
+      
+      try {
+        const res = await fetch('/auth/register', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({email, password, role})
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert('Registered! Please log in.');
+          window.location.href = '/login';
+        } else {
+          alert('Error: ' + (data.msg || data.error));
+        }
+      } catch (error) {
+        alert('Error: Unable to connect to server');
+      }
+      
+      form.classList.add('was-validated');
+    }, false);
+  }, false);
+})();
+</script>
+{% endblock %}
