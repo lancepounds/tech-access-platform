@@ -10,6 +10,25 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), default='user')
+    
+    # Personal Information
+    first_name = db.Column(db.String(50), nullable=True)
+    last_name = db.Column(db.String(50), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    
+    # Accessibility Information
+    disabilities = db.Column(db.Text, nullable=True)  # JSON string of selected disabilities
+    assistive_tech = db.Column(db.Text, nullable=True)
+    
+    # Experience & Interests
+    tech_experience = db.Column(db.String(20), nullable=True)
+    interests = db.Column(db.Text, nullable=True)  # JSON string of selected interests
+    
+    # Communication Preferences
+    email_notifications = db.Column(db.Boolean, default=True)
+    newsletter_subscription = db.Column(db.Boolean, default=False)
+    
+    # Timestamps
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
     
@@ -18,6 +37,17 @@ class User(db.Model):
 
     def __repr__(self):
         return f'<User {self.email}>'
+    
+    @property
+    def full_name(self):
+        """Return the user's full name."""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        return self.email.split('@')[0]  # Fallback to email username
 
 
 class Company(db.Model):

@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Register – Tech Access{% endblock %}
@@ -27,39 +28,223 @@
         {% endwith %}
 
         <form method="post" action="/register" novalidate class="needs-validation" id="registerForm">
+          <!-- Personal Information Section -->
           <div class="mb-4">
-            <label for="email" class="form-label">
-              <i class="bi bi-envelope me-1"></i>Email Address
-            </label>
-            <input type="email" class="form-control form-control-lg" id="email" name="email" required
-                   placeholder="Enter your email address">
-            <div class="invalid-feedback">
-              Please provide a valid email address.
+            <h5 class="text-primary mb-3">
+              <i class="bi bi-person-circle me-2"></i>Personal Information
+            </h5>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="firstName" class="form-label">
+                  <i class="bi bi-person me-1"></i>First Name
+                </label>
+                <input type="text" class="form-control" id="firstName" name="firstName" required
+                       placeholder="Enter your first name">
+                <div class="invalid-feedback">
+                  Please provide your first name.
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="lastName" class="form-label">
+                  <i class="bi bi-person me-1"></i>Last Name
+                </label>
+                <input type="text" class="form-control" id="lastName" name="lastName" required
+                       placeholder="Enter your last name">
+                <div class="invalid-feedback">
+                  Please provide your last name.
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label">
+                <i class="bi bi-envelope me-1"></i>Email Address
+              </label>
+              <input type="email" class="form-control" id="email" name="email" required
+                     placeholder="Enter your email address">
+              <div class="invalid-feedback">
+                Please provide a valid email address.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="phone" class="form-label">
+                <i class="bi bi-telephone me-1"></i>Phone Number
+              </label>
+              <input type="tel" class="form-control" id="phone" name="phone"
+                     placeholder="Enter your phone number (optional)">
+              <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>We'll use this to contact you about testing opportunities.
+              </div>
             </div>
           </div>
 
+          <!-- Accessibility Information Section -->
           <div class="mb-4">
-            <label for="password" class="form-label">
-              <i class="bi bi-lock me-1"></i>Password
-            </label>
-            <input type="password" class="form-control form-control-lg" id="password" name="password" required minlength="6"
-                   placeholder="Create a password (min. 6 characters)">
-            <div class="invalid-feedback">
-              Password must be at least 6 characters long.
+            <h5 class="text-primary mb-3">
+              <i class="bi bi-universal-access-circle me-2"></i>Accessibility Information
+            </h5>
+            
+            <div class="mb-3">
+              <label for="disabilities" class="form-label">
+                <i class="bi bi-heart me-1"></i>Disabilities/Conditions (Optional)
+              </label>
+              <select class="form-select" id="disabilities" name="disabilities" multiple>
+                <option value="visual">Visual impairment/Blindness</option>
+                <option value="hearing">Hearing impairment/Deafness</option>
+                <option value="mobility">Mobility/Physical disabilities</option>
+                <option value="cognitive">Cognitive disabilities</option>
+                <option value="speech">Speech disabilities</option>
+                <option value="learning">Learning disabilities</option>
+                <option value="neurological">Neurological conditions</option>
+                <option value="chronic">Chronic illnesses</option>
+                <option value="other">Other</option>
+              </select>
+              <div class="form-text">
+                <i class="bi bi-shield-check me-1"></i>This helps us match you with relevant testing opportunities. Hold Ctrl/Cmd to select multiple.
+              </div>
             </div>
-            <div class="form-text">
-              <i class="bi bi-info-circle me-1"></i>Password must be at least 6 characters long.
+
+            <div class="mb-3">
+              <label for="assistiveTech" class="form-label">
+                <i class="bi bi-tools me-1"></i>Assistive Technologies Used
+              </label>
+              <textarea class="form-control" id="assistiveTech" name="assistiveTech" rows="3"
+                        placeholder="List any assistive technologies you use (screen readers, voice recognition, etc.)"></textarea>
+              <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>Examples: JAWS, NVDA, Dragon, Switch controls, etc.
+              </div>
             </div>
           </div>
 
+          <!-- Experience & Interests Section -->
           <div class="mb-4">
-            <label for="confirmPassword" class="form-label">
-              <i class="bi bi-lock-fill me-1"></i>Confirm Password
-            </label>
-            <input type="password" class="form-control form-control-lg" id="confirmPassword" name="confirmPassword" required
-                   placeholder="Confirm your password">
-            <div class="invalid-feedback" id="confirmPasswordFeedback">
-              Please confirm your password.
+            <h5 class="text-primary mb-3">
+              <i class="bi bi-laptop me-2"></i>Experience & Interests
+            </h5>
+            
+            <div class="mb-3">
+              <label for="techExperience" class="form-label">
+                <i class="bi bi-star me-1"></i>Technology Experience Level
+              </label>
+              <select class="form-select" id="techExperience" name="techExperience" required>
+                <option value="">Select your experience level</option>
+                <option value="beginner">Beginner - Basic computer/mobile use</option>
+                <option value="intermediate">Intermediate - Comfortable with most apps/websites</option>
+                <option value="advanced">Advanced - Very tech-savvy, developer background</option>
+                <option value="expert">Expert - Professional in tech/accessibility field</option>
+              </select>
+              <div class="invalid-feedback">
+                Please select your technology experience level.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="interests" class="form-label">
+                <i class="bi bi-gear me-1"></i>Areas of Interest for Testing
+              </label>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="webApps" name="interests" value="webApps">
+                    <label class="form-check-label" for="webApps">Web Applications</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="mobileApps" name="interests" value="mobileApps">
+                    <label class="form-check-label" for="mobileApps">Mobile Apps</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="hardware" name="interests" value="hardware">
+                    <label class="form-check-label" for="hardware">Hardware/Devices</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="games" name="interests" value="games">
+                    <label class="form-check-label" for="games">Games</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="ecommerce" name="interests" value="ecommerce">
+                    <label class="form-check-label" for="ecommerce">E-commerce</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="education" name="interests" value="education">
+                    <label class="form-check-label" for="education">Educational Tools</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="productivity" name="interests" value="productivity">
+                    <label class="form-check-label" for="productivity">Productivity Tools</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="social" name="interests" value="social">
+                    <label class="form-check-label" for="social">Social Media</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Section -->
+          <div class="mb-4">
+            <h5 class="text-primary mb-3">
+              <i class="bi bi-shield-lock me-2"></i>Account Security
+            </h5>
+            
+            <div class="mb-3">
+              <label for="password" class="form-label">
+                <i class="bi bi-lock me-1"></i>Password
+              </label>
+              <input type="password" class="form-control" id="password" name="password" required minlength="8"
+                     placeholder="Create a password (min. 8 characters)">
+              <div class="invalid-feedback">
+                Password must be at least 8 characters long.
+              </div>
+              <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>Password must be at least 8 characters long and include numbers or special characters.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="confirmPassword" class="form-label">
+                <i class="bi bi-lock-fill me-1"></i>Confirm Password
+              </label>
+              <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required
+                     placeholder="Confirm your password">
+              <div class="invalid-feedback" id="confirmPasswordFeedback">
+                Please confirm your password.
+              </div>
+            </div>
+          </div>
+
+          <!-- Preferences Section -->
+          <div class="mb-4">
+            <h5 class="text-primary mb-3">
+              <i class="bi bi-gear-fill me-2"></i>Communication Preferences
+            </h5>
+            
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="emailNotifications" name="emailNotifications" value="true" checked>
+              <label class="form-check-label" for="emailNotifications">
+                <i class="bi bi-envelope me-1"></i>Receive email notifications about new testing opportunities
+              </label>
+            </div>
+            
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="newsletter" name="newsletter" value="true">
+              <label class="form-check-label" for="newsletter">
+                <i class="bi bi-newspaper me-1"></i>Subscribe to our accessibility newsletter
+              </label>
+            </div>
+            
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+              <label class="form-check-label" for="terms">
+                <i class="bi bi-check-circle me-1"></i>I agree to the Terms of Service and Privacy Policy
+              </label>
+              <div class="invalid-feedback">
+                You must agree to the terms and conditions.
+              </div>
             </div>
           </div>
 
@@ -105,10 +290,29 @@
       }
     }
 
-    password.addEventListener('input', validatePasswords);
+    function validatePasswordStrength() {
+      var pwd = password.value;
+      var hasNumber = /\d/.test(pwd);
+      var hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
+      
+      if (pwd.length >= 8 && (hasNumber || hasSpecial)) {
+        password.setCustomValidity('');
+        return true;
+      } else {
+        password.setCustomValidity('Password must be at least 8 characters and include numbers or special characters');
+        return false;
+      }
+    }
+
+    password.addEventListener('input', function() {
+      validatePasswordStrength();
+      validatePasswords();
+    });
+    
     confirmPassword.addEventListener('input', validatePasswords);
 
     form.addEventListener('submit', function(event) {
+      validatePasswordStrength();
       validatePasswords();
       if (form.checkValidity() === false) {
         event.preventDefault();
