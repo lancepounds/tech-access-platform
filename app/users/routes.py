@@ -102,12 +102,14 @@ def register():
     # Process disabilities and interests (handle multiple selections)
     disabilities = []
     interests = []
+    specific_disability = None
     profile_picture_filename = None
     
     if not request.is_json:
         # Handle form data (multiple selections)
         disabilities = request.form.getlist('disabilities') if 'disabilities' in request.form else []
         interests = request.form.getlist('interests') if 'interests' in request.form else []
+        specific_disability = request.form.get('specificDisability')
         
         # Handle profile picture upload
         if 'profilePicture' in request.files:
@@ -148,6 +150,7 @@ def register():
         # Handle JSON data
         disabilities = data.get('disabilities', [])
         interests = data.get('interests', [])
+        specific_disability = data.get('specificDisability')
 
     # Create new user
     hashed_password = generate_password_hash(data['password'])
@@ -159,6 +162,7 @@ def register():
         last_name=data.get('lastName'),
         phone=data.get('phone'),
         disabilities=json.dumps(disabilities) if disabilities else None,
+        specific_disability=specific_disability,
         assistive_tech=data.get('assistiveTech'),
         tech_experience=data.get('techExperience'),
         interests=json.dumps(interests) if interests else None,

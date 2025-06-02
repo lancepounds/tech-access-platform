@@ -31,6 +31,7 @@ class RegistrationSchema(ma.Schema):
     
     # Accessibility Information
     disabilities = fields.List(fields.String())
+    specificDisability = fields.String()
     assistiveTech = fields.String()
     
     # Experience & Interests
