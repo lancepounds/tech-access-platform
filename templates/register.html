@@ -28,7 +28,7 @@
         {% endwith %}
 
         <form method="post" action="/register" novalidate class="needs-validation" id="registerForm" enctype="multipart/form-data">
-          {{ csrf_token() }}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <!-- Personal Information Section -->
           <div class="mb-4">
             <h5 class="text-primary mb-3">

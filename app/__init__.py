@@ -6,6 +6,7 @@ from app.companies.routes import companies_bp
 from app.events.routes import evt_bp as events_bp
 from app.main.routes import main_bp
 from app.checks.routes import checks_bp
+from flask_wtf.csrf import CSRFProtect
 import os
 
 
@@ -19,6 +20,9 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     ma.init_app(app)
+    
+    # Initialize CSRF protection
+    csrf = CSRFProtect(app)
     
     # Initialize Supabase
     from supabase import create_client
