@@ -22,12 +22,15 @@
         {% if not session.get('role') %}
         <div class="hero-actions mb-5">
           <a href="{{ url_for('users.show_register') }}" class="btn btn-success btn-lg me-3 px-5 py-3">
-            <i class="bi bi-person-plus-fill me-2"></i>Get Started
+            <i class="bi bi-person-plus-fill me-2"></i>Join as Member
+          </a>
+          <a href="{{ url_for('companies.show_register') }}" class="btn btn-warning btn-lg me-3 px-5 py-3">
+            <i class="bi bi-building me-2"></i>Register Company
           </a>
           <a href="{{ url_for('auth.login_page') }}" class="btn btn-outline-primary btn-lg px-5 py-3">
             <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
           </a>
-        </div>
+        </div></div>
         {% else %}
         <div class="hero-actions mb-5">
           <a href="{{ url_for('main.show_events') }}" class="btn btn-primary btn-lg me-3 px-5 py-3">
@@ -142,7 +145,10 @@
           <p class="text-muted mb-4 fs-5">Join our community today and start making a difference in accessibility testing.</p>
           <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
             <a href="{{ url_for('users.show_register') }}" class="btn btn-success btn-lg px-4">
-              <i class="bi bi-person-plus-fill me-2"></i>Register Now
+              <i class="bi bi-person-plus-fill me-2"></i>Join as Member
+            </a>
+            <a href="{{ url_for('companies.show_register') }}" class="btn btn-warning btn-lg px-4">
+              <i class="bi bi-building me-2"></i>Register Company
             </a>
             <a href="{{ url_for('main.testing_opportunities') }}" class="btn btn-outline-primary btn-lg px-4">
               <i class="bi bi-search me-2"></i>Explore Opportunities
