@@ -56,9 +56,30 @@ class User(db.Model):
 class Company(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(60), nullable=False)
+    contact_email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), default='company')
     approved = db.Column(db.Boolean, default=False)
+    
+    # Company Details
+    phone = db.Column(db.String(20), nullable=True)
+    website = db.Column(db.String(255), nullable=True)
+    address = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    industry = db.Column(db.String(50), nullable=True)
+    company_size = db.Column(db.String(20), nullable=True)
+    
+    # Products & Services
+    products_services = db.Column(db.Text, nullable=True)
+    accessibility_goals = db.Column(db.Text, nullable=True)
+    interests = db.Column(db.Text, nullable=True)  # JSON string of selected interests
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+    def __repr__(self):
+        return f'<Company {self.name}>'
 
 
 class Event(db.Model):

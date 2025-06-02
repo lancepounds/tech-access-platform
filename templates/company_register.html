@@ -1,0 +1,188 @@
+
+{% extends "base.html" %}
+
+{% block title %}Company Registration - Tech Access{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card">
+      <div class="card-header text-center">
+        <h4 class="mb-0"><i class="bi bi-building me-2"></i>Register Your Company</h4>
+        <p class="mb-0 mt-2 text-light">Join our platform to showcase your accessible products and services</p>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('companies.register_company') }}">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="company_name" class="form-label">Company Name *</label>
+              <input type="text" class="form-control" id="company_name" name="company_name" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="contact_email" class="form-label">Contact Email *</label>
+              <input type="email" class="form-control" id="contact_email" name="contact_email" required>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="phone" class="form-label">Phone Number</label>
+              <input type="tel" class="form-control" id="phone" name="phone">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="website" class="form-label">Website</label>
+              <input type="url" class="form-control" id="website" name="website" placeholder="https://yourcompany.com">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="address" class="form-label">Company Address</label>
+            <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="company_description" class="form-label">Company Description *</label>
+            <textarea class="form-control" id="company_description" name="company_description" rows="4" 
+                      placeholder="Tell us about your company and mission..." required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="industry" class="form-label">Industry *</label>
+            <select class="form-control" id="industry" name="industry" required>
+              <option value="">Select Industry</option>
+              <option value="technology">Technology</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="education">Education</option>
+              <option value="finance">Finance</option>
+              <option value="retail">Retail</option>
+              <option value="manufacturing">Manufacturing</option>
+              <option value="consulting">Consulting</option>
+              <option value="nonprofit">Non-Profit</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="company_size" class="form-label">Company Size</label>
+            <select class="form-control" id="company_size" name="company_size">
+              <option value="">Select Size</option>
+              <option value="1-10">1-10 employees</option>
+              <option value="11-50">11-50 employees</option>
+              <option value="51-200">51-200 employees</option>
+              <option value="201-1000">201-1000 employees</option>
+              <option value="1000+">1000+ employees</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="products_services" class="form-label">Products & Services *</label>
+            <textarea class="form-control" id="products_services" name="products_services" rows="4" 
+                      placeholder="Describe the products and services you want to test for accessibility..." required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="accessibility_goals" class="form-label">Accessibility Goals</label>
+            <textarea class="form-control" id="accessibility_goals" name="accessibility_goals" rows="3" 
+                      placeholder="What are your accessibility goals and how can our community help?"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Areas of Interest</label>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="web_accessibility" name="interests" value="web_accessibility">
+                  <label class="form-check-label" for="web_accessibility">Web Accessibility</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="mobile_accessibility" name="interests" value="mobile_accessibility">
+                  <label class="form-check-label" for="mobile_accessibility">Mobile Accessibility</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="assistive_tech" name="interests" value="assistive_tech">
+                  <label class="form-check-label" for="assistive_tech">Assistive Technology</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="usability_testing" name="interests" value="usability_testing">
+                  <label class="form-check-label" for="usability_testing">Usability Testing</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="cognitive_accessibility" name="interests" value="cognitive_accessibility">
+                  <label class="form-check-label" for="cognitive_accessibility">Cognitive Accessibility</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="visual_accessibility" name="interests" value="visual_accessibility">
+                  <label class="form-check-label" for="visual_accessibility">Visual Accessibility</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="auditory_accessibility" name="interests" value="auditory_accessibility">
+                  <label class="form-check-label" for="auditory_accessibility">Auditory Accessibility</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="motor_accessibility" name="interests" value="motor_accessibility">
+                  <label class="form-check-label" for="motor_accessibility">Motor Accessibility</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label">Password *</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="confirm_password" class="form-label">Confirm Password *</label>
+            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="terms_agreement" name="terms_agreement" required>
+            <label class="form-check-label" for="terms_agreement">
+              I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and <a href="#" class="text-decoration-none">Privacy Policy</a> *
+            </label>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-building me-2"></i>Register Company
+            </button>
+          </div>
+        </form>
+
+        <div class="text-center mt-3">
+          <p class="mb-0">Already have an account? 
+            <a href="{{ url_for('auth.login_page') }}" class="text-decoration-none">Sign in</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+
+    form.addEventListener('submit', function(e) {
+        if (password.value !== confirmPassword.value) {
+            e.preventDefault();
+            alert('Passwords do not match!');
+            confirmPassword.focus();
+        }
+    });
+
+    confirmPassword.addEventListener('input', function() {
+        if (password.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    });
+});
+</script>
+{% endblock %}

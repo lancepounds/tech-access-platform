@@ -59,7 +59,7 @@ def create_app():
     app.register_blueprint(dash_bp)
     app.register_blueprint(events_bp, url_prefix='/api/events')
     app.register_blueprint(users_bp)
-    app.register_blueprint(companies_bp, url_prefix='/api/companies')
+    app.register_blueprint(companies_bp, url_prefix='/companies')
     app.register_blueprint(checks_bp, url_prefix='/checks')
     app.register_blueprint(main_bp)
 

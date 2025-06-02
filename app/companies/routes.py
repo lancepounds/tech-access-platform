@@ -1,12 +1,81 @@
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash
+from werkzeug.security import generate_password_hash
 from app.models import Company
 from app.extensions import db
+import json
 
 companies_bp = Blueprint('companies', __name__)
 
 # Simple admin token (in production, use real authentication)
 ADMIN_TOKEN = "my-secret-admin-token"
+
+
+@companies_bp.route('/register', methods=['GET'])
+def show_register():
+    """Show company registration form"""
+    return render_template('company_register.html')
+
+
+@companies_bp.route('/register', methods=['POST'])
+def register_company():
+    """Handle company registration"""
+    try:
+        # Get form data
+        company_name = request.form.get('company_name')
+        contact_email = request.form.get('contact_email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Validation
+        if not company_name or not contact_email or not password:
+            flash('Company name, email, and password are required.', 'danger')
+            return redirect(url_for('companies.show_register'))
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return redirect(url_for('companies.show_register'))
+        
+        # Check if company already exists
+        existing_company = Company.query.filter(
+            (Company.name == company_name) | (Company.contact_email == contact_email)
+        ).first()
+        
+        if existing_company:
+            flash('Company name or email already exists.', 'danger')
+            return redirect(url_for('companies.show_register'))
+        
+        # Get checkbox interests
+        interests = request.form.getlist('interests')
+        interests_json = json.dumps(interests) if interests else None
+        
+        # Create new company
+        new_company = Company(
+            name=company_name,
+            contact_email=contact_email,
+            password=generate_password_hash(password),
+            phone=request.form.get('phone'),
+            website=request.form.get('website'),
+            address=request.form.get('address'),
+            description=request.form.get('company_description'),
+            industry=request.form.get('industry'),
+            company_size=request.form.get('company_size'),
+            products_services=request.form.get('products_services'),
+            accessibility_goals=request.form.get('accessibility_goals'),
+            interests=interests_json,
+            approved=False  # Companies need admin approval
+        )
+        
+        db.session.add(new_company)
+        db.session.commit()
+        
+        flash('Company registration submitted successfully! Please wait for admin approval.', 'success')
+        return redirect(url_for('auth.login_page'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Registration failed: {str(e)}', 'danger')
+        return redirect(url_for('companies.show_register'))
 
 
 @companies_bp.route('/pending', methods=['GET'])
