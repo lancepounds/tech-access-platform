@@ -206,7 +206,7 @@ def register():
             return jsonify({'message': 'User created successfully'}), 201
 
         flash('Registration successful! Welcome to Tech Access Group.', 'success')
-        return redirect(url_for('auth.login_page'))
+        return redirect(url_for('auth.login'))
     except Exception as e:
         db.session.rollback()
         # Clean up uploaded file if user creation fails
