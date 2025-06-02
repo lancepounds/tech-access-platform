@@ -12,6 +12,9 @@ class User(db.Model):
     role = db.Column(db.String(20), default='user')
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    
+    # Add relationship
+    rsvps = db.relationship("RSVP", back_populates="user")
 
     def __repr__(self):
         return f'<User {self.email}>'
@@ -32,7 +35,7 @@ class Event(db.Model):
     description = db.Column(db.Text, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     company_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
-    rsvps = db.relationship("RSVP", backref="event", cascade="all, delete-orphan")
+    rsvps = db.relationship("RSVP", back_populates="event", cascade="all, delete-orphan")
 
 
 class RSVP(db.Model):
@@ -44,8 +47,8 @@ class RSVP(db.Model):
     fulfilled = db.Column(db.Boolean, default=False)
     
     # Add relationships
-    user = db.relationship("User", backref="rsvps")
-    event = db.relationship("Event")
+    user = db.relationship("User", back_populates="rsvps")
+    event = db.relationship("Event", back_populates="rsvps")
 
 
 class GiftCard(db.Model):
