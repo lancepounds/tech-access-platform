@@ -51,38 +51,6 @@ def register():
         return jsonify({'error': f'Failed to create user: {str(e)}'}), 500
 
 
-@auth_bp.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-
-    if not data or not data.get('email') or not data.get('password'):
-        return jsonify({'error': 'Missing credentials'}), 400
-
-    user = User.query.filter_by(email=data['email']).first()
-    company = Company.query.filter_by(name=data['email']).first()
-
-    if user and check_password_hash(user.password, data['password']):
-        token = jwt.encode({
-            'email': user.email,
-            'role': user.role,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-        }, JWT_SECRET, algorithm='HS256')
-        return jsonify({'token': token, 'role': 'user'}), 200
-
-    if company and data['password'] == company.password:
-        # For companies, we use their name as both email and password
-        if data['password'] == company.name:
-            token = jwt.encode({
-                'email': company.name,
-                'role': company.role,
-                'approved': company.approved,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-            }, JWT_SECRET, algorithm='HS256')
-            return jsonify({'token': token, 'role': 'company'}), 200
-
-    return jsonify({'error': 'Invalid credentials'}), 401
-
-
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login_page():
     if request.method == 'GET':
@@ -150,6 +118,38 @@ def logout():
     session.clear()
     flash('You have been logged out successfully.', 'success')
     return redirect(url_for('main.index'))
+
+
+@auth_bp.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({'error': 'Missing credentials'}), 400
+
+    user = User.query.filter_by(email=data['email']).first()
+    company = Company.query.filter_by(name=data['email']).first()
+
+    if user and check_password_hash(user.password, data['password']):
+        token = jwt.encode({
+            'email': user.email,
+            'role': user.role,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }, JWT_SECRET, algorithm='HS256')
+        return jsonify({'token': token, 'role': 'user'}), 200
+
+    if company and data['password'] == company.password:
+        # For companies, we use their name as both email and password
+        if data['password'] == company.name:
+            token = jwt.encode({
+                'email': company.name,
+                'role': company.role,
+                'approved': company.approved,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+            }, JWT_SECRET, algorithm='HS256')
+            return jsonify({'token': token, 'role': 'company'}), 200
+
+    return jsonify({'error': 'Invalid credentials'}), 401
 
 
 @auth_bp.route('/protected', methods=['GET'])
