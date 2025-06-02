@@ -69,6 +69,16 @@ class Company(db.Model):
     industry = db.Column(db.String(50), nullable=True)
     company_size = db.Column(db.String(20), nullable=True)
     
+    # Contact Person
+    contact_name = db.Column(db.String(100), nullable=True)
+    contact_title = db.Column(db.String(100), nullable=True)
+    
+    # Accessibility Information
+    accessibility_experience = db.Column(db.String(50), nullable=True)
+    compliance_requirements = db.Column(db.String(50), nullable=True)
+    testing_timeline = db.Column(db.String(50), nullable=True)
+    testing_budget = db.Column(db.String(50), nullable=True)
+    
     # Products & Services
     products_services = db.Column(db.Text, nullable=True)
     accessibility_goals = db.Column(db.Text, nullable=True)

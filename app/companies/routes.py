@@ -63,6 +63,13 @@ def register_company():
             products_services=request.form.get('products_services'),
             accessibility_goals=request.form.get('accessibility_goals'),
             interests=interests_json,
+            # New fields
+            contact_name=request.form.get('contact_name'),
+            contact_title=request.form.get('contact_title'),
+            accessibility_experience=request.form.get('accessibility_experience'),
+            compliance_requirements=request.form.get('compliance_requirements'),
+            testing_timeline=request.form.get('testing_timeline'),
+            testing_budget=request.form.get('testing_budget'),
             approved=False  # Companies need admin approval
         )
         
