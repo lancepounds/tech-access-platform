@@ -2,7 +2,7 @@
 import pytest
 import json
 from main import app, db, User
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 @pytest.fixture
 def client():
@@ -56,6 +56,8 @@ class TestUserRegistration:
         assert user is not None
         assert user.email == sample_user['email']
         assert user.role == 'user'
+        assert user.password != sample_user['password']
+        assert check_password_hash(user.password, sample_user['password'])
     
     def test_register_missing_email(self, client):
         """Test registration with missing email."""
