@@ -6,6 +6,9 @@ Quick API test script for immediate endpoint testing.
 
 import requests
 import json
+import pytest
+
+pytest.skip("helper script", allow_module_level=True)
 
 BASE_URL = "http://0.0.0.0:5000"
 
