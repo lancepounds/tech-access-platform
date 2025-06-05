@@ -22,7 +22,8 @@ def create_app():
     ma.init_app(app)
     
     # Initialize CSRF protection
-    csrf = CSRFProtect(app)
+    csrf = CSRFProtect()
+    csrf.init_app(app)
     
     # Initialize Supabase
     from supabase import create_client
@@ -58,11 +59,17 @@ def create_app():
     from app.main.routes import main_bp
     from app.checks.routes import checks_bp
     from app.dashboard.routes import dash_bp
+
+    csrf.exempt(auth_bp)
+    csrf.exempt(users_bp)
+    csrf.exempt(events_bp)
+    csrf.exempt(companies_bp)
+    csrf.exempt(checks_bp)
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dash_bp)
     app.register_blueprint(events_bp, url_prefix='/api/events')
-    app.register_blueprint(users_bp)
+    app.register_blueprint(users_bp, url_prefix='/api/users')
     app.register_blueprint(companies_bp, url_prefix='/companies')
     app.register_blueprint(checks_bp, url_prefix='/checks')
     app.register_blueprint(main_bp)

@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app.models import User
 from app.extensions import db
-from app.users.schemas import RegistrationSchema
+from app.users.schemas import RegistrationSchema, LoginSchema
 from marshmallow import ValidationError
 import jwt
 import datetime
@@ -70,154 +70,76 @@ def show_register():
 
 @users_bp.route('/register', methods=['POST'])
 def register():
-    # Handle different content types
-    if request.is_json:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-    else:
-        data = request.form
-        if not data:
-            flash('No form data provided', 'danger')
-            return redirect(url_for('users.show_register'))
-
-    # Validate required fields
-    if not data.get('email') or not data.get('password'):
-        error_msg = 'Missing email or password'
-        if request.is_json:
-            return jsonify({'error': error_msg}), 400
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
-
-    # Sanitize and validate email format
-    email = data.get('email', '').strip().lower()
-    if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-        error_msg = 'Please provide a valid email address'
-        if request.is_json:
-            return jsonify({'error': error_msg}), 400
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
-
-    # Validate password confirmation
-    if data.get('password') != data.get('confirmPassword'):
-        error_msg = 'Passwords do not match'
-        if request.is_json:
-            return jsonify({'error': error_msg}), 400
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
-
-    # Validate password strength
-    if not validate_password_strength(data['password']):
-        error_msg = 'Password must be at least 8 characters and include numbers or special characters'
-        if request.is_json:
-            return jsonify({'error': error_msg}), 400
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
-
-    # Check if user already exists
-    existing_user = User.query.filter_by(email=email).first()
-    if existing_user:
-        error_msg = 'User already exists'
-        if request.is_json:
-            return jsonify({'error': error_msg}), 400
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
-
-    # Process disabilities and interests (handle multiple selections)
-    disabilities = []
-    interests = []
-    specific_disability = None
-    profile_picture_filename = None
-    
+    """Register a new user via JSON API."""
     if not request.is_json:
-        # Handle form data (multiple selections)
-        disabilities = request.form.getlist('disabilities') if 'disabilities' in request.form else []
-        interests = request.form.getlist('interests') if 'interests' in request.form else []
-        specific_disability = request.form.get('specificDisability')
-        
-        # Handle profile picture upload
-        if 'profilePicture' in request.files:
-            file = request.files['profilePicture']
-            if file and file.filename:
-                # Validate file extension
-                if not allowed_file(file.filename):
-                    flash('Invalid file type. Please upload PNG, JPG, GIF, or WebP images only.', 'danger')
-                    return redirect(url_for('users.show_register'))
-                
-                # Validate file size (5MB limit) - check actual file size
-                file.seek(0, os.SEEK_END)
-                file_size = file.tell()
-                file.seek(0)
-                if file_size > 5 * 1024 * 1024:
-                    flash('File size must be less than 5MB.', 'danger')
-                    return redirect(url_for('users.show_register'))
-                
-                # Validate file content
-                if not validate_file_content(file):
-                    flash('Invalid image file. Please upload a valid image.', 'danger')
-                    return redirect(url_for('users.show_register'))
-                
-                # Create uploads directory if it doesn't exist
-                upload_dir = os.path.join('static', 'uploads', 'profiles')
-                os.makedirs(upload_dir, exist_ok=True)
-                
-                # Generate unique filename
-                filename = secure_filename(file.filename)
-                name, ext = os.path.splitext(filename)
-                unique_filename = f"{str(uuid.uuid4())}{ext}"
-                file_path = os.path.join(upload_dir, unique_filename)
-                
-                try:
-                    file.save(file_path)
-                    profile_picture_filename = unique_filename
-                except Exception as e:
-                    flash('Error uploading profile picture. Please try again.', 'danger')
-                    return redirect(url_for('users.show_register'))
-    else:
-        # Handle JSON data
-        disabilities = data.get('disabilities', [])
-        interests = data.get('interests', [])
-        specific_disability = data.get('specificDisability')
+        return jsonify({'error': 'No JSON data provided'}), 400
 
-    # Create new user
-    hashed_password = generate_password_hash(data['password'])
-    new_user = User(
-        email=email,
-        password=hashed_password,
-        role='user',
-        first_name=data.get('firstName'),
-        last_name=data.get('lastName'),
-        phone=data.get('phone'),
-        disabilities=json.dumps(disabilities) if disabilities else None,
-        specific_disability=specific_disability,
-        assistive_tech=data.get('assistiveTech'),
-        tech_experience=data.get('techExperience'),
-        interests=json.dumps(interests) if interests else None,
-        email_notifications=bool(data.get('emailNotifications')),
-        newsletter_subscription=bool(data.get('newsletter')),
-        profile_picture=profile_picture_filename
-    )
-
+    data = request.get_json() or {}
     try:
-        db.session.add(new_user)
-        db.session.commit()
+        validated = LoginSchema().load(data)
+    except ValidationError as err:
+        return jsonify({'error': 'Validation failed', 'details': err.messages}), 400
 
-        if request.is_json:
-            return jsonify({'message': 'User created successfully'}), 201
+    if not validate_password_strength(validated['password']):
+        return jsonify({
+            'error': 'Validation failed',
+            'details': {'password': ['Password must be at least 8 characters and include numbers or special characters']}
+        }), 400
 
-        flash('Registration successful! Welcome to Tech Access Group.', 'success')
-        return redirect(url_for('auth.login'))
-    except Exception as e:
-        db.session.rollback()
-        # Clean up uploaded file if user creation fails
-        if profile_picture_filename:
-            try:
-                os.remove(os.path.join('static', 'uploads', 'profiles', profile_picture_filename))
-            except:
-                pass
-        
-        error_msg = 'Registration failed. Please try again.'
-        if request.is_json:
-            return jsonify({'error': error_msg}), 500
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
+    email = validated['email'].strip().lower()
+    if User.query.filter_by(email=email).first():
+        return jsonify({'error': 'Email already registered'}), 400
+
+    hashed_password = generate_password_hash(validated['password'])
+    user = User(email=email, password=hashed_password, role='user')
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({'message': 'User registered successfully'}), 201
+
+@users_bp.route('/login', methods=['POST'])
+def api_login():
+    if not request.is_json:
+        return jsonify({'error': 'No JSON data provided'}), 400
+
+    data = request.get_json() or {}
+    try:
+        validated = LoginSchema().load(data)
+    except ValidationError as err:
+        return jsonify({'error': 'Validation failed', 'details': err.messages}), 400
+
+    user = User.query.filter_by(email=validated['email']).first()
+    if user and check_password_hash(user.password, validated['password']):
+        token = jwt.encode({
+            'email': user.email,
+            'role': user.role,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }, JWT_SECRET, algorithm='HS256')
+        return jsonify({'token': token, 'role': user.role}), 200
+
+    return jsonify({'error': 'Invalid credentials'}), 401
+
+
+@users_bp.route('/profile', methods=['GET'])
+def profile():
+    """Return the authenticated user's profile."""
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({'error': 'Missing Authorization header'}), 401
+
+    token = auth_header[7:] if auth_header.startswith('Bearer ') else auth_header
+    try:
+        decoded = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+    except jwt.InvalidTokenError:
+        return jsonify({'error': 'Invalid token'}), 401
+
+    user = User.query.filter_by(email=decoded.get('email')).first()
+    if not user:
+        return jsonify({'error': 'Invalid token'}), 401
+
+    return jsonify({
+        'id': user.id,
+        'email': user.email,
+        'role': user.role,
+        'created_at': user.created_at.isoformat(),
+        'updated_at': user.updated_at.isoformat()
+    }), 200

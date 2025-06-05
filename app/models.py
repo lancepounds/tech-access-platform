@@ -2,6 +2,8 @@
 from app.extensions import db
 import datetime
 import uuid
+import os
+from flask import url_for
 
 
 class User(db.Model):
@@ -15,6 +17,9 @@ class User(db.Model):
     first_name = db.Column(db.String(50), nullable=True)
     last_name = db.Column(db.String(50), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
+    name = db.Column(db.String(80), nullable=True)
+    bio = db.Column(db.Text, nullable=True)
+    avatar_filename = db.Column(db.String(128), nullable=True)
     
     # Accessibility Information
     disabilities = db.Column(db.Text, nullable=True)  # JSON string of selected disabilities
@@ -53,6 +58,12 @@ class User(db.Model):
         elif self.last_name:
             return self.last_name
         return self.email.split('@')[0]  # Fallback to email username
+
+    def get_avatar_url(self):
+        """Return the URL for the user's avatar image."""
+        if self.avatar_filename:
+            return url_for('static', filename='avatars/' + self.avatar_filename)
+        return '/static/avatars/default.png'
 
 
 class Company(db.Model):
