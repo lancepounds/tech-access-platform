@@ -109,12 +109,21 @@ class Company(db.Model):
 class Event(db.Model):
     __tablename__ = "events"
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = db.Column(db.String(128), nullable=False)
+    title = db.Column(db.String(128), nullable=False)
     description = db.Column(db.Text, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
     user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=True)  # For user-created events
     rsvps = db.relationship("RSVP", back_populates="event", cascade="all, delete-orphan")
+
+    # Backwards compatibility for code that still references ``name``
+    @property
+    def name(self):
+        return self.title
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self.title = value
 
 
 class RSVP(db.Model):

@@ -4,10 +4,10 @@
 {% block title %}Welcome - Tech Access Group{% endblock %}
 
 {% block content %}
-<form class="container mb-4" method="get" action="{{ url_for('main.search') }}">
+<form action="{{ url_for('main.search') }}" method="get" class="mb-4">
   <div class="input-group">
-    <input type="text" class="form-control" name="q" placeholder="Search events...">
-    <button class="btn btn-primary" type="submit">Search</button>
+    <input type="text" name="q" class="form-control" placeholder="Search events…" required>
+    <button type="submit" class="btn btn-primary">Search</button>
   </div>
 </form>
 <!-- Hero Section -->

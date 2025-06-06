@@ -40,12 +40,13 @@ def show_events():
 def search():
     """Search events by title or description."""
     q = request.args.get('q', '').strip()
-    events = []
     if q:
         pattern = f"%{q}%"
         events = Event.query.filter(
-            or_(Event.name.ilike(pattern), Event.description.ilike(pattern))
-        ).all()
+            or_(Event.title.ilike(pattern), Event.description.ilike(pattern))
+        ).order_by(Event.date).all()
+    else:
+        events = []
     return render_template('search_results.html', query=q, events=events)
 
 @main_bp.route('/testing-opportunities')
