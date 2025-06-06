@@ -8,3 +8,8 @@ class ProfileForm(FlaskForm):
     bio = TextAreaField('Bio')
     avatar = FileField('Avatar', validators=[Optional(), FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
     submit = SubmitField('Save Profile')
+
+
+class CancelRSVPForm(FlaskForm):
+    """Empty form used solely for CSRF protection when cancelling an RSVP."""
+    submit = SubmitField('Cancel RSVP')
