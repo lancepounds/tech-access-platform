@@ -42,7 +42,10 @@ def event_detail(event_id):
     """Display a single event's details."""
     event = Event.query.get_or_404(event_id)
     count = event.rsvps.count()
-    return render_template('event_detail.html', event=event, count=count)
+    attendees = [rsvp.user for rsvp in event.rsvps.all()]
+    return render_template(
+        'event_detail.html', event=event, count=count, attendees=attendees
+    )
 
 @main_bp.route('/search')
 def search():
