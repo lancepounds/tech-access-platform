@@ -36,6 +36,14 @@ def show_events():
     events = Event.query.order_by(Event.date).all()
     return render_template('events.html', events=events)
 
+
+@main_bp.route('/events/<event_id>')
+def event_detail(event_id):
+    """Display a single event's details."""
+    event = Event.query.get_or_404(event_id)
+    count = event.rsvps.count()
+    return render_template('event_detail.html', event=event, count=count)
+
 @main_bp.route('/search')
 def search():
     """Search events by title or description."""
