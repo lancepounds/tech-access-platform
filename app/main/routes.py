@@ -1,11 +1,14 @@
 
-from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for, current_app, abort
+from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 from app.models import Event, RSVP, Company, User, Reward
 from sqlalchemy import or_
 from app.auth.decorators import decode_token
 from app.extensions import db
 import datetime
 import uuid
+import os
 
 main_bp = Blueprint('main', __name__)
 from app.auth.routes import login as auth_login
@@ -106,7 +109,11 @@ def test_sendgrid():
         return jsonify({'error': f'SendGrid error: {str(e)}'}), 500
 
 @main_bp.route('/create-event', methods=['POST'])
+@login_required
 def create_event():
+    if not current_user.company_id:
+        return abort(403)
+
     # Get form data
     title = request.form.get('title')
     description = request.form.get('description')
@@ -124,25 +131,22 @@ def create_event():
         flash('Invalid date format.', 'danger')
         return redirect(url_for('main.create_event_page'))
 
-    # For demo purposes, assuming we have a way to get the current company
-    # In a real implementation, you'd get this from the session token
-    company = Company.query.first()  # This is temporary - replace with actual session logic
-
-    if not company:
-        flash('Company not found.', 'danger')
-        return redirect(url_for('main.create_event_page'))
-
-    if not company.approved:
-        flash('Company not approved.', 'danger')
-        return redirect(url_for('main.create_event_page'))
-
     # Create the event
     new_event = Event(
         title=title,
         description=description,
         date=event_date,
-        company_id=company.id
+        company_id=current_user.company_id
     )
+
+    image_file = request.files.get('image')
+    if image_file and image_file.filename:
+        filename = secure_filename(image_file.filename)
+        unique_name = f"{uuid.uuid4().hex}_{filename}"
+        upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'events')
+        os.makedirs(upload_folder, exist_ok=True)
+        image_file.save(os.path.join(upload_folder, unique_name))
+        setattr(new_event, 'image_filename', unique_name)
 
     try:
         db.session.add(new_event)
@@ -153,6 +157,51 @@ def create_event():
         db.session.rollback()
         flash('Failed to create event. Please try again.', 'danger')
         return redirect(url_for('main.create_event_page'))
+
+
+@main_bp.route('/events/<event_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    if not current_user.company_id or event.company_id != current_user.company_id:
+        return abort(403)
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        description = request.form.get('description')
+        date = request.form.get('date')
+
+        if not title or not description or not date:
+            flash('All fields are required.', 'danger')
+            return redirect(url_for('main.edit_event', event_id=event_id))
+
+        try:
+            event.date = datetime.datetime.fromisoformat(date)
+        except ValueError:
+            flash('Invalid date format.', 'danger')
+            return redirect(url_for('main.edit_event', event_id=event_id))
+
+        event.title = title
+        event.description = description
+
+        image_file = request.files.get('image')
+        if image_file and image_file.filename:
+            filename = secure_filename(image_file.filename)
+            unique_name = f"{uuid.uuid4().hex}_{filename}"
+            upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'events')
+            os.makedirs(upload_folder, exist_ok=True)
+            image_file.save(os.path.join(upload_folder, unique_name))
+            setattr(event, 'image_filename', unique_name)
+
+        try:
+            db.session.commit()
+            flash('Event updated successfully!', 'success')
+            return redirect(url_for('main.event_detail', event_id=event.id))
+        except Exception:
+            db.session.rollback()
+            flash('Failed to update event. Please try again.', 'danger')
+
+    return render_template('edit_event.html', event=event)
 
 @main_bp.route('/my-rsvps-page')
 def show_my_rsvps():
