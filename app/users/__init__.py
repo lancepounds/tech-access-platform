@@ -3,12 +3,12 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os, uuid
 from app.extensions import db
-from app.models import User
+from app.models import User, RSVP, Event
 from app.users.forms import ProfileForm
 
-users_bp = Blueprint('users', __name__, url_prefix='/users')
+users_bp = Blueprint('users', __name__)
 
-@users_bp.route('/profile', methods=['GET', 'POST'])
+@users_bp.route('/users/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
     user = current_user
@@ -33,3 +33,13 @@ def profile():
         return redirect(url_for('users.profile'))
 
     return render_template('profile.html', form=form, user=user)
+
+
+@users_bp.route('/my-rsvps')
+@login_required
+def my_rsvps():
+    """Display events the current user has RSVP'd to."""
+    user = current_user
+    rsvps = RSVP.query.filter_by(user_id=user.id).all()
+    events = [rsvp.event for rsvp in rsvps if rsvp.event]
+    return render_template('my_rsvps.html', events=events)
