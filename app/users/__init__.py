@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 import os, uuid
 from app.extensions import db
 from app.models import User, RSVP, Event
-from app.users.forms import ProfileForm
+from app.users.forms import ProfileForm, CancelRSVPForm
 
 users_bp = Blueprint('users', __name__)
 
@@ -42,4 +42,17 @@ def my_rsvps():
     user = current_user
     rsvps = RSVP.query.filter_by(user_id=user.id).all()
     events = [rsvp.event for rsvp in rsvps if rsvp.event]
-    return render_template('my_rsvps.html', events=events)
+    form = CancelRSVPForm()
+    return render_template('my_rsvps.html', events=events, form=form)
+
+
+@users_bp.route('/cancel-rsvp/<int:event_id>', methods=['POST'])
+@login_required
+def cancel_rsvp(event_id: int):
+    """Allow a user to cancel their RSVP for a given event."""
+    rsvp = RSVP.query.filter_by(user_id=current_user.id, event_id=str(event_id)).first()
+    if rsvp:
+        db.session.delete(rsvp)
+        db.session.commit()
+        flash('RSVP cancelled.', 'success')
+    return redirect(url_for('users.my_rsvps'))

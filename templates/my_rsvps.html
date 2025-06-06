@@ -8,8 +8,14 @@
     <ul class="list-group">
       {% for event in events %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-          <a href="#" class="text-decoration-none">{{ event.title }}</a>
-          <small class="text-muted">{{ event.date.strftime('%B %d, %Y') }}</small>
+          <div>
+            <strong>{{ event.title }}</strong>
+            <small class="text-muted ms-2">{{ event.date.strftime('%B %d, %Y') }}</small>
+          </div>
+          <form method="post" action="{{ url_for('users.cancel_rsvp', event_id=event.id) }}" class="d-inline">
+            {{ form.csrf_token }}
+            <button type="submit" class="btn btn-sm btn-danger">Cancel RSVP</button>
+          </form>
         </li>
       {% endfor %}
     </ul>
