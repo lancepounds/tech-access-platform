@@ -1,19 +1,22 @@
-{% extends "base.html" %}
-{% block title %}Search Results{% endblock %}
+{% extends 'base.html' %}
+
 {% block content %}
-<div class="container py-4">
-  <h2 class="mb-4">Search results for '{{ query }}'</h2>
+<div class="container">
+  <h2>Search results for “{{ query }}”</h2>
+
   {% if events %}
     <ul class="list-group">
-    {% for ev in events %}
-      <li class="list-group-item">
-        <a href="{{ url_for('main.show_event', event_id=ev.id) }}">{{ ev.title or ev.name }}</a>
-        <p class="mb-0 text-muted">{{ ev.description[:150] }}{% if ev.description|length > 150 %}...{% endif %}</p>
-      </li>
-    {% endfor %}
+      {% for ev in events %}
+        <li class="list-group-item">
+          <strong>{{ ev.title }}</strong> – {{ ev.date.strftime('%Y-%m-%d') }}
+          <p class="mb-0">
+            {{ ev.description[:100] }}{% if ev.description|length > 100 %}…{% endif %}
+          </p>
+        </li>
+      {% endfor %}
     </ul>
   {% else %}
-    <p>No events found matching '{{ query }}'.</p>
+    <p>No events found matching “{{ query }}.”</p>
   {% endif %}
 </div>
 {% endblock %}
