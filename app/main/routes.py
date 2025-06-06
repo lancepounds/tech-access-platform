@@ -8,11 +8,12 @@ import datetime
 import uuid
 
 main_bp = Blueprint('main', __name__)
+from app.auth.routes import login as auth_login
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login_redirect():
-    """Redirect /login to /auth/login"""
-    return redirect(url_for('auth.login'))
+    """Handle login via the auth blueprint."""
+    return auth_login()
 
 @main_bp.route('/')
 def index():

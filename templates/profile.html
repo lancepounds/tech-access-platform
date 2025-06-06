@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <h2>My Profile</h2>
+  <form method="post" enctype="multipart/form-data">
+    {{ form.csrf_token }}
+    <div class="mb-3">
+      {{ form.name.label(class="form-label") }}
+      {{ form.name(class="form-control") }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Email (read-only)</label>
+      <input type="email" class="form-control" value="{{ user.email }}" readonly>
+    </div>
+    <div class="mb-3">
+      {{ form.bio.label(class="form-label") }}
+      {{ form.bio(class="form-control", rows=4) }}
+    </div>
+    <div class="mb-3">
+      {{ form.avatar.label(class="form-label") }}<br>
+      {% if user.avatar_filename %}
+        <img src="{{ url_for('static', filename='uploads/profiles/' ~ user.avatar_filename) }}"
+             alt="Avatar" class="img-thumbnail mb-2" width="150">
+      {% endif %}
+      {{ form.avatar(class="form-control") }}
+    </div>
+    <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+  </form>
+</div>
+{% endblock %}

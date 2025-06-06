@@ -1,12 +1,13 @@
 
 from app.extensions import db
+from flask_login import UserMixin
 import datetime
 import uuid
 import os
 from flask import url_for
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = "users"
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     email = db.Column(db.String(120), unique=True, nullable=False)
