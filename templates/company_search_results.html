@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="container">
+  <h2>Company results for '{{ query }}'</h2>
+  {% if companies %}
+    <ul class="list-group">
+      {% for comp in companies %}
+        <li class="list-group-item">
+          <a href="{{ url_for('main.show_company', company_id=comp.id) }}">{{ comp.name }}</a>
+          <p class="mb-0">{{ comp.description[:100] }}{% if comp.description and comp.description|length > 100 %}…{% endif %}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No companies found matching '{{ query }}.'</p>
+  {% endif %}
+</div>
+{% endblock %}
