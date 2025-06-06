@@ -1,11 +1,23 @@
-from flask import Blueprint, request, jsonify, render_template, session, flash, redirect, url_for
-from werkzeug.security import check_password_hash, generate_password_hash
-from app.models import User, Company
-from app.auth.decorators import decode_token
-from app.extensions import db
-import jwt
 import datetime
 import os
+import re # Added import
+
+import jwt
+from flask import (
+    Blueprint,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from app.auth.decorators import decode_token
+from app.extensions import db
+from app.models import Company, User
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -88,7 +100,11 @@ def login():
     company = Company.query.filter_by(contact_email=email).first()
     if company and check_password_hash(company.password, password):
         if not company.approved:
-            flash('Your company account is pending approval. Please wait for admin approval.', 'warning')
+            flash(
+                ('Your company account is pending approval. '
+                 'Please wait for admin approval.'),
+                'warning'
+            )
             return render_template('login.html')
 
         # Generate JWT token for company
@@ -127,10 +143,17 @@ def api_login():
     if not data or not data.get('email') or not data.get('password'):
         return jsonify({'error': 'Missing credentials'}), 400
 
-    user = User.query.filter_by(email=data['email']).first()
-    company = Company.query.filter_by(name=data['email']).first()
+    email = data.get('email', '').strip().lower()
+    # Basic email format validation
+    if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+        return jsonify({'error': 'Invalid email format'}), 400
+
+    user = User.query.filter_by(email=email).first()
+    # Attempt to find company by contact_email
+    company = Company.query.filter_by(contact_email=email).first()
 
     if user and check_password_hash(user.password, data['password']):
+        # User login successful
         token = jwt.encode({
             'email': user.email,
             'role': user.role,
@@ -138,19 +161,23 @@ def api_login():
         }, JWT_SECRET, algorithm='HS256')
         return jsonify({'token': token, 'role': 'user'}), 200
 
-    if company and data['password'] == company.password:
-        # For companies, we use their name as both email and password
-        if data['password'] == company.name:
-            token = jwt.encode({
-                'email': company.name,
-                'role': company.role,
-                'approved': company.approved,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-            }, JWT_SECRET, algorithm='HS256')
-            return jsonify({'token': token, 'role': 'company'}), 200
+    # If not a regular user, check if it's a company login
+    if company and check_password_hash(company.password, data['password']):
+        # Company login successful
+        # Ensure company is approved
+        if not company.approved:
+            return jsonify({'error': 'Company account not approved'}), 403
+
+        token = jwt.encode({
+            'email': company.contact_email, # Use contact_email for consistency in token
+            'role': company.role,
+            'company_id': company.id,
+            'approved': company.approved,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }, JWT_SECRET, algorithm='HS256')
+        return jsonify({'token': token, 'role': 'company'}), 200
 
     return jsonify({'error': 'Invalid credentials'}), 401
-
 
 @auth_bp.route('/protected', methods=['GET'])
 def protected():

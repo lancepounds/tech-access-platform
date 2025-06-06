@@ -1,15 +1,18 @@
 
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
-from app.models import Company
-from app.extensions import db
 import json
+import re
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from werkzeug.security import generate_password_hash
+
+from flask_jwt_extended import get_jwt, jwt_required # Added
+
+from app.extensions import db
+from app.models import Company
 
 companies_bp = Blueprint('companies', __name__)
 
-# Simple admin token (in production, use real authentication)
-ADMIN_TOKEN = "my-secret-admin-token"
-
+# ADMIN_TOKEN removed
 
 @companies_bp.route('/register', methods=['GET'])
 def show_register():
@@ -94,7 +97,11 @@ def register_company():
         db.session.add(new_company)
         db.session.commit()
         
-        flash('Company registration submitted successfully! Please wait for admin approval.', 'success')
+        flash(
+            ('Company registration submitted successfully! '
+             'Please wait for admin approval.'),
+            'success'
+        )
         return redirect(url_for('auth.login_page'))
         
     except Exception as e:
@@ -104,10 +111,11 @@ def register_company():
 
 
 @companies_bp.route('/pending', methods=['GET'])
+@jwt_required() # Added
 def list_pending_companies():
-    token = request.headers.get('Authorization')
-    if token != f"Bearer {ADMIN_TOKEN}":
-        return jsonify({'error': 'Unauthorized'}), 403
+    claims = get_jwt() # Added
+    if claims.get('role') != 'admin': # Added
+        return jsonify({'error': 'Forbidden: Admins only'}), 403 # Added
 
     pending = Company.query.filter_by(approved=False).all()
     result = [{'id': c.id, 'name': c.name} for c in pending]
@@ -115,10 +123,11 @@ def list_pending_companies():
 
 
 @companies_bp.route('/approve', methods=['POST'])
+@jwt_required() # Added
 def approve_company():
-    token = request.headers.get('Authorization')
-    if token != f"Bearer {ADMIN_TOKEN}":
-        return jsonify({'error': 'Unauthorized'}), 403
+    claims = get_jwt() # Added
+    if claims.get('role') != 'admin': # Added
+        return jsonify({'error': 'Forbidden: Admins only'}), 403 # Added
 
     data = request.get_json()
     company_name = data.get('name')
@@ -140,5 +149,3 @@ def approve_company():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to approve company: {str(e)}'}), 500
-import json
-import re

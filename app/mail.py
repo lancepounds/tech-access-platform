@@ -1,9 +1,8 @@
 
-import os
+from flask import current_app as app
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-from flask import current_app as app
 
 def send_email(to_email, subject, html_content):
     if app.config["SENDGRID_MOCK"]:

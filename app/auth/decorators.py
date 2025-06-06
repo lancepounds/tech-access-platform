@@ -1,8 +1,9 @@
 
-from functools import wraps
-from flask import request, jsonify, g
-import jwt
 import os
+from functools import wraps
+
+import jwt
+from flask import g, jsonify, request
 
 
 def decode_token(token):

@@ -1,10 +1,22 @@
 
-from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for, current_app
-from app.models import Event, RSVP, Company, User, Reward
-from app.auth.decorators import decode_token
-from app.extensions import db
 import datetime
 import uuid
+
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+
+from app.auth.decorators import decode_token
+from app.extensions import db
+from app.models import RSVP, Company, Event, Reward, User # Added User
 
 main_bp = Blueprint('main', __name__)
 
@@ -24,7 +36,11 @@ def db_health():
             return {"status": "error", "message": "Supabase not configured"}, 500
 
         # Test connectivity by querying information schema
-        response = current_app.supabase.table("information_schema.tables").select("*").execute()
+        response = (
+            current_app.supabase.table("information_schema.tables")
+            .select("*")
+            .execute()
+        )
         return {"status": "ok", "tables_count": len(response.data)}, 200
     except Exception as e:
         return {"status": "error", "message": str(e)}, 500
@@ -56,7 +72,10 @@ def test_sendgrid():
         success = send_email(
             to=to, 
             subject='SendGrid Test Email', 
-            html_content='<h2>Test Successful!</h2><p>Your SendGrid API key is working correctly.</p>'
+            html_content=(
+                '<h2>Test Successful!</h2>'
+                '<p>Your SendGrid API key is working correctly.</p>'
+            )
         )
         if success:
             return jsonify({'msg': f'Test email sent successfully to {to}'}), 200
@@ -84,16 +103,20 @@ def create_event():
         flash('Invalid date format.', 'danger')
         return redirect(url_for('main.create_event_page'))
 
-    # For demo purposes, assuming we have a way to get the current company
-    # In a real implementation, you'd get this from the session token
-    company = Company.query.first()  # This is temporary - replace with actual session logic
+    # Get company_id from session
+    company_id_from_session = session.get('company_id')
+    if not company_id_from_session:
+        flash('No company is logged in or session expired.', 'danger')
+        return redirect(url_for('auth.login')) # Or a more appropriate page
+
+    company = Company.query.get(company_id_from_session)
 
     if not company:
-        flash('Company not found.', 'danger')
+        flash('Logged-in company not found in database.', 'danger')
         return redirect(url_for('main.create_event_page'))
 
     if not company.approved:
-        flash('Company not approved.', 'danger')
+        flash('Your company account is not yet approved to create events.', 'danger')
         return redirect(url_for('main.create_event_page'))
 
     # Create the event
@@ -101,7 +124,7 @@ def create_event():
         title=title,
         description=description,
         date=event_date,
-        company_id=company.id
+        company_id=company.id # Use fetched company's ID
     )
 
     try:
@@ -109,7 +132,7 @@ def create_event():
         db.session.commit()
         flash('Event created successfully!', 'success')
         return redirect(url_for('main.show_events'))
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         flash('Failed to create event. Please try again.', 'danger')
         return redirect(url_for('main.create_event_page'))
@@ -132,7 +155,17 @@ def show_my_rsvps():
         return redirect(url_for('auth.login'))
 
     # Query RSVPs for the logged-in user
-    rsvps = RSVP.query.filter_by(user_email=decoded['email']).join(Event).join(Company).all()
+    user = User.query.filter_by(email=decoded['email']).first()
+    if not user:
+        flash('User not found for your session. Please log in again.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    rsvps = (
+        RSVP.query.filter_by(user_id=user.id)
+        .join(Event)
+        .join(Company) # Assuming Event has a 'company' relationship
+        .all()
+    )
 
     return render_template('my_rsvps.html', rsvps=rsvps)
 
@@ -141,9 +174,23 @@ def company_dashboard():
     if session.get('role') != 'company':
         flash('Please log in as a company.', 'danger')
         return redirect(url_for('auth.login'))
-    decoded = decode_token(session['token'])
-    company = Company.query.filter_by(name=decoded['email']).first()
-    return render_template('company_dashboard.html', events=company.events)
+
+    company_id = session.get('company_id')
+    company = None
+    if company_id:
+        company = Company.query.get(company_id)
+
+    if not company: # Fallback or if company_id wasn't in session
+        decoded = decode_token(session['token'])
+        if decoded and decoded.get('email'):
+            company = Company.query.filter_by(contact_email=decoded['email']).first()
+
+    if not company:
+        flash('Company information not found. Please log in again.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    # Assuming company.events relationship exists or is handled by template
+    return render_template('company_dashboard.html', events=company.events, company=company)
 
 @main_bp.route('/company-dashboard')
 def company_dashboard_legacy():
@@ -157,14 +204,22 @@ def company_dashboard_legacy():
         return redirect(url_for('main.show_events'))
 
     # Decode token to get company info
-    decoded = decode_token(session['token'])
-    if not decoded:
-        flash('Session expired. Please log in again.', 'danger')
-        return redirect(url_for('auth.login'))
+    # Prioritize company_id from session
+    company_id = session.get('company_id')
+    company = None
+    if company_id:
+        company = Company.query.get(company_id)
 
-    company = Company.query.filter_by(name=decoded['email']).first()
+    if not company: # Fallback if company_id not in session or company not found by id
+        decoded = decode_token(session['token'])
+        if not decoded:
+            flash('Session expired. Please log in again.', 'danger')
+            return redirect(url_for('auth.login'))
+        if decoded.get('email'):
+            company = Company.query.filter_by(contact_email=decoded['email']).first()
+
     if not company:
-        flash('Company not found.', 'danger')
+        flash('Company not found. Please log in again.', 'danger')
         return redirect(url_for('main.show_events'))
 
     if not company.approved:
@@ -192,14 +247,22 @@ def fulfill_rsvp_ui(rsvp_id):
         return redirect(url_for('main.show_events'))
 
     # Decode token to get company info
-    decoded = decode_token(session['token'])
-    if not decoded:
-        flash('Session expired. Please log in again.', 'danger')
-        return redirect(url_for('auth.login'))
+    # Prioritize company_id from session
+    company_id = session.get('company_id')
+    company = None
+    if company_id:
+        company = Company.query.get(company_id)
 
-    company = Company.query.filter_by(name=decoded['email']).first()
+    if not company: # Fallback
+        decoded = decode_token(session['token'])
+        if not decoded:
+            flash('Session expired. Please log in again.', 'danger')
+            return redirect(url_for('auth.login'))
+        if decoded.get('email'):
+            company = Company.query.filter_by(contact_email=decoded['email']).first()
+
     if not company or not company.approved:
-        flash('Company not found or not approved.', 'danger')
+        flash('Company not found, not approved, or session invalid. Please log in again.', 'danger')
         return redirect(url_for('main.show_events'))
 
     rsvp = RSVP.query.get(rsvp_id)
@@ -220,8 +283,10 @@ def fulfill_rsvp_ui(rsvp_id):
 
     try:
         db.session.commit()
-        flash(f'RSVP for {rsvp.user_email} marked as fulfilled!', 'success')
-    except Exception as e:
+        user = User.query.get(rsvp.user_id)
+        user_email_for_message = user.email if user else f"User ID {rsvp.user_id}"
+        flash(f'RSVP for {user_email_for_message} marked as fulfilled!', 'success')
+    except Exception:
         db.session.rollback()
         flash('Failed to update RSVP. Please try again.', 'danger')
 
@@ -234,10 +299,17 @@ def issue_gift(rsvp_id):
         flash('Please log in as a company.', 'danger')
         return redirect(url_for('auth.login'))
 
-    decoded = decode_token(session['token'])
-    company = Company.query.filter_by(name=decoded['email']).first()
+    decoded = decode_token(session['token']) # Keep this for now, but company_id is better
+    company_id = session.get('company_id')
+    company = None
+    if company_id:
+        company = Company.query.get(company_id)
+
+    if not company and decoded and decoded.get('email'): # Fallback
+        company = Company.query.filter_by(contact_email=decoded['email']).first()
+
     if not company or not company.approved:
-        flash('Not authorized.', 'danger')
+        flash('Company not found, not approved, or session invalid. Please log in again.', 'danger')
         return redirect(url_for('auth.login'))
 
     rsvp = RSVP.query.get_or_404(rsvp_id)
@@ -269,7 +341,11 @@ def get_my_rsvps():
     if decoded['role'] != 'user':
         return jsonify({'error': 'Unauthorized'}), 403
 
-    rsvps = RSVP.query.filter_by(user_email=decoded['email']).all()
+    user = User.query.filter_by(email=decoded['email']).first()
+    if not user:
+        return jsonify({'error': 'User not found for the provided token.'}), 404
+
+    rsvps = RSVP.query.filter_by(user_id=user.id).all()
     events = []
     for rsvp in rsvps:
         event = Event.query.get(rsvp.event_id)
@@ -295,9 +371,16 @@ def fulfill_rsvp(rsvp_id):
     if not decoded or decoded['role'] != 'company':
         return jsonify({'error': 'Unauthorized'}), 403
 
-    company = Company.query.filter_by(name=decoded['email']).first()
+    company_id_from_token = decoded.get('company_id')
+    company = None
+    if company_id_from_token:
+        company = Company.query.get(company_id_from_token)
+
+    if not company: # Fallback
+        company = Company.query.filter_by(contact_email=decoded.get('email')).first()
+
     if not company or not company.approved:
-        return jsonify({'error': 'Company not found or not approved'}), 403
+        return jsonify({'error': 'Company not found, not approved, or token invalid.'}), 403
 
     rsvp = RSVP.query.get(rsvp_id)
     if not rsvp:
@@ -305,13 +388,19 @@ def fulfill_rsvp(rsvp_id):
 
     event = Event.query.get(rsvp.event_id)
     if event.company_id != company.id:
-        return jsonify({'error': 'This RSVP does not belong to one of your events'}), 403
+        return jsonify({
+            'error': 'This RSVP does not belong to one of your events'
+        }), 403
 
     rsvp.fulfilled = True
 
     try:
         db.session.commit()
-        return jsonify({'message': f'RSVP for {rsvp.user_email} marked as fulfilled'}), 200
+        user = User.query.get(rsvp.user_id)
+        user_email_for_message = user.email if user else f"User ID {rsvp.user_id}"
+        return jsonify({
+            'message': f'RSVP for {user_email_for_message} marked as fulfilled'
+        }), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to update RSVP: {str(e)}'}), 500

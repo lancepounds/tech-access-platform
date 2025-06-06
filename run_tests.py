@@ -8,6 +8,7 @@ Run this script to execute all pytest tests.
 import subprocess
 import sys
 
+
 def run_tests():
     """Run pytest tests with verbose output."""
     try:

@@ -1,10 +1,11 @@
 
-import pytest
-import time
 from unittest.mock import Mock, patch
+
+import pytest
 import requests
+
 from app.checks.runner import run_check
-from app.models import Check, CheckResult
+from app.models import CheckResult
 
 
 class TestRunCheck:

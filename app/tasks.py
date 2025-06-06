@@ -1,11 +1,12 @@
 
 import atexit
-from app.extensions import scheduler, db
-from app.models import Check
+
 from app.checks.runner import run_check
+from app.extensions import db, scheduler
+from app.models import Check
 
 
-def initialize_scheduler(app):
+def initialize_scheduler(_app):  # app -> _app
     """Initialize and configure the APScheduler."""
     if not scheduler.running:
         scheduler.configure(
@@ -124,7 +125,9 @@ def poll_all_checks():
                 except Exception as e:
                     # Rollback this specific check's transaction
                     db.session.rollback()
-                    print(f"Error polling check {check.name} (ID: {check.id}): {str(e)}")
+                    print(
+                        f"Error polling check {check.name} (ID: {check.id}): {str(e)}"
+                    )
                     
         except Exception as e:
             print(f"Error in poll_all_checks: {str(e)}")

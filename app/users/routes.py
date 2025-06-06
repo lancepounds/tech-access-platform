@@ -1,16 +1,16 @@
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash, session
-from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-from app.models import User
-from app.extensions import db
-from app.users.schemas import RegistrationSchema
-from marshmallow import ValidationError
-import jwt
-import datetime
-import os
-import uuid
+import contextlib
 import json
+import os
 import re
+import uuid
+from functools import wraps
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
+
+from app.extensions import db
+from app.models import User
 from config import Config
 
 users_bp = Blueprint('users', __name__)
@@ -44,7 +44,7 @@ def validate_file_content(file):
         ]
         
         return any(header.startswith(sig) for sig in image_signatures)
-    except:
+    except Exception:
         return False
 
 def validate_password_strength(password):
@@ -61,7 +61,15 @@ def validate_password_strength(password):
 def list_users():
     """Debug endpoint to see registered users"""
     users = User.query.all()
-    user_list = [{'id': user.id, 'email': user.email, 'name': user.full_name, 'created_at': user.created_at} for user in users]
+    user_list = [
+        {
+            'id': user.id,
+            'email': user.email,
+            'name': user.full_name,
+            'created_at': user.created_at
+        }
+        for user in users
+    ]
     return jsonify({'users': user_list, 'count': len(user_list)})
 
 @users_bp.route('/register', methods=['GET'])
@@ -89,30 +97,39 @@ def register():
         flash(error_msg, 'danger')
         return redirect(url_for('users.show_register'))
 
-    # Sanitize and validate email format
+    # All subsequent common validations need to check request.is_json
+    # to return the correct error response type.
+
     email = data.get('email', '').strip().lower()
     if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
         error_msg = 'Please provide a valid email address'
         if request.is_json:
             return jsonify({'error': error_msg}), 400
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
+        else:
+            flash(error_msg, 'danger')
+            return redirect(url_for('users.show_register'))
 
     # Validate password confirmation
-    if data.get('password') != data.get('confirmPassword'):
+    # Ensure 'confirmPassword' is provided, especially for JSON requests if it's expected
+    if data.get('password') != data.get('confirmPassword'): # For JSON, ensure confirmPassword is part of the payload
         error_msg = 'Passwords do not match'
         if request.is_json:
             return jsonify({'error': error_msg}), 400
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
+        else:
+            flash(error_msg, 'danger')
+            return redirect(url_for('users.show_register'))
 
     # Validate password strength
     if not validate_password_strength(data['password']):
-        error_msg = 'Password must be at least 8 characters and include numbers or special characters'
+        error_msg = (
+            'Password must be at least 8 characters and '
+            'include numbers or special characters'
+        )
         if request.is_json:
             return jsonify({'error': error_msg}), 400
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
+        else:
+            flash(error_msg, 'danger')
+            return redirect(url_for('users.show_register'))
 
     # Check if user already exists
     existing_user = User.query.filter_by(email=email).first()
@@ -120,8 +137,9 @@ def register():
         error_msg = 'User already exists'
         if request.is_json:
             return jsonify({'error': error_msg}), 400
-        flash(error_msg, 'danger')
-        return redirect(url_for('users.show_register'))
+        else:
+            flash(error_msg, 'danger')
+            return redirect(url_for('users.show_register'))
 
     # Process disabilities and interests (handle multiple selections)
     disabilities = []
@@ -131,8 +149,14 @@ def register():
     
     if not request.is_json:
         # Handle form data (multiple selections)
-        disabilities = request.form.getlist('disabilities') if 'disabilities' in request.form else []
-        interests = request.form.getlist('interests') if 'interests' in request.form else []
+        disabilities = (
+            request.form.getlist('disabilities')
+            if 'disabilities' in request.form else []
+        )
+        interests = (
+            request.form.getlist('interests')
+            if 'interests' in request.form else []
+        )
         specific_disability = request.form.get('specificDisability')
         
         # Handle profile picture upload
@@ -141,7 +165,11 @@ def register():
             if file and file.filename:
                 # Validate file extension
                 if not allowed_file(file.filename):
-                    flash('Invalid file type. Please upload PNG, JPG, GIF, or WebP images only.', 'danger')
+                    flash(
+                        ('Invalid file type. Please upload PNG, JPG, GIF, '
+                         'or WebP images only.'),
+                        'danger'
+                    )
                     return redirect(url_for('users.show_register'))
                 
                 # Validate file size (5MB limit) - check actual file size
@@ -170,8 +198,11 @@ def register():
                 try:
                     file.save(file_path)
                     profile_picture_filename = unique_filename
-                except Exception as e:
-                    flash('Error uploading profile picture. Please try again.', 'danger')
+                except Exception:
+                    flash(
+                        'Error uploading profile picture. Please try again.',
+                        'danger'
+                    )
                     return redirect(url_for('users.show_register'))
     else:
         # Handle JSON data
@@ -207,17 +238,62 @@ def register():
 
         flash('Registration successful! Welcome to Tech Access Group.', 'success')
         return redirect(url_for('auth.login'))
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         # Clean up uploaded file if user creation fails
         if profile_picture_filename:
-            try:
-                os.remove(os.path.join('static', 'uploads', 'profiles', profile_picture_filename))
-            except:
-                pass
+            with contextlib.suppress(Exception):
+                os.remove(
+                    os.path.join(
+                        'static', 'uploads', 'profiles', profile_picture_filename
+                    )
+                )
         
         error_msg = 'Registration failed. Please try again.'
         if request.is_json:
             return jsonify({'error': error_msg}), 500
         flash(error_msg, 'danger')
         return redirect(url_for('users.show_register'))
+
+# Placeholder for JWT-based authentication/user loading
+# In a real app, this would come from app.auth.decorators or similar
+def jwt_required_placeholder():
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            # This is a mock, replace with actual token validation
+            # and user loading (e.g., using flask_jwt_extended)
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return jsonify({'error': 'Missing or malformed Authorization header'}), 401
+
+            # Mock: assume token is valid and extract user identity (e.g., email)
+            # In a real app, you'd decode and verify the token here
+            # For testing, we'll assume a valid token if present
+            # and that get_jwt_identity_placeholder exists and returns a mock email
+            # current_user_email = get_jwt_identity_placeholder()
+            # For now, let's just pass if token exists
+            pass # Replace with actual user loading based on token
+            return fn(*args, **kwargs) # In real app: fn(current_user, *args, **kwargs)
+        return decorator
+    return wrapper
+
+# Placeholder for getting current user identity from token
+# def get_jwt_identity_placeholder():
+#     return "mockuser@example.com" # Replace with actual logic
+
+@users_bp.route('/profile', methods=['GET'])
+@jwt_required_placeholder() # This is a placeholder decorator
+def get_user_profile():
+    # In a real implementation, current_user would be loaded by jwt_required
+    # For now, assume a mock current_user or fetch based on a mock identity
+    # current_user_email = get_jwt_identity_placeholder()
+    # user = User.query.filter_by(email=current_user_email).first()
+    # if not user:
+    #    return jsonify({'error': 'User not found'}), 404
+
+    # Placeholder response
+    return jsonify({
+        'message': 'Profile endpoint reached (mock)',
+        # 'user_email': current_user_email # If you use the mock identity
+    }), 200

@@ -1,9 +1,11 @@
-from flask import Blueprint, request, jsonify, abort, current_app as app, render_template, session, flash, redirect, url_for
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from app.models import Event, RSVP, GiftCard, User
-from app.extensions import db
-from app.auth.decorators import decode_token
 import stripe
+from flask import Blueprint, abort, flash, jsonify, redirect, request, session, url_for
+from flask import current_app as app
+from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+
+from app.auth.decorators import decode_token
+from app.extensions import db
+from app.models import RSVP, Company, Event, GiftCard, User # Added Company
 
 evt_bp = Blueprint("events", __name__, url_prefix="/events")
 
@@ -16,19 +18,30 @@ def require_role(role):
 def create_event():
     require_role("company")
     claims = get_jwt()
-    company_email = claims.get("email")
+    # Get the integer company_id directly from JWT
+    actual_company_id = claims.get("company_id")
     
-    # Find the company user
-    company_user = User.query.filter_by(email=company_email, role="company").first()
-    if not company_user:
-        return jsonify({"error": "Company user not found"}), 404
-    
+    if not actual_company_id:
+        # This case should ideally not happen if API login for companies is correct
+        # and User with role='company' always has an associated Company.
+        # Fallback or error if company_id is not in JWT for a company role.
+        # For now, let's assume company_email can be used to find the Company record
+        # if company_id claim is missing (though this is less ideal).
+        company_email_from_jwt = claims.get("email") # This is company.name
+        company_record = Company.query.filter_by(name=company_email_from_jwt).first()
+        if not company_record:
+            return jsonify({"error": "Company not found based on JWT email (company name)."}), 404
+        actual_company_id = company_record.id
+    elif not isinstance(actual_company_id, int):
+        # If company_id is present but not an int, something is wrong with token creation
+        return jsonify({"error": "Invalid company_id format in JWT."}), 500
+
     data = request.get_json() or {}
     evt = Event(
         name=data.get("name"),
         description=data.get("description"),
         date=data.get("date"),
-        company_id=company_user.id
+        company_id=actual_company_id # Use the integer company_id
     )
     db.session.add(evt)
     db.session.commit()
@@ -87,14 +100,20 @@ def rsvp(evt_id):
 
     # Fetch event and company info
     evt = Event.query.get(evt_id)
-    company = User.query.get(evt.company_id)
+    company_record = Company.query.get(evt.company_id) # Changed User to Company
+    if not company_record:
+        # Handle case where company might not be found, though unlikely if evt.company_id is valid
+        return jsonify({"error": "Company associated with the event not found."}), 500
+
     member = User.query.get(user_id)
     subject = f"New RSVP for your event: {evt.name}"
     html = (
-        f"<p>{member.email} just RSVPed for <strong>{evt.name}</strong> on {evt.date}.</p>"
+        f"<p>{member.email} just RSVPed for <strong>{evt.name}</strong> "
+        f"on {evt.date}.</p>"
+        f"<p>This RSVP is for an event hosted by {company_record.name}.</p>" # Optional: add company name
         "<p>Log in to your dashboard to view details.</p>"
     )
-    send_email(company.email, subject, html)
+    send_email(company_record.contact_email, subject, html) # Use company_record.contact_email
 
     return jsonify({"msg":"RSVP confirmed and gift card issued"}), 201
 
@@ -114,7 +133,12 @@ def issue_gift(evt_id):
         description=f"Manual gift for RSVP to event {evt_id}"
     )
 
-    gift = GiftCard(user_id=user_id, event_id=evt_id, amount_cents=amount, stripe_charge_id=charge.id)
+    gift = GiftCard(
+        user_id=user_id,
+        event_id=evt_id,
+        amount_cents=amount,
+        stripe_charge_id=charge.id
+    )
     db.session.add(gift)
     db.session.commit()
     return jsonify({"msg":"Gift card issued","charge_id":charge.id}), 200

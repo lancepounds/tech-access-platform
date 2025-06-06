@@ -1,14 +1,13 @@
 
 #!/usr/bin/env python3
 """
-Comprehensive endpoint testing script for the Flask application.
-Tests all major API endpoints including authentication, events, RSVPs, and user management.
+Comprehensive endpoint testing script for the Flask application. Tests all major API
+endpoints including authentication, events, RSVPs, and user management.
 """
 
-import requests
-import json
 import sys
-from datetime import datetime, timedelta
+
+import requests
 
 # Base URL for your Flask app
 BASE_URL = "http://0.0.0.0:5000"
@@ -42,7 +41,8 @@ class EndpointTester:
 
         try:
             response = self.session.get(f"{self.base_url}/_db_health")
-            success = response.status_code in [200, 500]  # Either works or fails gracefully
+            # Either works or fails gracefully
+            success = response.status_code in [200, 500]
             self.log_test("Database Health", success, f"Status: {response.status_code}")
         except Exception as e:
             self.log_test("Database Health", False, f"Error: {str(e)}")
@@ -60,8 +60,11 @@ class EndpointTester:
                 f"{self.base_url}/auth/register",
                 json=test_user
             )
-            success = response.status_code in [201, 400]  # 400 if user already exists
-            self.log_test("User Registration", success, f"Status: {response.status_code}")
+            # 400 if user already exists
+            success = response.status_code in [201, 400]
+            self.log_test(
+                "User Registration", success, f"Status: {response.status_code}"
+            )
         except Exception as e:
             self.log_test("User Registration", False, f"Error: {str(e)}")
 
@@ -81,7 +84,9 @@ class EndpointTester:
             if response.status_code == 200:
                 data = response.json()
                 self.user_token = data.get('token')
-                self.log_test("User Login", True, f"Token received: {bool(self.user_token)}")
+                self.log_test(
+                    "User Login", True, f"Token received: {bool(self.user_token)}"
+                )
             else:
                 self.log_test("User Login", False, f"Status: {response.status_code}")
         except Exception as e:
@@ -101,7 +106,9 @@ class EndpointTester:
                 json=test_company
             )
             success = response.status_code in [201, 400]
-            self.log_test("Company Registration", success, f"Status: {response.status_code}")
+            self.log_test(
+                "Company Registration", success, f"Status: {response.status_code}"
+            )
         except Exception as e:
             self.log_test("Company Registration", False, f"Error: {str(e)}")
 
@@ -119,7 +126,9 @@ class EndpointTester:
                 headers=headers
             )
             success = response.status_code == 200
-            self.log_test("Protected Endpoint", success, f"Status: {response.status_code}")
+            self.log_test(
+                "Protected Endpoint", success, f"Status: {response.status_code}"
+            )
         except Exception as e:
             self.log_test("Protected Endpoint", False, f"Error: {str(e)}")
 
@@ -137,7 +146,9 @@ class EndpointTester:
         try:
             response = self.session.get(f"{self.base_url}/create-event")
             success = response.status_code == 200
-            self.log_test("Create Event Page", success, f"Status: {response.status_code}")
+            self.log_test(
+                "Create Event Page", success, f"Status: {response.status_code}"
+            )
         except Exception as e:
             self.log_test("Create Event Page", False, f"Error: {str(e)}")
 
@@ -165,7 +176,8 @@ class EndpointTester:
             response = self.session.get(
                 f"{self.base_url}/test-sendgrid?email=test@example.com"
             )
-            success = response.status_code in [200, 500]  # Either works or fails gracefully
+            # Either works or fails gracefully
+            success = response.status_code in [200, 500]
             self.log_test("SendGrid Config", success, f"Status: {response.status_code}")
         except Exception as e:
             self.log_test("SendGrid Config", False, f"Error: {str(e)}")
@@ -202,7 +214,9 @@ class EndpointTester:
         try:
             response = self.session.get(f"{self.base_url}/testing-opportunities")
             success = response.status_code == 200
-            self.log_test("Testing Opportunities", success, f"Status: {response.status_code}")
+            self.log_test(
+                "Testing Opportunities", success, f"Status: {response.status_code}"
+            )
         except Exception as e:
             self.log_test("Testing Opportunities", False, f"Error: {str(e)}")
 
@@ -244,14 +258,14 @@ class EndpointTester:
         passed_tests = sum(1 for result in self.test_results if result['success'])
         failed_tests = total_tests - passed_tests
         
-        print(f"\n📊 Test Summary:")
+        print("\n📊 Test Summary:")
         print(f"Total Tests: {total_tests}")
         print(f"✅ Passed: {passed_tests}")
         print(f"❌ Failed: {failed_tests}")
         print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
         
         if failed_tests > 0:
-            print(f"\n❌ Failed Tests:")
+            print("\n❌ Failed Tests:")
             for result in self.test_results:
                 if not result['success']:
                     print(f"  - {result['test']}: {result['message']}")

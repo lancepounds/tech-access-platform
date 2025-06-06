@@ -1,17 +1,19 @@
 
-from flask import Blueprint, request, jsonify, g
-from marshmallow import ValidationError
 from datetime import datetime, timedelta
-from app.models import Check, CheckResult
-from app.extensions import db
+
+from flask import Blueprint, jsonify, request
+from marshmallow import ValidationError
+
 from app.auth.decorators import jwt_required
 from app.checks.schemas import (
-    CheckCreateSchema, 
-    CheckUpdateSchema, 
+    CheckCreateSchema,
     CheckResponseSchema,
     CheckResultCreateSchema,
-    CheckResultResponseSchema
+    CheckResultResponseSchema,
+    CheckUpdateSchema,
 )
+from app.extensions import db
+from app.models import Check, CheckResult
 
 checks_bp = Blueprint('checks', __name__)
 
@@ -161,7 +163,10 @@ def get_check_results(check_id):
             since_datetime = datetime.fromisoformat(since.replace('Z', '+00:00'))
             query = query.filter(CheckResult.timestamp >= since_datetime)
         except ValueError:
-            return jsonify({'error': 'Invalid timestamp format. Use ISO format (e.g., 2024-01-01T00:00:00Z)'}), 400
+            return jsonify({
+                'error': ('Invalid timestamp format. Use ISO format '
+                          '(e.g., 2024-01-01T00:00:00Z)')
+            }), 400
     
     results = query.order_by(CheckResult.timestamp.desc())\
                   .offset(offset)\
@@ -204,11 +209,15 @@ def get_checks_summary():
         # Calculate uptime percentage
         up_count = sum(1 for result in results if result.status == 'up')
         total_count = len(results)
-        uptime_percentage = round((up_count / total_count) * 100, 2) if total_count > 0 else 0.0
+        uptime_percentage = (
+            round((up_count / total_count) * 100, 2) if total_count > 0 else 0.0
+        )
         
         # Calculate average latency
         total_latency = sum(result.latency_ms for result in results)
-        average_latency_ms = round(total_latency / total_count, 2) if total_count > 0 else 0.0
+        average_latency_ms = (
+            round(total_latency / total_count, 2) if total_count > 0 else 0.0
+        )
         
         # Get current status (most recent result)
         most_recent_result = max(results, key=lambda r: r.timestamp)

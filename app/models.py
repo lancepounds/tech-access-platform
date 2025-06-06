@@ -1,7 +1,7 @@
 
-from app.extensions import db
-import datetime
 import uuid
+
+from app.extensions import db
 
 
 class User(db.Model):
@@ -17,9 +17,12 @@ class User(db.Model):
     phone = db.Column(db.String(20), nullable=True)
     
     # Accessibility Information
-    disabilities = db.Column(db.Text, nullable=True)  # JSON string of selected disabilities
-    specific_disability = db.Column(db.Text, nullable=True)  # Detailed description of specific disability
-    wheelchair_usage = db.Column(db.String(20), nullable=True)  # fulltime, parttime, or none
+    # JSON string of selected disabilities
+    disabilities = db.Column(db.Text, nullable=True)
+    # Detailed description of specific disability
+    specific_disability = db.Column(db.Text, nullable=True)
+    # fulltime, parttime, or none
+    wheelchair_usage = db.Column(db.String(20), nullable=True)
     assistive_tech = db.Column(db.Text, nullable=True)
     
     # Experience & Interests
@@ -35,7 +38,9 @@ class User(db.Model):
     
     # Timestamps
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    updated_at = db.Column(
+        db.DateTime, server_default=db.func.now(), onupdate=db.func.now()
+    )
     
     # Add relationship
     rsvps = db.relationship("RSVP", back_populates="user")
@@ -88,7 +93,9 @@ class Company(db.Model):
     
     # Timestamps
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    updated_at = db.Column(
+        db.DateTime, server_default=db.func.now(), onupdate=db.func.now()
+    )
 
     def __repr__(self):
         return f'<Company {self.name}>'
@@ -101,8 +108,12 @@ class Event(db.Model):
     description = db.Column(db.Text, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
-    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=True)  # For user-created events
-    rsvps = db.relationship("RSVP", back_populates="event", cascade="all, delete-orphan")
+    # For user-created events
+    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=True)
+    rsvps = db.relationship(
+        "RSVP", back_populates="event", cascade="all, delete-orphan"
+    )
+    company = db.relationship("Company") # Added relationship to Company
 
 
 class RSVP(db.Model):

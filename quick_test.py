@@ -4,8 +4,9 @@
 Quick API test script for immediate endpoint testing.
 """
 
-import requests
 import json
+
+import requests
 
 BASE_URL = "http://0.0.0.0:5000"
 
@@ -30,7 +31,7 @@ def test_endpoint(method, endpoint, data=None, headers=None):
         try:
             content = response.json()
             print(f"JSON Response: {json.dumps(content, indent=2)}")
-        except:
+        except Exception:
             print(f"Text Response: {response.text[:500]}...")
             
     except Exception as e:

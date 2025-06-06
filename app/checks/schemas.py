@@ -1,7 +1,9 @@
 
-from marshmallow import fields, validate, validates, ValidationError
-from app.extensions import ma
 import re
+
+from marshmallow import ValidationError, fields, validate, validates
+
+from app.extensions import ma
 
 
 class CheckCreateSchema(ma.Schema):
@@ -26,7 +28,9 @@ class CheckCreateSchema(ma.Schema):
         validate=validate.Range(min=5, max=86400),  # 5 seconds to 24 hours
         error_messages={
             "required": "Interval is required.",
-            "validator_failed": "Interval must be between 5 seconds and 86400 seconds (24 hours)."
+            "validator_failed": (
+                "Interval must be between 5 seconds and 86400 seconds (24 hours)."
+            ),
         }
     )
 
@@ -61,7 +65,9 @@ class CheckUpdateSchema(ma.Schema):
     interval_sec = fields.Integer(
         validate=validate.Range(min=5, max=86400),
         error_messages={
-            "validator_failed": "Interval must be between 5 seconds and 86400 seconds (24 hours)."
+            "validator_failed": (
+                "Interval must be between 5 seconds and 86400 seconds (24 hours)."
+            ),
         }
     )
 

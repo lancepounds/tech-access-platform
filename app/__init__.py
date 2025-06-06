@@ -1,13 +1,13 @@
 from flask import Flask
-from app.extensions import db, ma
+from flask_wtf.csrf import CSRFProtect
+
 from app.auth.routes import auth_bp
-from app.users.routes import users_bp
+from app.checks.routes import checks_bp
 from app.companies.routes import companies_bp
 from app.events.routes import evt_bp as events_bp
+from app.extensions import db, ma
 from app.main.routes import main_bp
-from app.checks.routes import checks_bp
-from flask_wtf.csrf import CSRFProtect
-import os
+from app.users.routes import users_bp
 
 
 def create_app():
@@ -22,8 +22,8 @@ def create_app():
     ma.init_app(app)
     
     # Initialize CSRF protection
-    csrf = CSRFProtect(app)
-    
+    CSRFProtect(app)
+
     # Initialize Supabase
     from supabase import create_client
     if app.config.get('SUPABASE_URL') and app.config.get('SUPABASE_KEY'):
@@ -51,18 +51,12 @@ def create_app():
     initialize_scheduler(app)
 
     # Register blueprints
-    from app.auth.routes import auth_bp
-    from app.users.routes import users_bp
-    from app.companies.routes import companies_bp
-    from app.events.routes import evt_bp as events_bp
-    from app.main.routes import main_bp
-    from app.checks.routes import checks_bp
     from app.dashboard.routes import dash_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dash_bp)
     app.register_blueprint(events_bp, url_prefix='/api/events')
-    app.register_blueprint(users_bp)
+    app.register_blueprint(users_bp, url_prefix='/api/users')
     app.register_blueprint(companies_bp, url_prefix='/companies')
     app.register_blueprint(checks_bp, url_prefix='/checks')
     app.register_blueprint(main_bp)

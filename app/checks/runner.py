@@ -1,6 +1,8 @@
 
-import requests
 import time
+
+import requests
+
 from app.models import CheckResult
 
 
@@ -34,10 +36,7 @@ def run_check(check):
         latency_ms = int((end_time - start_time) * 1000)
         
         # Determine status based on response code
-        if 200 <= response.status_code <= 399:
-            status = 'up'
-        else:
-            status = 'down'
+        status = 'up' if 200 <= response.status_code <= 399 else 'down'
             
     except requests.exceptions.Timeout:
         # Handle timeout (5+ seconds)

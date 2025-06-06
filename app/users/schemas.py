@@ -1,5 +1,6 @@
 
 from marshmallow import fields, validate
+
 from app.extensions import ma
 
 
