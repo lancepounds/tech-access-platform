@@ -114,7 +114,14 @@ class Event(db.Model):
     date = db.Column(db.DateTime, nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
     user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=True)  # For user-created events
-    rsvps = db.relationship("RSVP", back_populates="event", cascade="all, delete-orphan")
+    # Use dynamic loading so we can call ``event.rsvps.count()`` without
+    # loading all related rows into memory.
+    rsvps = db.relationship(
+        "RSVP",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
 
     # Backwards compatibility for code that still references ``name``
     @property
