@@ -1,6 +1,7 @@
 
 from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for, current_app
 from app.models import Event, RSVP, Company, User, Reward
+from sqlalchemy import or_
 from app.auth.decorators import decode_token
 from app.extensions import db
 import datetime
@@ -33,6 +34,18 @@ def db_health():
 def show_events():
     events = Event.query.order_by(Event.date).all()
     return render_template('events.html', events=events)
+
+@main_bp.route('/search')
+def search():
+    """Search events by title or description."""
+    q = request.args.get('q', '').strip()
+    events = []
+    if q:
+        pattern = f"%{q}%"
+        events = Event.query.filter(
+            or_(Event.name.ilike(pattern), Event.description.ilike(pattern))
+        ).all()
+    return render_template('search_results.html', query=q, events=events)
 
 @main_bp.route('/testing-opportunities')
 def testing_opportunities():
