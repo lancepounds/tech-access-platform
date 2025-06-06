@@ -1,5 +1,7 @@
 import os
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-secret-key')
@@ -18,6 +20,8 @@ class Config:
     JWT_TOKEN_LOCATION = ["headers"]
     JWT_HEADER_NAME = "Authorization"
     JWT_HEADER_TYPE = "Bearer"
+
+    UPLOAD_FOLDER = os.path.join(basedir, 'static', 'uploads')
 
 
 class DevelopmentConfig(Config):

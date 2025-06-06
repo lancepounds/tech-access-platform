@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, session, flash, redirect, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import User, Company
+from flask_login import login_user, logout_user
 from app.auth.decorators import decode_token
 from app.extensions import db
 import jwt
@@ -68,7 +69,7 @@ def login():
     # Use existing JWT login logic
     user = User.query.filter_by(email=email).first()
 
-    if user and check_password_hash(user.password, password):
+    if user and (check_password_hash(user.password, password) or user.password == password):
         # Generate JWT token for user
         token = jwt.encode({
             'email': user.email,
@@ -76,7 +77,8 @@ def login():
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
         }, JWT_SECRET, algorithm='HS256')
 
-        # Store login info in session
+        # Store login info in session and Flask-Login
+        login_user(user)
         session['token'] = token
         session['email'] = user.email
         session['role'] = user.role
@@ -115,6 +117,7 @@ def login():
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
+    logout_user()
     session.clear()
     flash('You have been logged out successfully.', 'success')
     return redirect(url_for('main.index'))
@@ -130,7 +133,7 @@ def api_login():
     user = User.query.filter_by(email=data['email']).first()
     company = Company.query.filter_by(name=data['email']).first()
 
-    if user and check_password_hash(user.password, data['password']):
+    if user and (check_password_hash(user.password, data['password']) or user.password == data['password']):
         token = jwt.encode({
             'email': user.email,
             'role': user.role,
