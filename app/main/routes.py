@@ -49,6 +49,20 @@ def search():
         events = []
     return render_template('search_results.html', query=q, events=events)
 
+
+@main_bp.route('/search/companies')
+def search_companies():
+    """Search companies by name or description."""
+    q = request.args.get('q', '').strip()
+    if q:
+        pattern = f"%{q}%"
+        companies = Company.query.filter(
+            or_(Company.name.ilike(pattern), Company.description.ilike(pattern))
+        ).order_by(Company.name).all()
+    else:
+        companies = []
+    return render_template('company_search_results.html', query=q, companies=companies)
+
 @main_bp.route('/testing-opportunities')
 def testing_opportunities():
     return render_template('testing_opportunities.html')
@@ -330,3 +344,10 @@ def fulfill_rsvp(rsvp_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to update RSVP: {str(e)}'}), 500
+
+
+@main_bp.route('/companies/<int:company_id>')
+def show_company(company_id):
+    """Display a company's details."""
+    company = Company.query.get_or_404(company_id)
+    return f"Company: {company.name}"
