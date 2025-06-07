@@ -1,0 +1,7 @@
+Hello {{ user.name }},
+
+Your RSVP for “{{ event.title }}” on {{ event.date.strftime('%Y-%m-%d') }} has been successfully canceled.
+
+If you change your mind, you can RSVP again at {{ url_for('main.event_detail', event_id=event.id, _external=True) }}.
+
+— Tech Access Team

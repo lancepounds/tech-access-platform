@@ -1,5 +1,5 @@
 from flask import Flask
-from app.extensions import db, ma, login_manager
+from app.extensions import db, ma, login_manager, migrate, mail
 from flask_wtf.csrf import CSRFProtect
 import os
 
@@ -11,10 +11,16 @@ def create_app():
     from config import DevelopmentConfig
     app.config.from_object(DevelopmentConfig)
 
+    if app.config.get('TESTING'):
+        app.config.setdefault('MAIL_SUPPRESS_SEND', True)
+
     # Initialize extensions
     db.init_app(app)
     ma.init_app(app)
     login_manager.init_app(app)
+    migrate.init_app(app, db)
+    mail.init_app(app)
+    app.mail = mail
     login_manager.login_view = 'auth.login'
     from app.models import User
 

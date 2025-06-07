@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime
 from app import create_app, db
 from app.models import User, Event, RSVP
+from app.extensions import mail
 
 
 @pytest.fixture
@@ -9,6 +10,9 @@ def client(tmp_path):
     app = create_app()
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = False
+    mail.init_app(app)
+    app.mail = mail
+    app.mail.suppress = True
     with app.app_context():
         db.create_all()
     return app.test_client()

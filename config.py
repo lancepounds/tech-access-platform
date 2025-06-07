@@ -15,6 +15,13 @@ class Config:
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
     SENDGRID_MOCK = SENDGRID_API_KEY is None
 
+    MAIL_SERVER = 'smtp.example.com'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = 'your-username'
+    MAIL_PASSWORD = 'your-password'
+    MAIL_DEFAULT_SENDER = ('Tech Access', 'no-reply@techaccess.org')
+
     # JWT configuration
     JWT_SECRET_KEY = os.getenv("SECRET_KEY", 'fallback-secret-key')
     JWT_TOKEN_LOCATION = ["headers"]

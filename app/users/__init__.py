@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, current_app, redirect, ur
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os, uuid
-from app.extensions import db
+from flask_mail import Message
+from app.extensions import db, mail
 from app.models import User, RSVP, Event
 from app.users.forms import ProfileForm, CancelRSVPForm
 
@@ -52,7 +53,14 @@ def cancel_rsvp(event_id: int):
     """Allow a user to cancel their RSVP for a given event."""
     rsvp = RSVP.query.filter_by(user_id=current_user.id, event_id=str(event_id)).first()
     if rsvp:
+        event = Event.query.get(event_id)
         db.session.delete(rsvp)
         db.session.commit()
-        flash('RSVP cancelled.', 'success')
+        msg = Message(
+            subject=f"RSVP Cancellation for {event.title}",
+            recipients=[current_user.email]
+        )
+        msg.body = render_template('email/cancellation_confirmation.txt', user=current_user, event=event)
+        mail.send(msg)
+        flash('RSVP has been canceled and a confirmation email has been sent.', 'success')
     return redirect(url_for('users.my_rsvps'))
