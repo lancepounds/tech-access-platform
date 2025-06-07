@@ -106,6 +106,14 @@ class Company(db.Model):
         return f'<Company {self.name}>'
 
 
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<Category {self.name}>'
+
+
 class Event(db.Model):
     __tablename__ = "events"
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -114,6 +122,8 @@ class Event(db.Model):
     date = db.Column(db.DateTime, nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
     user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=True)  # For user-created events
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
+    category = db.relationship('Category', backref='events')
     # Use dynamic loading so we can call ``event.rsvps.count()`` without
     # loading all related rows into memory.
     rsvps = db.relationship('RSVP', backref='event', lazy='dynamic')
