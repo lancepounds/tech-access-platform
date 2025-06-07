@@ -1,0 +1,9 @@
+Hello {{ user.name }},
+
+Thank you for RSVPing to “{{ event.title }}” on {{ event.date.strftime('%Y-%m-%d') }}.
+
+You can view event details at {{ url_for('main.event_detail', event_id=event.id, _external=True) }}.
+
+We look forward to seeing you there!
+
+— Tech Access Team

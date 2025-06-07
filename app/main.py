@@ -2,9 +2,10 @@ import io
 import csv
 from flask import Response, abort
 from flask_login import login_required, current_user
-
 from app.models import Event
 from app.main.routes import main_bp
+
+
 
 
 @main_bp.route('/events/<int:event_id>/export', methods=['GET'])

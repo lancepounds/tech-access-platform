@@ -10,6 +10,8 @@ from app.reviews.forms import ReviewForm
 from app.users.forms import WaitlistForm
 from app.auth.decorators import decode_token
 from app.extensions import db
+from flask_mail import Message
+from app.extensions import mail
 import datetime
 import uuid
 import os
@@ -91,8 +93,40 @@ def event_detail(event_id):
         waitlist_form=waitlist_form,
         Waitlist=Waitlist,
         avg_rating=round(avg_rating, 1),
-        reviews=reviews,
+    reviews=reviews,
     )
+
+
+@main_bp.route('/events/<event_id>/rsvp', methods=['POST'])
+@login_required
+def rsvp_event(event_id):
+    """RSVP the current user to an event and send confirmation email."""
+    event = Event.query.get_or_404(event_id)
+
+    existing = RSVP.query.filter_by(user_id=current_user.id, event_id=str(event_id)).first()
+    if existing:
+        flash('You have already RSVP\'d for this event.', 'warning')
+        return redirect(url_for('main.event_detail', event_id=event_id))
+
+    seats_taken = RSVP.query.filter_by(event_id=str(event_id)).count()
+    seats_available = not getattr(event, 'max_participants', None) or seats_taken < (event.max_participants or 0)
+
+    if not seats_available:
+        flash('No seats available for this event.', 'danger')
+        return redirect(url_for('main.event_detail', event_id=event_id))
+
+    new_rsvp = RSVP(event_id=str(event_id), user_id=current_user.id)
+    db.session.add(new_rsvp)
+    db.session.commit()
+
+    msg = Message(
+        subject=f"RSVP Confirmation for {event.title}",
+        recipients=[current_user.email]
+    )
+    msg.body = render_template('email/rsvp_confirmation.txt', user=current_user, event=event)
+    mail.send(msg)
+    flash('Your RSVP is confirmed and a confirmation email has been sent.', 'success')
+    return redirect(url_for('users.my_rsvps'))
 
 @main_bp.route('/search')
 def search():
