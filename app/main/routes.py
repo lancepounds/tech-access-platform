@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for, current_app, abort
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from app.models import Event, RSVP, Company, User, Reward
+from app.models import Event, RSVP, Company, User, Reward, Category
 from sqlalchemy import or_
 from app.auth.decorators import decode_token
 from app.extensions import db
@@ -38,6 +38,17 @@ def db_health():
 def show_events():
     events = Event.query.order_by(Event.date).all()
     return render_template('events.html', events=events)
+
+
+@main_bp.route('/events')
+def list_events():
+    category_id = request.args.get('category_id', type=int)
+    if category_id:
+        events = Event.query.filter_by(category_id=category_id).order_by(Event.date).all()
+    else:
+        events = Event.query.order_by(Event.date).all()
+    all_categories = Category.query.order_by(Category.name).all()
+    return render_template('event_list.html', events=events, all_categories=all_categories)
 
 
 @main_bp.route('/events/<event_id>')
@@ -83,7 +94,8 @@ def testing_opportunities():
 
 @main_bp.route('/create-event', methods=['GET'])
 def create_event_page():
-    return render_template('create_event.html')
+    categories = Category.query.order_by(Category.name).all()
+    return render_template('create_event.html', categories=categories)
 
 @main_bp.route('/test-sendgrid', methods=['GET'])
 def test_sendgrid():
@@ -118,6 +130,7 @@ def create_event():
     title = request.form.get('title')
     description = request.form.get('description')
     date = request.form.get('date')
+    category_id_val = request.form.get('category_id')
 
     # Validation
     if not title or not description or not date:
@@ -138,6 +151,11 @@ def create_event():
         date=event_date,
         company_id=current_user.company_id
     )
+    if category_id_val:
+        try:
+            new_event.category_id = int(category_id_val)
+        except ValueError:
+            pass
 
     image_file = request.files.get('image')
     if image_file and image_file.filename:
@@ -165,6 +183,7 @@ def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
     if not current_user.company_id or event.company_id != current_user.company_id:
         return abort(403)
+    categories = Category.query.order_by(Category.name).all()
 
     if request.method == 'POST':
         title = request.form.get('title')
@@ -183,6 +202,12 @@ def edit_event(event_id):
 
         event.title = title
         event.description = description
+        category_id_val = request.form.get('category_id')
+        if category_id_val:
+            try:
+                event.category_id = int(category_id_val)
+            except ValueError:
+                pass
 
         image_file = request.files.get('image')
         if image_file and image_file.filename:
@@ -201,7 +226,7 @@ def edit_event(event_id):
             db.session.rollback()
             flash('Failed to update event. Please try again.', 'danger')
 
-    return render_template('edit_event.html', event=event)
+    return render_template('edit_event.html', event=event, categories=categories)
 
 @main_bp.route('/my-rsvps-page')
 def show_my_rsvps():

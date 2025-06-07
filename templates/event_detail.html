@@ -5,6 +5,9 @@
 {% block content %}
 <div class="container my-5">
   <h1>{{ event.title }}</h1>
+  {% if event.category %}
+  <p><strong>Category:</strong> {{ event.category.name }}</p>
+  {% endif %}
   <p>{{ event.description }}</p>
   <p>Date: {{ event.date }}</p>
   <p>RSVPs: {{ count }}</p>

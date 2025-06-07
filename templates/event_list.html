@@ -6,6 +6,17 @@
 </head>
 <body>
   <h1>Available Events</h1>
+  <form method="get" action="{{ url_for('main.list_events') }}" class="mb-4">
+    <div class="input-group">
+      <select name="category_id" class="form-select">
+        <option value="">All Categories</option>
+        {% for cat in all_categories %}
+          <option value="{{ cat.id }}" {% if request.args.get('category_id')|int == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </div>
+  </form>
   <ul>
     {% for e in events %}
       <li>{{e.name}} on {{e.date}} — <a href="/events/{{e.id}}">Details</a>
