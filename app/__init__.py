@@ -58,6 +58,7 @@ def create_app():
     from app.users import users_bp
     from app.companies.routes import companies_bp
     from app.events.routes import evt_bp as events_bp
+    from app.categories import categories_bp
     from app.main.routes import main_bp
     from app.checks.routes import checks_bp
     from app.dashboard.routes import dash_bp
@@ -67,6 +68,7 @@ def create_app():
     csrf.exempt(users_bp)
     csrf.exempt(events_bp)
     csrf.exempt(companies_bp)
+    csrf.exempt(categories_bp)
     csrf.exempt(checks_bp)
     
     app.register_blueprint(auth_bp)
@@ -76,6 +78,7 @@ def create_app():
     app.register_blueprint(users_bp)
     app.register_blueprint(companies_bp, url_prefix='/companies')
     app.register_blueprint(checks_bp, url_prefix='/checks')
+    app.register_blueprint(categories_bp)
     app.register_blueprint(main_bp)
 
     # Create tables

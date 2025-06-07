@@ -25,6 +25,15 @@
             <label for="date" class="form-label">Event Date & Time</label>
             <input type="datetime-local" class="form-control" id="date" name="date" required>
           </div>
+          <div class="mb-3">
+            <label for="category_id" class="form-label">Category</label>
+            <select name="category_id" class="form-select">
+              <option value="">Uncategorized</option>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if event and event.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
           {% if current_user.company_id %}
           <div class="mb-3">
             <label for="image" class="form-label">Event Image</label>
