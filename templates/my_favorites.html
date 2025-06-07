@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}My Favorites – Tech Access{% endblock %}
+
+{% block content %}
+  <h2 class="mb-4">My Favorite Events</h2>
+  {% if events %}
+    <ul class="list-group">
+      {% for event in events %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('main.event_detail', event_id=event.id) }}">{{ event.title }}</a>
+          <small class="text-muted">{{ event.date.strftime('%B %d, %Y') }}</small>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You haven’t favorited any events yet.</p>
+  {% endif %}
+{% endblock %}

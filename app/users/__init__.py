@@ -6,7 +6,7 @@ import uuid
 from flask import Blueprint
 from flask_mail import Message
 from app.extensions import db, mail
-from app.models import User, RSVP, Event, Waitlist
+from app.models import User, RSVP, Event, Waitlist, Favorite
 from app.users.forms import ProfileForm, CancelRSVPForm
 
 users_bp = Blueprint('users', __name__)
@@ -70,5 +70,31 @@ def cancel_rsvp(event_id: int):
         )
         msg.body = render_template('email/cancellation_confirmation.txt', user=current_user, event=event)
         mail.send(msg)
-        flash('RSVP has been canceled and a confirmation email has been sent.', 'success')
+        flash('RSVP cancelled.', 'success')
     return redirect(url_for('users.my_rsvps'))
+
+
+@users_bp.route('/favorite/<event_id>', methods=['POST'])
+@login_required
+def toggle_favorite(event_id):
+    """Toggle favorite status for the given event."""
+    fav = Favorite.query.filter_by(user_id=current_user.id, event_id=str(event_id)).first()
+    if fav:
+        db.session.delete(fav)
+        db.session.commit()
+        flash('Event removed from favorites.', 'success')
+    else:
+        new_fav = Favorite(user_id=current_user.id, event_id=str(event_id))
+        db.session.add(new_fav)
+        db.session.commit()
+        flash('Event added to favorites.', 'success')
+    return redirect(request.referrer or url_for('main.event_detail', event_id=event_id))
+
+
+@users_bp.route('/users/favorites')
+@login_required
+def my_favorites():
+    """List current user's favorited events."""
+    favs = Favorite.query.filter_by(user_id=current_user.id).all()
+    events = [f.event for f in favs if f.event]
+    return render_template('my_favorites.html', events=events)
