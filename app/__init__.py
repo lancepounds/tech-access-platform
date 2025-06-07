@@ -11,8 +11,8 @@ def create_app():
     from config import DevelopmentConfig
     app.config.from_object(DevelopmentConfig)
 
-    if app.config.get('TESTING'):
-        app.config.setdefault('MAIL_SUPPRESS_SEND', True)
+    # Suppress sending emails by default (tests override if needed)
+    app.config.setdefault('MAIL_SUPPRESS_SEND', True)
 
     # Initialize extensions
     db.init_app(app)

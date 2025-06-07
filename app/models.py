@@ -172,6 +172,15 @@ class Waitlist(db.Model):
     user = db.relationship('User', backref='waitlist_entries')
 
 
+class Favorite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    event_id = db.Column(db.String, db.ForeignKey('events.id'), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    user = db.relationship('User', backref='favorites')
+    event = db.relationship('Event', backref='favorited_by')
+
+
 class GiftCard(db.Model):
     __tablename__ = "gift_cards"
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))

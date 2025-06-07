@@ -4,7 +4,17 @@
 
 {% block content %}
 <div class="container my-5">
-<h1>{{ event.title }}</h1>
+<h1>{{ event.title }}
+  {% if current_user.is_authenticated %}
+    {% set is_fav = event.favorited_by | selectattr('user_id','equalto', current_user.id) | list | length > 0 %}
+    <form method="post" action="{{ url_for('users.toggle_favorite', event_id=event.id) }}" class="d-inline">
+      {{ csrf_token() }}
+      <button type="submit" class="btn btn-link p-0 fs-3" aria-label="Toggle favorite">
+        {% if is_fav %}&#9733;{% else %}&#9734;{% endif %}
+      </button>
+    </form>
+  {% endif %}
+</h1>
 {% if current_user.company_id and event.company_id == current_user.company_id %}
   <a href="{{ url_for('main.event_calendar', event_id=event.id) }}" class="btn btn-outline-primary mb-3">
     Add to Calendar

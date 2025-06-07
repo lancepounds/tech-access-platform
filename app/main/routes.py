@@ -108,11 +108,12 @@ def rsvp_event(event_id):
         flash('You have already RSVP\'d for this event.', 'warning')
         return redirect(url_for('main.event_detail', event_id=event_id))
 
-    seats_taken = RSVP.query.filter_by(event_id=str(event_id)).count()
-    seats_available = not getattr(event, 'max_participants', None) or seats_taken < (event.max_participants or 0)
-
-    if not seats_available:
-        flash('No seats available for this event.', 'danger')
+    # Check capacity and handle waitlist
+    if event.capacity and RSVP.query.filter_by(event_id=str(event_id)).count() >= event.capacity:
+        wait = Waitlist(user_id=current_user.id, event_id=str(event_id))
+        db.session.add(wait)
+        db.session.commit()
+        flash('Event is full. You have been added to the waitlist.', 'info')
         return redirect(url_for('main.event_detail', event_id=event_id))
 
     new_rsvp = RSVP(event_id=str(event_id), user_id=current_user.id)
@@ -125,7 +126,7 @@ def rsvp_event(event_id):
     )
     msg.body = render_template('email/rsvp_confirmation.txt', user=current_user, event=event)
     mail.send(msg)
-    flash('Your RSVP is confirmed and a confirmation email has been sent.', 'success')
+    flash('RSVP successful! A confirmation email has been sent.', 'success')
     return redirect(url_for('users.my_rsvps'))
 
 @main_bp.route('/search')
