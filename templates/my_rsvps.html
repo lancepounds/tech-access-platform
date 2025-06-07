@@ -4,8 +4,9 @@
 
 {% block content %}
   <h2 class="mb-4">My RSVP'd Events</h2>
+  <h3>Confirmed RSVPs</h3>
   {% if events %}
-    <ul class="list-group">
+    <ul class="list-group mb-4">
       {% for event in events %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
           <div>
@@ -21,6 +22,19 @@
     </ul>
   {% else %}
     <p>You haven’t signed up for any events yet.</p>
+  {% endif %}
+
+  <h3>Waitlisted</h3>
+  {% if waitlists %}
+    <ul class="list-group">
+      {% for wl in waitlists %}
+        <li class="list-group-item">
+          {{ wl.event.title }} - #{{ wl.event.waitlist.filter(Waitlist.created_at <= wl.created_at).count() }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No waitlisted events.</p>
   {% endif %}
 {% endblock %}
 
