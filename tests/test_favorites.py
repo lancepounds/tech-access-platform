@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime
 from app import create_app, db
 from app.models import User, Event, Favorite
+from werkzeug.security import generate_password_hash
 
 @pytest.fixture
 def client(tmp_path):
@@ -10,7 +11,7 @@ def client(tmp_path):
     app.config['WTF_CSRF_ENABLED'] = False
     with app.app_context():
         db.create_all()
-        user = User(email='fav@example.com', password='pw')
+        user = User(email='fav@example.com', password=generate_password_hash('pw'))
         event = Event(id='evt1', title='Fav Event', description='Desc', date=datetime(2030,1,1))
         db.session.add_all([user, event])
         db.session.commit()

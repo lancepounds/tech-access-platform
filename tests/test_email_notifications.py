@@ -3,6 +3,7 @@ from app import create_app, db
 from app.models import User, Event
 from app.extensions import mail
 from datetime import datetime
+from werkzeug.security import generate_password_hash
 
 @pytest.fixture
 def client():
@@ -11,13 +12,14 @@ def client():
         TESTING=True,
         MAIL_SUPPRESS_SEND=True,
         MAIL_SERVER='localhost',
-        MAIL_PORT=8025
+        MAIL_PORT=8025,
+        WTF_CSRF_ENABLED=False  # Explicitly disable CSRF for these tests
     )
     mail.init_app(app)
     app.mail = mail
     with app.app_context():
         db.create_all()
-        user = User(email='u@example.com', password='pass', name='U')
+        user = User(email='u@example.com', password=generate_password_hash('pass'), name='U')
         event = Event(id='1', title='E', description='D', date=datetime(2025, 10, 10), company_id=None)
         db.session.add_all([user, event])
         db.session.commit()

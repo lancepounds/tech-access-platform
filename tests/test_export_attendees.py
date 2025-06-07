@@ -25,9 +25,9 @@ def seed_data(app):
             password=generate_password_hash('pw'),
             approved=True,
         )
-        owner = User(email='owner@example.com', password='pw', name='Owner')
-        user1 = User(email='a@example.com', password='pw', name='Alice')
-        user2 = User(email='b@example.com', password='pw', name='Bob')
+        owner = User(email='owner@example.com', password=generate_password_hash('pw'), name='Owner')
+        user1 = User(email='a@example.com', password=generate_password_hash('pw'), name='Alice')
+        user2 = User(email='b@example.com', password=generate_password_hash('pw'), name='Bob')
         db.session.add_all([company, owner, user1, user2])
         db.session.commit()
         event = Event(
@@ -93,7 +93,7 @@ def test_export_attendees_forbidden(client):
         password=generate_password_hash('pw'),
         approved=True,
     )
-    other_owner = User(email='other@example.com', password='pw', name='Other')
+    other_owner = User(email='other@example.com', password=generate_password_hash('pw'), name='Other')
     with client.application.app_context():
         db.session.add_all([other_company, other_owner])
         db.session.commit()
