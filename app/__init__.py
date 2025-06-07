@@ -68,6 +68,7 @@ def create_app():
     from app.main.routes import main_bp
     from app.checks.routes import checks_bp
     from app.dashboard.routes import dash_bp
+    from app.api import api_bp
 
     csrf.exempt(auth_bp)
     csrf.exempt(api_users_bp)
@@ -80,6 +81,7 @@ def create_app():
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dash_bp)
+    app.register_blueprint(api_bp)
     app.register_blueprint(events_bp, url_prefix='/api/events')
     app.register_blueprint(api_users_bp, url_prefix='/api/users')
     app.register_blueprint(users_bp)
