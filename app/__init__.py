@@ -70,6 +70,7 @@ def create_app():
     csrf.exempt(companies_bp)
     csrf.exempt(categories_bp)
     csrf.exempt(checks_bp)
+    csrf.exempt(main_bp)
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dash_bp)

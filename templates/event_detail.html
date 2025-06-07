@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends 'layout.html' %}
 
 {% block title %}{{ event.title }} – Tech Access{% endblock %}
 
@@ -35,6 +35,36 @@
     </ul>
   {% else %}
     <p>No one has RSVP’d yet.</p>
+  {% endif %}
+
+  <p><strong>Average Rating:</strong> {{ avg_rating }} / 5</p>
+
+  {% if current_user.is_authenticated %}
+    <form method="post">
+      {{ form.csrf_token }}
+      <div class="mb-2">
+        {{ form.rating.label }} {{ form.rating(class="form-select w-auto d-inline-block") }}
+      </div>
+      <div class="mb-2">
+        {{ form.comment.label }} {{ form.comment(class="form-control", rows="3") }}
+      </div>
+      <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+    </form>
+  {% endif %}
+
+  <h3 class="mt-4">Reviews</h3>
+  {% if reviews %}
+    <ul class="list-group">
+      {% for rev in reviews %}
+        <li class="list-group-item">
+          <strong>{{ rev.user.name }}</strong> — {{ rev.rating }}/5<br>
+          <small class="text-muted">{{ rev.created_at.strftime('%Y-%m-%d') }}</small>
+          <p>{{ rev.comment }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No reviews yet.</p>
   {% endif %}
 </div>
 {% endblock %}
