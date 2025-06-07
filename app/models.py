@@ -138,6 +138,18 @@ class Event(db.Model):
         self.title = value
 
 
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    event_id = db.Column(db.String, db.ForeignKey('events.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    user = db.relationship('User', backref='reviews')
+    event = db.relationship('Event', backref='reviews')
+
+
 class RSVP(db.Model):
     __tablename__ = "rsvps"
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))

@@ -4,8 +4,9 @@ from flask_login import login_required, current_user
 import io
 import csv
 from werkzeug.utils import secure_filename
-from app.models import Event, RSVP, Company, User, Reward, Category
-from sqlalchemy import or_
+from app.models import Event, RSVP, Company, User, Reward, Category, Review
+from sqlalchemy import or_, func
+from app.reviews.forms import ReviewForm
 from app.auth.decorators import decode_token
 from app.extensions import db
 import datetime
@@ -54,14 +55,39 @@ def list_events():
     return render_template('event_list.html', events=events, all_categories=all_categories)
 
 
-@main_bp.route('/events/<event_id>')
+@main_bp.route('/events/<event_id>', methods=['GET', 'POST'])
 def event_detail(event_id):
-    """Display a single event's details."""
+    """Display a single event's details and handle reviews."""
     event = Event.query.get_or_404(event_id)
+    form = ReviewForm()
+
+    if form.validate_on_submit() and current_user.is_authenticated:
+        rsvp = db.session.query(func.count()).select_from(Review).filter_by(user_id=current_user.id, event_id=event.id).scalar()
+        if not Review.query.filter_by(user_id=current_user.id, event_id=event.id).first():
+            new_review = Review(
+                user_id=current_user.id,
+                event_id=event.id,
+                rating=int(form.rating.data),
+                comment=form.comment.data,
+            )
+            db.session.add(new_review)
+            db.session.commit()
+            flash('Your review has been posted.', 'success')
+        return redirect(url_for('main.event_detail', event_id=event.id))
+
+    avg_rating = db.session.query(func.avg(Review.rating)).filter_by(event_id=event.id).scalar() or 0
+    reviews = Review.query.filter_by(event_id=event.id).order_by(Review.created_at.desc()).all()
+
     count = event.rsvps.count()
     attendees = [rsvp.user for rsvp in event.rsvps.all()]
     return render_template(
-        'event_detail.html', event=event, count=count, attendees=attendees
+        'event_detail.html',
+        event=event,
+        count=count,
+        attendees=attendees,
+        form=form,
+        avg_rating=round(avg_rating, 1),
+        reviews=reviews,
     )
 
 @main_bp.route('/search')
