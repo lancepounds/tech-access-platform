@@ -1,6 +1,7 @@
 import io
 import csv
-from flask import Response, abort
+from datetime import date
+from flask import Blueprint, render_template, Response, abort
 from flask_login import login_required, current_user
 from app.models import Event
 from app.main.routes import main_bp
@@ -30,5 +31,13 @@ def export_attendees(event_id):
         mimetype='text/csv',
         headers={'Content-Disposition': f'attachment;filename=attendees_event_{event_id}.csv'}
     )
+
+
+@main_bp.route('/events')
+def events():
+    today = date.today()
+    upcoming_events = Event.query.filter(Event.date >= today).order_by(Event.date).all()
+    past_events = Event.query.filter(Event.date < today).order_by(Event.date.desc()).all()
+    return render_template('events.html', upcoming_events=upcoming_events, past_events=past_events)
 
 

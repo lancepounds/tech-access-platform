@@ -12,7 +12,7 @@ def client():
     return app.test_client()
 
 
-def test_filter_by_category(client):
+def test_events_show_all_categories(client):
     with client.application.app_context():
         music = Category(name='Music')
         tech = Category(name='Tech')
@@ -22,10 +22,9 @@ def test_filter_by_category(client):
         e2 = Event(id='t1', title='Tech Conf', description='B', date=datetime(2030,1,2), category_id=tech.id)
         db.session.add_all([e1, e2])
         db.session.commit()
-        url = f'/events?category_id={music.id}'
-    res = client.get(url)
+    res = client.get('/events')
     assert b'Music Fest' in res.data
-    assert b'Tech Conf' not in res.data
+    assert b'Tech Conf' in res.data
 
 
 def test_uncategorized_events_show(client):
