@@ -1,0 +1,8 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container mt-5 text-center">
+  <h1>500 – Server Error</h1>
+  <p>Sorry, an unexpected error occurred.</p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-primary">Return Home</a>
+</div>
+{% endblock %}
