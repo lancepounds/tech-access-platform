@@ -463,3 +463,35 @@ def export_attendees(event_id):
         mimetype='text/csv',
         headers={'Content-Disposition': f'attachment;filename=attendees_event_{event_id}.csv'}
     )
+
+
+@main_bp.route('/events/<int:event_id>/calendar.ics', methods=['GET'])
+@login_required
+def event_calendar(event_id):
+    event = Event.query.get_or_404(event_id)
+    if not current_user.company_id or event.company_id != current_user.company_id:
+        abort(403)
+    si = io.StringIO()
+    writer = csv.writer(si)
+    writer.writerow(['UID', 'DTSTART', 'SUMMARY', 'DESCRIPTION', 'URL'])
+    uid = f"event-{event.id}@{request.host}"
+    dtstart = event.date.strftime('%Y%m%d')
+    url = url_for('main.event_detail', event_id=event.id, _external=True)
+    writer.writerow([uid, dtstart, event.title, event.description, url])
+    lines = si.getvalue().splitlines()
+    headers = lines[0].split(',')
+    values = lines[1].split(',')
+    event_lines = '\r\n'.join(f"{h}:{v}" for h, v in zip(headers, values))
+    ics_content = (
+        'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//YourApp//EN\r\n' +
+        'BEGIN:VEVENT\r\n' +
+        event_lines +
+        '\r\nEND:VEVENT\r\nEND:VCALENDAR'
+    )
+    return Response(
+        ics_content,
+        headers={
+            'Content-Type': 'text/calendar',
+            'Content-Disposition': f'attachment; filename=event_{event.id}.ics'
+        }
+    )
