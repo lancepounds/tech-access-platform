@@ -6,6 +6,7 @@ import csv
 from werkzeug.utils import secure_filename
 from app.models import Event, RSVP, Company, User, Reward, Category, Review, Waitlist
 from sqlalchemy import or_, func
+from datetime import date
 from app.reviews.forms import ReviewForm
 from app.users.forms import WaitlistForm
 from app.auth.decorators import decode_token
@@ -49,16 +50,14 @@ def show_events():
 
 @main_bp.route('/events')
 def list_events():
-    page = request.args.get('page', 1, type=int)
-    category_id = request.args.get('category_id', type=int)
-    query = Event.query
-    if category_id:
-        query = query.filter_by(category_id=category_id)
-    pagination = query.order_by(Event.date).paginate(page=page, per_page=10, error_out=False)
-    events = pagination.items
-    all_categories = Category.query.order_by(Category.name).all()
-    counts = {e.id: e.rsvps.count() for e in events}
-    return render_template('events.html', events=events, pagination=pagination, counts=counts, all_categories=all_categories)
+    today = date.today()
+    upcoming_events = Event.query.filter(Event.date >= today).order_by(Event.date).all()
+    past_events = Event.query.filter(Event.date < today).order_by(Event.date.desc()).all()
+    return render_template(
+        'events.html',
+        upcoming_events=upcoming_events,
+        past_events=past_events
+    )
 
 
 @main_bp.route('/events/<event_id>', methods=['GET', 'POST'])

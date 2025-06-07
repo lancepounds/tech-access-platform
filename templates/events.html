@@ -1,282 +1,31 @@
-
 {% extends "base.html" %}
 
 {% block title %}Events – Tech Access{% endblock %}
 
 {% block content %}
-<!-- Header Section -->
-<div class="events-header text-center py-4 mb-5">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <div class="header-icon mb-3">
-          <i class="bi bi-calendar-event" style="font-size: 3.5rem; color: var(--primary-color);"></i>
-        </div>
-        <h1 class="display-4 fw-bold mb-3">
-          <span class="text-gradient">Upcoming Events</span>
-        </h1>
-        <p class="lead text-muted mb-4">
-          Discover accessibility testing opportunities and join our community events
-        </p>
-        {% if session.get('role') == 'company' %}
-        <a href="{{ url_for('main.create_event_page') }}" class="btn btn-success btn-lg">
-          <i class="bi bi-plus-circle me-2"></i>Create New Event
-        </a>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Filters and Search -->
-<div class="container mb-4">
-  <div class="row">
-    <div class="col-md-8">
-      <div class="input-group">
-        <span class="input-group-text bg-white border-end-0">
-          <i class="bi bi-search text-muted"></i>
-        </span>
-        <input type="text" class="form-control border-start-0" placeholder="Search events..." id="eventSearch">
-      </div>
-    </div>
-    <div class="col-md-4">
-      <select class="form-select" id="eventFilter">
-        <option value="">All Categories</option>
-        <option value="web">Web Testing</option>
-        <option value="mobile">Mobile Apps</option>
-        <option value="software">Software</option>
-        <option value="workshop">Workshops</option>
-      </select>
-    </div>
-  </div>
-</div>
-
-<!-- Events Grid -->
-<div class="container">
-  {% if events %}
-  <div class="row g-4" id="eventsGrid">
-    {% for event in events %}
-    <div class="col-lg-6 col-xl-4 event-card" data-category="{{ event.category or 'general' }}">
-      <div class="card h-100 border-0 shadow-sm event-item">
-        <div class="card-header bg-gradient text-white p-3" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));">
-          <div class="d-flex justify-content-between align-items-start">
-            <h5 class="card-title mb-0 fw-bold">{{ event.title }}</h5>
-            <span class="badge bg-white text-primary rounded-pill px-3">
-              {{ event.category or 'General' }}
-            </span>
-          </div>
-        </div>
-        
-        <div class="card-body p-4">
-          <p class="card-text text-muted mb-3">{{ event.description[:120] }}{% if event.description|length > 120 %}...{% endif %}</p>
-          
-          <div class="event-details mb-3">
-            <div class="detail-item mb-2">
-              <i class="bi bi-calendar3 me-2 text-primary"></i>
-              <span class="fw-medium">{{ event.date.strftime('%B %d, %Y') }}</span>
-            </div>
-            <div class="detail-item mb-2">
-              <i class="bi bi-clock me-2 text-primary"></i>
-              <span>{{ event.time or 'Time TBD' }}</span>
-            </div>
-            <div class="detail-item mb-2">
-              <i class="bi bi-geo-alt me-2 text-primary"></i>
-              <span>{{ event.location or 'Virtual Event' }}</span>
-            </div>
-            {% if event.max_participants %}
-            <div class="detail-item mb-2">
-              <i class="bi bi-people me-2 text-primary"></i>
-              <span>{{ counts[event.id] }}/{{ event.max_participants }} participants</span>
-            </div>
-            {% endif %}
-          </div>
-          
-            {% if counts[event.id] >= (event.max_participants or 999) %}
-          <div class="alert alert-warning py-2 px-3 mb-3">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            <small>Event is full</small>
-          </div>
-          {% endif %}
-        </div>
-        
-        <div class="card-footer bg-transparent border-0 p-4 pt-0">
-          {% if session.get('role') == 'user' %}
-            {% set user_rsvp = event.rsvps.filter_by(user_id=session.get('user_id')).first() %}
-            {% if user_rsvp %}
-            <button class="btn btn-outline-success w-100" disabled>
-              <i class="bi bi-check-circle-fill me-2"></i>You're registered!
-            </button>
-            {% elif counts[event.id] >= (event.max_participants or 999) %}
-            <button class="btn btn-secondary w-100" disabled>
-              <i class="bi bi-x-circle me-2"></i>Event Full
-            </button>
-            {% else %}
-            <form method="post" action="{{ url_for('main.rsvp_event', event_id=event.id) }}">
-              <button type="submit" class="btn btn-primary w-100">
-                <i class="bi bi-calendar-plus me-2"></i>Register Now
-              </button>
-            </form>
-            {% endif %}
-          {% elif session.get('role') == 'company' %}
-          <div class="d-grid gap-2">
-            <a href="#" class="btn btn-outline-primary">
-              <i class="bi bi-eye me-2"></i>View Details
-            </a>
-            <div class="text-center">
-              <small>RSVPs: {{ counts[event.id] }}</small>
-            </div>
-          </div>
-          {% else %}
-          <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary w-100">
-            <i class="bi bi-box-arrow-in-right me-2"></i>Login to Register
-          </a>
-          {% endif %}
-        </div>
-      </div>
-    </div>
+<h2>Upcoming Events</h2>
+{% if upcoming_events %}
+  <ul class="list-group mb-4">
+    {% for ev in upcoming_events %}
+      <li class="list-group-item">
+        <a href="{{ url_for('main.event_detail', event_id=ev.id) }}">{{ ev.title }}</a> — {{ ev.date }}
+      </li>
     {% endfor %}
-  </div>
-  {% else %}
-  <!-- Empty State -->
-  <div class="row justify-content-center">
-    <div class="col-lg-6 text-center">
-      <div class="empty-state py-5">
-        <i class="bi bi-calendar-x" style="font-size: 4rem; color: var(--text-light); margin-bottom: 2rem;"></i>
-        <h3 class="fw-bold mb-3">No Events Yet</h3>
-        <p class="text-muted mb-4">There are no events scheduled at the moment. Check back soon!</p>
-        {% if session.get('role') == 'company' %}
-        <a href="{{ url_for('main.create_event_page') }}" class="btn btn-success">
-          <i class="bi bi-plus-circle me-2"></i>Create First Event
-        </a>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-  {% endif %}
-  <nav aria-label="Event pagination">
-    <ul class="pagination">
-      {% if pagination.has_prev %}
-        <li class="page-item">
-          <a class="page-link" href="{{ url_for('main.list_events', page=pagination.prev_num) }}">Previous</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Previous</span></li>
-      {% endif %}
-      {% if pagination.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="{{ url_for('main.list_events', page=pagination.next_num) }}">Next</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Next</span></li>
-      {% endif %}
-    </ul>
-  </nav>
-</div>
+  </ul>
+{% else %}
+  <p>No upcoming events.</p>
+{% endif %}
 
-<style>
-.text-gradient {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.events-header {
-  position: relative;
-  overflow: hidden;
-}
-
-.events-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(16, 185, 129, 0.05));
-  border-radius: 20px;
-  z-index: -1;
-}
-
-.event-item {
-  transition: all 0.3s ease;
-  border-radius: 16px !important;
-  overflow: hidden;
-}
-
-.event-item:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
-}
-
-.event-item .card-header {
-  border-radius: 16px 16px 0 0 !important;
-}
-
-.detail-item {
-  display: flex;
-  align-items: center;
-  font-size: 0.9rem;
-}
-
-.input-group .form-control:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
-}
-
-.input-group-text {
-  border-color: var(--border-light);
-}
-
-.form-select:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
-}
-
-.empty-state {
-  padding: 3rem 1rem;
-}
-
-@media (max-width: 768px) {
-  .events-header h1 {
-    font-size: 2.5rem !important;
-  }
-  
-  .container .row .col-md-4 {
-    margin-top: 1rem;
-  }
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('eventSearch');
-  const filterSelect = document.getElementById('eventFilter');
-  const eventCards = document.querySelectorAll('.event-card');
-
-  function filterEvents() {
-    const searchTerm = searchInput.value.toLowerCase();
-    const selectedCategory = filterSelect.value.toLowerCase();
-
-    eventCards.forEach(card => {
-      const title = card.querySelector('.card-title').textContent.toLowerCase();
-      const description = card.querySelector('.card-text').textContent.toLowerCase();
-      const category = card.getAttribute('data-category').toLowerCase();
-
-      const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
-      const matchesCategory = !selectedCategory || category === selectedCategory;
-
-      if (matchesSearch && matchesCategory) {
-        card.style.display = 'block';
-        card.style.animation = 'fadeIn 0.3s ease';
-      } else {
-        card.style.display = 'none';
-      }
-    });
-  }
-
-  searchInput.addEventListener('input', filterEvents);
-  filterSelect.addEventListener('change', filterEvents);
-});
-</script>
+<h2>Past Events</h2>
+{% if past_events %}
+  <ul class="list-group">
+    {% for ev in past_events %}
+      <li class="list-group-item text-muted">
+        <a href="{{ url_for('main.event_detail', event_id=ev.id) }}">{{ ev.title }}</a> — {{ ev.date }}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No past events.</p>
+{% endif %}
 {% endblock %}

@@ -18,28 +18,12 @@ def client():
 
 
 def extract_titles(html: str):
-    return re.findall(r'<h5 class="card-title[^>]*>([^<]+)</h5>', html)
+    return re.findall(r'<li class="list-group-item(?: text-muted)?">\s*<a [^>]+>([^<]+)</a>', html)
 
 
-def test_first_page_shows_ten_events(client):
-    res = client.get('/events?page=1')
+def test_all_events_displayed(client):
+    res = client.get('/events')
     assert res.status_code == 200
     titles = extract_titles(res.get_data(as_text=True))
-    assert len(titles) == 10
-    assert 'Event 1' in titles and 'Event 10' in titles
-
-
-def test_third_page_shows_remaining_events(client):
-    res = client.get('/events?page=3')
-    html = res.get_data(as_text=True)
-    titles = extract_titles(html)
-    assert len(titles) == 5
-    assert 'Event 25' in titles
-    assert '/events?page=2' in html  # Previous enabled
-
-
-def test_out_of_range_page_returns_empty(client):
-    res = client.get('/events?page=999')
-    titles = extract_titles(res.get_data(as_text=True))
-    assert res.status_code == 200
-    assert titles == []
+    assert len(titles) == 25
+    assert 'Event 1' in titles and 'Event 25' in titles
