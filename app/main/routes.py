@@ -49,13 +49,16 @@ def show_events():
 
 @main_bp.route('/events')
 def list_events():
+    page = request.args.get('page', 1, type=int)
     category_id = request.args.get('category_id', type=int)
+    query = Event.query
     if category_id:
-        events = Event.query.filter_by(category_id=category_id).order_by(Event.date).all()
-    else:
-        events = Event.query.order_by(Event.date).all()
+        query = query.filter_by(category_id=category_id)
+    pagination = query.order_by(Event.date).paginate(page=page, per_page=10, error_out=False)
+    events = pagination.items
     all_categories = Category.query.order_by(Category.name).all()
-    return render_template('event_list.html', events=events, all_categories=all_categories)
+    counts = {e.id: e.rsvps.count() for e in events}
+    return render_template('events.html', events=events, pagination=pagination, counts=counts, all_categories=all_categories)
 
 
 @main_bp.route('/events/<event_id>', methods=['GET', 'POST'])
