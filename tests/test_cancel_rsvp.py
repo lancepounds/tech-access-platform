@@ -22,9 +22,11 @@ def login(client, email, password):
     client.post('/login', data={'email': email, 'password': password})
 
 
+from werkzeug.security import generate_password_hash
+
 def test_cancel_existing_rsvp(client):
     with client.application.app_context():
-        user = User(email='cancel@example.com', password='pw')
+        user = User(email='cancel@example.com', password=generate_password_hash('pw'))
         event = Event(id='1', title='Delete Event', description='Desc', date=datetime(2030, 1, 1))
         db.session.add_all([user, event])
         db.session.commit()
@@ -44,7 +46,7 @@ def test_cancel_existing_rsvp(client):
 
 def test_cancel_nonexistent_rsvp(client):
     with client.application.app_context():
-        user = User(email='noevent@example.com', password='pw')
+        user = User(email='noevent@example.com', password=generate_password_hash('pw'))
         event = Event(id='2', title='Lonely Event', description='Desc', date=datetime(2031, 1, 1))
         db.session.add_all([user, event])
         db.session.commit()

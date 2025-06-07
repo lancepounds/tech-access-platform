@@ -1,14 +1,20 @@
 
+import json # Moved to top
+import json
+import re
+import os # Added os
+import logging # Added logging
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash
 from werkzeug.security import generate_password_hash
 from app.models import Company
 from app.extensions import db
-import json
 
 companies_bp = Blueprint('companies', __name__)
 
 # Simple admin token (in production, use real authentication)
-ADMIN_TOKEN = "my-secret-admin-token"
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "my-secret-admin-token")
+if ADMIN_TOKEN == "my-secret-admin-token":
+    logging.warning("SECURITY WARNING: Using default ADMIN_TOKEN. This should be changed for production environments.")
 
 
 @companies_bp.route('/register', methods=['GET'])
@@ -140,5 +146,3 @@ def approve_company():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to approve company: {str(e)}'}), 500
-import json
-import re
