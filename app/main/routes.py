@@ -37,7 +37,8 @@ def db_health():
 @main_bp.route('/events-page')
 def show_events():
     events = Event.query.order_by(Event.date).all()
-    return render_template('events.html', events=events)
+    counts = {e.id: e.rsvps.count() for e in events}
+    return render_template('events.html', events=events, counts=counts)
 
 
 @main_bp.route('/events/<event_id>')
