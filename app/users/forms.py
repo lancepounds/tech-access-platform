@@ -13,3 +13,7 @@ class ProfileForm(FlaskForm):
 class CancelRSVPForm(FlaskForm):
     """Empty form used solely for CSRF protection when cancelling an RSVP."""
     submit = SubmitField('Cancel RSVP')
+
+
+class WaitlistForm(FlaskForm):
+    pass
