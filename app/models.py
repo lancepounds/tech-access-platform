@@ -126,12 +126,7 @@ class Event(db.Model):
     category = db.relationship('Category', backref='events')
     # Use dynamic loading so we can call ``event.rsvps.count()`` without
     # loading all related rows into memory.
-    rsvps = db.relationship(
-        "RSVP",
-        back_populates="event",
-        cascade="all, delete-orphan",
-        lazy="dynamic",
-    )
+    rsvps = db.relationship('RSVP', backref='event', lazy='dynamic')
 
     # Backwards compatibility for code that still references ``name``
     @property
@@ -153,7 +148,6 @@ class RSVP(db.Model):
     
     # Add relationships
     user = db.relationship("User", back_populates="rsvps")
-    event = db.relationship("Event", back_populates="rsvps")
 
 
 class GiftCard(db.Model):

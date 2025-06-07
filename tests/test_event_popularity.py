@@ -13,9 +13,9 @@ def client():
     return app.test_client()
 
 
-def test_event_detail_zero_rsvps(client):
+def test_event_popularity_zero(client):
     with client.application.app_context():
-        event = Event(id='evt1', title='No RSVPs', description='Desc', date=datetime(2030, 1, 1))
+        event = Event(id='pop0', title='None', description='desc', date=datetime(2030, 1, 1))
         db.session.add(event)
         db.session.commit()
         url = f'/events/{event.id}'
@@ -25,19 +25,23 @@ def test_event_detail_zero_rsvps(client):
     assert 'RSVPs:</strong> 0' in html
 
 
-def test_event_detail_two_rsvps(client):
+def test_event_popularity_many(client):
     with client.application.app_context():
-        user1 = User(email='a@example.com', password='pw')
-        user2 = User(email='b@example.com', password='pw')
-        event = Event(id='evt2', title='With RSVPs', description='Desc', date=datetime(2030, 1, 1))
-        db.session.add_all([user1, user2, event])
+        user1 = User(email='u1@example.com', password='pw')
+        user2 = User(email='u2@example.com', password='pw')
+        user3 = User(email='u3@example.com', password='pw')
+        event = Event(id='popN', title='Many', description='desc', date=datetime(2030, 1, 1))
+        db.session.add_all([user1, user2, user3, event])
         db.session.commit()
-        r1 = RSVP(user_id=user1.id, event_id=event.id)
-        r2 = RSVP(user_id=user2.id, event_id=event.id)
-        db.session.add_all([r1, r2])
+        db.session.add_all([
+            RSVP(user_id=user1.id, event_id=event.id),
+            RSVP(user_id=user2.id, event_id=event.id),
+            RSVP(user_id=user3.id, event_id=event.id)
+        ])
         db.session.commit()
         url = f'/events/{event.id}'
     res = client.get(url)
     assert res.status_code == 200
     html = res.data.decode('utf-8')
-    assert 'RSVPs:</strong> 2' in html
+    assert 'RSVPs:</strong> 3' in html
+

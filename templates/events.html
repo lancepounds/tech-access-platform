@@ -86,12 +86,12 @@
             {% if event.max_participants %}
             <div class="detail-item mb-2">
               <i class="bi bi-people me-2 text-primary"></i>
-              <span>{{ event.rsvps|length }}/{{ event.max_participants }} participants</span>
+              <span>{{ counts[event.id] }}/{{ event.max_participants }} participants</span>
             </div>
             {% endif %}
           </div>
           
-          {% if event.rsvps|length >= (event.max_participants or 999) %}
+            {% if counts[event.id] >= (event.max_participants or 999) %}
           <div class="alert alert-warning py-2 px-3 mb-3">
             <i class="bi bi-exclamation-triangle me-2"></i>
             <small>Event is full</small>
@@ -101,12 +101,12 @@
         
         <div class="card-footer bg-transparent border-0 p-4 pt-0">
           {% if session.get('role') == 'user' %}
-            {% set user_rsvp = event.rsvps|selectattr('user_id', 'equalto', session.get('user_id'))|first %}
+            {% set user_rsvp = event.rsvps.filter_by(user_id=session.get('user_id')).first() %}
             {% if user_rsvp %}
             <button class="btn btn-outline-success w-100" disabled>
               <i class="bi bi-check-circle-fill me-2"></i>You're registered!
             </button>
-            {% elif event.rsvps|length >= (event.max_participants or 999) %}
+            {% elif counts[event.id] >= (event.max_participants or 999) %}
             <button class="btn btn-secondary w-100" disabled>
               <i class="bi bi-x-circle me-2"></i>Event Full
             </button>
@@ -123,7 +123,7 @@
               <i class="bi bi-eye me-2"></i>View Details
             </a>
             <div class="text-center">
-              <small class="text-muted">{{ event.rsvps|length }} registered</small>
+              <small>RSVPs: {{ counts[event.id] }}</small>
             </div>
           </div>
           {% else %}
