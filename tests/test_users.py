@@ -4,6 +4,7 @@ import pytest
 from app import create_app, db
 from app.models import User
 from flask_login import login_user
+from werkzeug.security import generate_password_hash
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
@@ -14,7 +15,7 @@ def client(tmp_path, monkeypatch):
     with app.app_context():
         db.create_all()
         # create a test user
-        user = User(email='test@example.com', password='testpassword', name='Test User')
+        user = User(email='test@example.com', password=generate_password_hash('testpassword'), name='Test User')
         db.session.add(user)
         db.session.commit()
     client = app.test_client()

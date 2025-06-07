@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime
 from app import create_app, db
 from app.models import User, Event, RSVP
+from werkzeug.security import generate_password_hash
 
 @pytest.fixture
 def client(tmp_path):
@@ -19,7 +20,7 @@ def login(client, email, password):
 
 def test_my_rsvps_shows_event(client):
     with client.application.app_context():
-        user = User(email='user1@example.com', password='pw')
+        user = User(email='user1@example.com', password=generate_password_hash('pw'))
         event = Event(id='10', title='Test Event', description='Desc', date=datetime(2025,1,1))
         db.session.add_all([user, event])
         db.session.commit()
@@ -34,7 +35,7 @@ def test_my_rsvps_shows_event(client):
 
 def test_my_rsvps_empty(client):
     with client.application.app_context():
-        user = User(email='user2@example.com', password='pw')
+        user = User(email='user2@example.com', password=generate_password_hash('pw'))
         db.session.add(user)
         db.session.commit()
     login(client, 'user2@example.com', 'pw')

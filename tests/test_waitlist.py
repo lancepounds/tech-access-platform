@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime
 from app import create_app, db
 from app.models import User, Event, RSVP, Waitlist
+from werkzeug.security import generate_password_hash
 
 @pytest.fixture
 def client(tmp_path):
@@ -23,8 +24,8 @@ def logout(client):
 
 def test_waitlist_promotion(client):
     with client.application.app_context():
-        user1 = User(email='wl1@example.com', password='pw')
-        user2 = User(email='wl2@example.com', password='pw')
+        user1 = User(email='wl1@example.com', password=generate_password_hash('pw'))
+        user2 = User(email='wl2@example.com', password=generate_password_hash('pw'))
         event = Event(id='50', title='Cap Event', description='Desc', date=datetime(2030,1,1), capacity=1)
         db.session.add_all([user1, user2, event])
         db.session.commit()
