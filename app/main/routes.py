@@ -498,9 +498,9 @@ def fulfill_rsvp(rsvp_id):
         return jsonify({'error': f'Failed to update RSVP: {str(e)}'}), 500
 
 
-@main_bp.route('/events/<int:event_id>/rsvp', methods=['POST'])
+@main_bp.route('/events/<int:event_id>/rsvp-capacity', methods=['POST'])
 @login_required
-def rsvp_event(event_id):
+def rsvp_event_capacity(event_id):
     event = Event.query.get_or_404(event_id)
     if RSVP.query.filter_by(event_id=event.id, user_id=current_user.id).first():
         flash('You have already RSVP\'d for this event.', 'warning')
