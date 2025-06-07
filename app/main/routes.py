@@ -4,9 +4,10 @@ from flask_login import login_required, current_user
 import io
 import csv
 from werkzeug.utils import secure_filename
-from app.models import Event, RSVP, Company, User, Reward, Category, Review
+from app.models import Event, RSVP, Company, User, Reward, Category, Review, Waitlist
 from sqlalchemy import or_, func
 from app.reviews.forms import ReviewForm
+from app.users.forms import WaitlistForm
 from app.auth.decorators import decode_token
 from app.extensions import db
 from flask_mail import Message
@@ -62,6 +63,7 @@ def event_detail(event_id):
     """Display a single event's details and handle reviews."""
     event = Event.query.get_or_404(event_id)
     form = ReviewForm()
+    waitlist_form = WaitlistForm()
 
     if form.validate_on_submit() and current_user.is_authenticated:
         rsvp = db.session.query(func.count()).select_from(Review).filter_by(user_id=current_user.id, event_id=event.id).scalar()
@@ -88,6 +90,8 @@ def event_detail(event_id):
         count=count,
         attendees=attendees,
         form=form,
+        waitlist_form=waitlist_form,
+        Waitlist=Waitlist,
         avg_rating=round(avg_rating, 1),
     reviews=reviews,
     )
@@ -492,6 +496,26 @@ def fulfill_rsvp(rsvp_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to update RSVP: {str(e)}'}), 500
+
+
+@main_bp.route('/events/<int:event_id>/rsvp', methods=['POST'])
+@login_required
+def rsvp_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    if RSVP.query.filter_by(event_id=event.id, user_id=current_user.id).first():
+        flash('You have already RSVP\'d for this event.', 'warning')
+        return redirect(url_for('main.show_events'))
+    if event.capacity is not None and event.rsvps.count() >= event.capacity:
+        wait = Waitlist(user_id=current_user.id, event_id=event.id)
+        db.session.add(wait)
+        db.session.commit()
+        flash('Event is full. You have been added to the waitlist.', 'info')
+        return redirect(url_for('main.show_events'))
+    rsvp = RSVP(user_id=current_user.id, event_id=event.id)
+    db.session.add(rsvp)
+    db.session.commit()
+    flash('RSVP successful!', 'success')
+    return redirect(url_for('main.show_events'))
 
 
 @main_bp.route('/companies/<int:company_id>')

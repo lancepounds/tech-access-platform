@@ -18,6 +18,9 @@
 {% endif %}
 
 <p><strong>RSVPs:</strong> {{ count }}</p>
+{% if event.capacity %}
+  <p>Seats left: {{ event.capacity - event.rsvps.count() }}</p>
+{% endif %}
 
 {% if event.category %}
   <p><strong>Category:</strong> {{ event.category.name }}</p>
@@ -35,6 +38,27 @@
     </ul>
   {% else %}
     <p>No one has RSVP’d yet.</p>
+  {% endif %}
+
+  {% if current_user.is_authenticated %}
+    {% set user_rsvp = event.rsvps.filter_by(user_id=current_user.id).first() %}
+    {% set waitlisted = event.waitlist.filter_by(user_id=current_user.id).first() %}
+    {% if not user_rsvp %}
+      {% if event.capacity and event.rsvps.count() >= event.capacity %}
+        <form method="post" action="{{ url_for('main.rsvp_event', event_id=event.id) }}">
+          {{ waitlist_form.csrf_token }}
+          <button type="submit" class="btn btn-secondary">Join Waitlist</button>
+        </form>
+        {% if waitlisted %}
+          <p>You’re #{{ event.waitlist.filter(Waitlist.user_id == current_user.id).order_by(Waitlist.created_at).count() }} on the waitlist.</p>
+        {% endif %}
+      {% else %}
+        <form method="post" action="{{ url_for('main.rsvp_event', event_id=event.id) }}">
+          {{ waitlist_form.csrf_token }}
+          <button type="submit" class="btn btn-primary">RSVP</button>
+        </form>
+      {% endif %}
+    {% endif %}
   {% endif %}
 
   <p><strong>Average Rating:</strong> {{ avg_rating }} / 5</p>

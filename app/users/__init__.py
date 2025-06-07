@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, current_app, redirect, url_for, flash
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-import os, uuid
+import os
+import uuid
+from flask import Blueprint
 from flask_mail import Message
 from app.extensions import db, mail
-from app.models import User, RSVP, Event
+from app.models import User, RSVP, Event, Waitlist
 from app.users.forms import ProfileForm, CancelRSVPForm
 
 users_bp = Blueprint('users', __name__)
@@ -43,8 +45,9 @@ def my_rsvps():
     user = current_user
     rsvps = RSVP.query.filter_by(user_id=user.id).all()
     events = [rsvp.event for rsvp in rsvps if rsvp.event]
+    waitlists = Waitlist.query.filter_by(user_id=user.id).order_by(Waitlist.created_at).all()
     form = CancelRSVPForm()
-    return render_template('my_rsvps.html', events=events, form=form)
+    return render_template('my_rsvps.html', events=events, waitlists=waitlists, form=form, Waitlist=Waitlist)
 
 
 @users_bp.route('/cancel-rsvp/<int:event_id>', methods=['POST'])
@@ -55,6 +58,11 @@ def cancel_rsvp(event_id: int):
     if rsvp:
         event = Event.query.get(event_id)
         db.session.delete(rsvp)
+        next_wait = Waitlist.query.filter_by(event_id=str(event_id)).order_by(Waitlist.created_at).first()
+        if next_wait:
+            new_rsvp = RSVP(user_id=next_wait.user_id, event_id=str(event_id))
+            db.session.delete(next_wait)
+            db.session.add(new_rsvp)
         db.session.commit()
         msg = Message(
             subject=f"RSVP Cancellation for {event.title}",

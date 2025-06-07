@@ -127,6 +127,8 @@ class Event(db.Model):
     # Use dynamic loading so we can call ``event.rsvps.count()`` without
     # loading all related rows into memory.
     rsvps = db.relationship('RSVP', backref='event', lazy='dynamic')
+    capacity = db.Column(db.Integer, nullable=True)
+    waitlist = db.relationship('Waitlist', backref='event', lazy='dynamic')
 
     # Backwards compatibility for code that still references ``name``
     @property
@@ -160,6 +162,14 @@ class RSVP(db.Model):
     
     # Add relationships
     user = db.relationship("User", back_populates="rsvps")
+
+
+class Waitlist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    user = db.relationship('User', backref='waitlist_entries')
 
 
 class GiftCard(db.Model):

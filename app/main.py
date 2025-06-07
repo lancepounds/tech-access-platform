@@ -30,3 +30,5 @@ def export_attendees(event_id):
         mimetype='text/csv',
         headers={'Content-Disposition': f'attachment;filename=attendees_event_{event_id}.csv'}
     )
+
+
