@@ -1,58 +1,40 @@
 
+import json # Moved to top
+import json
+import re
+import json
+import re
+import os
+import logging
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash
 from werkzeug.security import generate_password_hash
 from app.models import Company
-from app.extensions import db
-import json
+from .forms import CompanyRegistrationForm
+from .schemas import ApproveCompanySchema
+from app.extensions import db, limiter # Import limiter
+from flask_login import login_required, current_user
+from marshmallow import ValidationError
 
 companies_bp = Blueprint('companies', __name__)
 
-# Simple admin token (in production, use real authentication)
-ADMIN_TOKEN = "my-secret-admin-token"
+# ADMIN_TOKEN related lines removed
 
 
 @companies_bp.route('/register', methods=['GET'])
 def show_register():
     """Show company registration form"""
-    return render_template('company_register.html')
+    form = CompanyRegistrationForm()
+    return render_template('company_register.html', form=form)
 
 
 @companies_bp.route('/register', methods=['POST'])
+@limiter.limit("5 per hour;20 per day")
 def register_company():
     """Handle company registration"""
-    try:
-        # Get form data
-        company_name = request.form.get('company_name')
-        contact_email = request.form.get('contact_email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        
-        # Validation
-        if not company_name or not contact_email or not password:
-            flash('Company name, email, and password are required.', 'danger')
-            return redirect(url_for('companies.show_register'))
-        
-        if len(password) < 8:
-            flash('Password must be at least 8 characters long.', 'danger')
-            return redirect(url_for('companies.show_register'))
-        
-        if password != confirm_password:
-            flash('Passwords do not match.', 'danger')
-            return redirect(url_for('companies.show_register'))
-        
-        if not request.form.get('contact_name'):
-            flash('Primary contact name is required.', 'danger')
-            return redirect(url_for('companies.show_register'))
-        
-        if not request.form.get('company_description'):
-            flash('Company description is required.', 'danger')
-            return redirect(url_for('companies.show_register'))
-        
-        # Email validation
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if not re.match(email_pattern, contact_email):
-            flash('Please enter a valid email address.', 'danger')
-            return redirect(url_for('companies.show_register'))
+    form = CompanyRegistrationForm()
+    if form.validate_on_submit():
+        company_name = form.company_name.data
+        contact_email = form.contact_email.data
         
         # Check if company already exists
         existing_company = Company.query.filter(
@@ -61,53 +43,51 @@ def register_company():
         
         if existing_company:
             flash('Company name or email already exists.', 'danger')
-            return redirect(url_for('companies.show_register'))
+            return render_template('company_register.html', form=form) # Re-render with form and error
         
-        # Get checkbox interests
-        interests = request.form.getlist('interests')
-        interests_json = json.dumps(interests) if interests else None
+        interests_json = json.dumps(form.interests.data) if form.interests.data else None
         
-        # Create new company
         new_company = Company(
             name=company_name,
             contact_email=contact_email,
-            password=generate_password_hash(password),
-            phone=request.form.get('phone'),
-            website=request.form.get('website'),
-            address=request.form.get('address'),
-            description=request.form.get('company_description'),
-            industry=request.form.get('industry'),
-            company_size=request.form.get('company_size'),
-            products_services=request.form.get('products_services'),
-            accessibility_goals=request.form.get('accessibility_goals'),
+            password=generate_password_hash(form.password.data),
+            phone=form.phone.data,
+            website=form.website.data,
+            address=form.address.data,
+            description=form.company_description.data,
+            industry=form.industry.data,
+            company_size=form.company_size.data,
+            products_services=form.products_services.data,
+            accessibility_goals=form.accessibility_goals.data,
             interests=interests_json,
-            # New fields
-            contact_name=request.form.get('contact_name'),
-            contact_title=request.form.get('contact_title'),
-            accessibility_experience=request.form.get('accessibility_experience'),
-            compliance_requirements=request.form.get('compliance_requirements'),
-            testing_timeline=request.form.get('testing_timeline'),
-            testing_budget=request.form.get('testing_budget'),
+            contact_name=form.contact_name.data,
+            contact_title=form.contact_title.data,
+            accessibility_experience=form.accessibility_experience.data,
+            compliance_requirements=form.compliance_requirements.data,
+            testing_timeline=form.testing_timeline.data,
+            testing_budget=form.testing_budget.data,
             approved=False  # Companies need admin approval
         )
         
-        db.session.add(new_company)
-        db.session.commit()
-        
-        flash('Company registration submitted successfully! Please wait for admin approval.', 'success')
-        return redirect(url_for('auth.login_page'))
-        
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Registration failed: {str(e)}', 'danger')
-        return redirect(url_for('companies.show_register'))
+        try:
+            db.session.add(new_company)
+            db.session.commit()
+            flash('Company registration submitted successfully! Please wait for admin approval.', 'success')
+            return redirect(url_for('auth.login_page'))
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Error during company registration: {str(e)}")
+            flash(f'Registration failed due to an unexpected error. Please try again.', 'danger')
+            # Fall through to render form again
+
+    return render_template('company_register.html', form=form)
 
 
 @companies_bp.route('/pending', methods=['GET'])
+@login_required # Added decorator
 def list_pending_companies():
-    token = request.headers.get('Authorization')
-    if token != f"Bearer {ADMIN_TOKEN}":
-        return jsonify({'error': 'Unauthorized'}), 403
+    if not current_user.is_admin: # New authorization check
+        return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
 
     pending = Company.query.filter_by(approved=False).all()
     result = [{'id': c.id, 'name': c.name} for c in pending]
@@ -115,16 +95,21 @@ def list_pending_companies():
 
 
 @companies_bp.route('/approve', methods=['POST'])
+@login_required # Added decorator
 def approve_company():
-    token = request.headers.get('Authorization')
-    if token != f"Bearer {ADMIN_TOKEN}":
-        return jsonify({'error': 'Unauthorized'}), 403
+    if not current_user.is_admin: # New authorization check
+        return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
 
-    data = request.get_json()
-    company_name = data.get('name')
+    request_data = request.get_json()
+    if request_data is None: # Explicitly check for None
+        return jsonify({"error": "No input data provided or malformed JSON"}), 400
 
-    if not company_name:
-        return jsonify({'error': 'Missing company name'}), 400
+    try:
+        data = ApproveCompanySchema().load(request_data) # Pass request_data directly
+    except ValidationError as err:
+        return jsonify({'errors': err.messages}), 400
+
+    company_name = data['name'] # Use validated data
 
     company = Company.query.filter_by(name=company_name).first()
     if not company:
@@ -140,5 +125,3 @@ def approve_company():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to approve company: {str(e)}'}), 500
-import json
-import re

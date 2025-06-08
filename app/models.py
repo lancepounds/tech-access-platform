@@ -45,6 +45,7 @@ class User(db.Model, UserMixin):
     
     # Add relationship
     rsvps = db.relationship("RSVP", back_populates="user")
+    is_admin = db.Column(db.Boolean, default=False, nullable=False) # New admin field
 
     def __repr__(self):
         return f'<User {self.email}>'
@@ -129,6 +130,7 @@ class Event(db.Model):
     rsvps = db.relationship('RSVP', backref='event', lazy='dynamic')
     capacity = db.Column(db.Integer, nullable=True)
     waitlist = db.relationship('Waitlist', backref='event', lazy='dynamic')
+    image_filename = db.Column(db.String(255), nullable=True) # Added for event images
 
     # Backwards compatibility for code that still references ``name``
     @property

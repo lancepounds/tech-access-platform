@@ -23,7 +23,14 @@
         <img src="{{ url_for('static', filename='uploads/profiles/' ~ user.avatar_filename) }}"
              alt="Avatar" class="img-thumbnail mb-2" width="150">
       {% endif %}
-      {{ form.avatar(class="form-control") }}
+      {{ form.avatar(class="form-control" + (" is-invalid" if form.avatar.errors else "")) }}
+      {% if form.avatar.errors %}
+        <div class="invalid-feedback d-block">
+          {% for error in form.avatar.errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
     <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
   </form>

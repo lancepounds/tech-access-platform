@@ -12,205 +12,169 @@
         <p class="mb-0 mt-2 text-light">Join our platform to showcase your accessible products and services</p>
       </div>
       <div class="card-body">
-        <form method="POST" action="{{ url_for('companies.register_company') }}">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="company_name" class="form-label">Company Name *</label>
-              <input type="text" class="form-control" id="company_name" name="company_name" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="contact_email" class="form-label">Contact Email *</label>
-              <input type="email" class="form-control" id="contact_email" name="contact_email" required>
-            </div>
-          </div>
+        <form method="POST" action="{{ url_for('companies.register_company') }}" novalidate>
+          {{ form.hidden_tag() }} {# CSRF token and other hidden fields #}
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="contact_name" class="form-label">Primary Contact Name *</label>
-              <input type="text" class="form-control" id="contact_name" name="contact_name" required>
+              {{ form.company_name.label(class="form-label") }} {{ form.company_name(class="form-control" + (" is-invalid" if form.company_name.errors else "")) }}
+              {% if form.company_name.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.company_name.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
             </div>
             <div class="col-md-6 mb-3">
-              <label for="contact_title" class="form-label">Contact Title/Role</label>
-              <input type="text" class="form-control" id="contact_title" name="contact_title" placeholder="e.g. Product Manager, UX Designer">
+              {{ form.contact_email.label(class="form-label") }} {{ form.contact_email(class="form-control" + (" is-invalid" if form.contact_email.errors else "")) }}
+              {% if form.contact_email.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.contact_email.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="phone" class="form-label">Phone Number</label>
-              <input type="tel" class="form-control" id="phone" name="phone">
+              {{ form.contact_name.label(class="form-label") }} {{ form.contact_name(class="form-control" + (" is-invalid" if form.contact_name.errors else "")) }}
+              {% if form.contact_name.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.contact_name.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
             </div>
             <div class="col-md-6 mb-3">
-              <label for="website" class="form-label">Website</label>
-              <input type="url" class="form-control" id="website" name="website" placeholder="https://yourcompany.com">
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label for="address" class="form-label">Company Address</label>
-            <textarea class="form-control" id="address" name="address" rows="2"></textarea>
-          </div>
-
-          <div class="mb-3">
-            <label for="company_description" class="form-label">Company Description *</label>
-            <textarea class="form-control" id="company_description" name="company_description" rows="4" 
-                      placeholder="Tell us about your company and mission..." required></textarea>
-          </div>
-
-          <div class="mb-3">
-            <label for="industry" class="form-label">Industry *</label>
-            <select class="form-control" id="industry" name="industry" required>
-              <option value="">Select Industry</option>
-              <option value="technology">Technology</option>
-              <option value="healthcare">Healthcare</option>
-              <option value="education">Education</option>
-              <option value="finance">Finance</option>
-              <option value="retail">Retail</option>
-              <option value="manufacturing">Manufacturing</option>
-              <option value="consulting">Consulting</option>
-              <option value="nonprofit">Non-Profit</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label for="company_size" class="form-label">Company Size</label>
-            <select class="form-control" id="company_size" name="company_size">
-              <option value="">Select Size</option>
-              <option value="1-10">1-10 employees</option>
-              <option value="11-50">11-50 employees</option>
-              <option value="51-200">51-200 employees</option>
-              <option value="201-1000">201-1000 employees</option>
-              <option value="1000+">1000+ employees</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label for="products_services" class="form-label">Products & Services *</label>
-            <textarea class="form-control" id="products_services" name="products_services" rows="4" 
-                      placeholder="Describe the products and services you want to test for accessibility..." required></textarea>
-          </div>
-
-          <div class="mb-3">
-            <label for="accessibility_goals" class="form-label">Accessibility Goals</label>
-            <textarea class="form-control" id="accessibility_goals" name="accessibility_goals" rows="3" 
-                      placeholder="What are your accessibility goals and how can our community help?"></textarea>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="accessibility_experience" class="form-label">Current Accessibility Status</label>
-              <select class="form-control" id="accessibility_experience" name="accessibility_experience">
-                <option value="">Select Status</option>
-                <option value="none">No previous accessibility testing</option>
-                <option value="basic">Basic accessibility considerations</option>
-                <option value="intermediate">Some accessibility testing done</option>
-                <option value="advanced">Comprehensive accessibility program</option>
-              </select>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label for="compliance_requirements" class="form-label">Compliance Requirements</label>
-              <select class="form-control" id="compliance_requirements" name="compliance_requirements">
-                <option value="">Select Requirements</option>
-                <option value="wcag_aa">WCAG 2.1 AA</option>
-                <option value="wcag_aaa">WCAG 2.1 AAA</option>
-                <option value="ada">ADA Compliance</option>
-                <option value="section_508">Section 508</option>
-                <option value="multiple">Multiple Standards</option>
-                <option value="unsure">Not Sure</option>
-              </select>
+              {{ form.contact_title.label(class="form-label") }} {{ form.contact_title(class="form-control" + (" is-invalid" if form.contact_title.errors else ""), placeholder="e.g. Product Manager, UX Designer") }}
+              {% if form.contact_title.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.contact_title.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label for="testing_timeline" class="form-label">Preferred Testing Timeline</label>
-              <select class="form-control" id="testing_timeline" name="testing_timeline">
-                <option value="">Select Timeline</option>
-                <option value="asap">As soon as possible</option>
-                <option value="1_month">Within 1 month</option>
-                <option value="3_months">Within 3 months</option>
-                <option value="6_months">Within 6 months</option>
-                <option value="ongoing">Ongoing partnership</option>
-              </select>
+              {{ form.phone.label(class="form-label") }} {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else "")) }}
+              {% if form.phone.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.phone.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
             </div>
             <div class="col-md-6 mb-3">
-              <label for="testing_budget" class="form-label">Estimated Testing Budget</label>
-              <select class="form-control" id="testing_budget" name="testing_budget">
-                <option value="">Select Budget Range</option>
-                <option value="under_1k">Under $1,000</option>
-                <option value="1k_5k">$1,000 - $5,000</option>
-                <option value="5k_10k">$5,000 - $10,000</option>
-                <option value="10k_25k">$10,000 - $25,000</option>
-                <option value="25k_plus">$25,000+</option>
-                <option value="discuss">Prefer to discuss</option>
-              </select>
+              {{ form.website.label(class="form-label") }} {{ form.website(class="form-control" + (" is-invalid" if form.website.errors else ""), placeholder="https://yourcompany.com") }}
+              {% if form.website.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.website.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
             </div>
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Areas of Interest</label>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="web_accessibility" name="interests" value="web_accessibility">
-                  <label class="form-check-label" for="web_accessibility">Web Accessibility</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="mobile_accessibility" name="interests" value="mobile_accessibility">
-                  <label class="form-check-label" for="mobile_accessibility">Mobile Accessibility</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="assistive_tech" name="interests" value="assistive_tech">
-                  <label class="form-check-label" for="assistive_tech">Assistive Technology</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="usability_testing" name="interests" value="usability_testing">
-                  <label class="form-check-label" for="usability_testing">Usability Testing</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="cognitive_accessibility" name="interests" value="cognitive_accessibility">
-                  <label class="form-check-label" for="cognitive_accessibility">Cognitive Accessibility</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="visual_accessibility" name="interests" value="visual_accessibility">
-                  <label class="form-check-label" for="visual_accessibility">Visual Accessibility</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="auditory_accessibility" name="interests" value="auditory_accessibility">
-                  <label class="form-check-label" for="auditory_accessibility">Auditory Accessibility</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="motor_accessibility" name="interests" value="motor_accessibility">
-                  <label class="form-check-label" for="motor_accessibility">Motor Accessibility</label>
-                </div>
-              </div>
+            {{ form.address.label(class="form-label") }} {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else ""), rows="2") }}
+            {% if form.address.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.address.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.company_description.label(class="form-label") }}
+            {{ form.company_description(class="form-control" + (" is-invalid" if form.company_description.errors else ""), rows="4", placeholder="Tell us about your company and mission...") }}
+            {% if form.company_description.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.company_description.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.industry.label(class="form-label") }}
+            {{ form.industry(class="form-control" + (" is-invalid" if form.industry.errors else "")) }}
+            {% if form.industry.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.industry.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.company_size.label(class="form-label") }}
+            {{ form.company_size(class="form-control" + (" is-invalid" if form.company_size.errors else "")) }}
+            {% if form.company_size.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.company_size.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.products_services.label(class="form-label") }}
+            {{ form.products_services(class="form-control" + (" is-invalid" if form.products_services.errors else ""), rows="4", placeholder="Describe the products and services you want to test for accessibility...") }}
+            {% if form.products_services.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.products_services.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.accessibility_goals.label(class="form-label") }}
+            {{ form.accessibility_goals(class="form-control" + (" is-invalid" if form.accessibility_goals.errors else ""), rows="3", placeholder="What are your accessibility goals and how can our community help?") }}
+            {% if form.accessibility_goals.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.accessibility_goals.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              {{ form.accessibility_experience.label(class="form-label") }}
+              {{ form.accessibility_experience(class="form-control" + (" is-invalid" if form.accessibility_experience.errors else "")) }}
+              {% if form.accessibility_experience.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.accessibility_experience.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.compliance_requirements.label(class="form-label") }}
+              {{ form.compliance_requirements(class="form-control" + (" is-invalid" if form.compliance_requirements.errors else "")) }}
+              {% if form.compliance_requirements.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.compliance_requirements.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              {{ form.testing_timeline.label(class="form-label") }}
+              {{ form.testing_timeline(class="form-control" + (" is-invalid" if form.testing_timeline.errors else "")) }}
+              {% if form.testing_timeline.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.testing_timeline.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.testing_budget.label(class="form-label") }}
+              {{ form.testing_budget(class="form-control" + (" is-invalid" if form.testing_budget.errors else "")) }}
+              {% if form.testing_budget.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.testing_budget.errors %}<span>{{ error }}</span>{% endfor %}</div>
+              {% endif %}
             </div>
           </div>
 
           <div class="mb-3">
-            <label for="password" class="form-label">Password *</label>
-            <input type="password" class="form-control" id="password" name="password" required>
+            {{ form.interests.label(class="form-label") }}
+            {{ form.interests(class="form-select" + (" is-invalid" if form.interests.errors else ""), multiple="multiple") }} {# Use form-select for better styling of multiple #}
+            {% if form.interests.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.interests.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
           </div>
 
           <div class="mb-3">
-            <label for="confirm_password" class="form-label">Confirm Password *</label>
-            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+            {{ form.password.label(class="form-label") }} {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+            {% if form.password.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.password.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.confirm_password.label(class="form-label") }} {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else "")) }}
+            {% if form.confirm_password.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.confirm_password.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
           </div>
 
           <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="terms_agreement" name="terms_agreement" required>
-            <label class="form-check-label" for="terms_agreement">
-              I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and <a href="#" class="text-decoration-none">Privacy Policy</a> *
-            </label>
+            {{ form.terms_agreement(class="form-check-input" + (" is-invalid" if form.terms_agreement.errors else "")) }}
+            {{ form.terms_agreement.label(class="form-check-label") }}
+            {% if form.terms_agreement.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.terms_agreement.errors %}<span>{{ error }}</span>{% endfor %}
+                </div>
+            {% endif %}
           </div>
 
           <div class="d-grid">
-            <button type="submit" class="btn btn-primary">
-              <i class="bi bi-building me-2"></i>Register Company
-            </button>
+            {{ form.submit(class="btn btn-primary") }}
           </div>
         </form>
 

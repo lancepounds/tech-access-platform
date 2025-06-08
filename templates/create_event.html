@@ -11,41 +11,55 @@
         <h3 class="text-center">Create New Event</h3>
       </div>
       <div class="card-body">
-        <form method="post" action="/create-event" enctype="multipart/form-data">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <form method="POST" action="{{ url_for('main.create_event') }}" enctype="multipart/form-data" novalidate>
+          {{ form.hidden_tag() }} {# Includes CSRF token #}
+
           <div class="mb-3">
-            <label for="title" class="form-label">Event Title</label>
-            <input type="text" class="form-control" id="title" name="title" required>
+            {{ form.title.label(class="form-label") }}
+            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), required="required") }}
+            {% if form.title.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.title.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
           </div>
+
           <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+            {{ form.description.label(class="form-label") }}
+            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="4", required="required") }}
+            {% if form.description.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.description.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
           </div>
+
           <div class="mb-3">
-            <label for="date" class="form-label">Event Date & Time</label>
-            <input type="datetime-local" class="form-control" id="date" name="date" required>
+            {{ form.date.label(class="form-label") }}
+            {{ form.date(class="form-control" + (" is-invalid" if form.date.errors else ""), required="required") }}
+            {% if form.date.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.date.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
           </div>
+
           <div class="mb-3">
-            <label for="category_id" class="form-label">Category</label>
-            <select name="category_id" class="form-select">
-              <option value="">Uncategorized</option>
-              {% for cat in categories %}
-                <option value="{{ cat.id }}" {% if event and event.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
-              {% endfor %}
-            </select>
+            {{ form.category_id.label(class="form-label") }}
+            {{ form.category_id(class="form-select" + (" is-invalid" if form.category_id.errors else "")) }}
+            {% if form.category_id.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.category_id.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
           </div>
-          {% if current_user.company_id %}
+
           <div class="mb-3">
-            <label for="image" class="form-label">Event Image</label>
-            <input type="file" class="form-control" id="image" name="image">
+            {{ form.image.label(class="form-label") }}
+            {{ form.image(class="form-control" + (" is-invalid" if form.image.errors else "")) }}
+            {% if form.image.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.image.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
           </div>
-          {% endif %}
+
           <div class="d-grid">
-            <button type="submit" class="btn btn-primary">Create Event</button>
+            {{ form.submit(class="btn btn-primary") }}
           </div>
         </form>
         <div class="text-center mt-3">
-          <p><a href="{{ url_for('show_events') }}">Back to Events</a></p>
+          <p><a href="{{ url_for('main.show_events') }}">Back to Events</a></p>
         </div>
       </div>
     </div>

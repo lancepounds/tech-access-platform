@@ -26,34 +26,39 @@
           {% endif %}
         {% endwith %}
 
-        <form method="post" action="/auth/login" novalidate class="needs-validation">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <form method="post" action="{{ url_for('auth.login') }}" novalidate class="needs-validation">
+          {{ form.hidden_tag() }} {# Includes CSRF token and any other hidden fields #}
+
           <div class="mb-4">
-            <label for="email" class="form-label">
-              <i class="bi bi-envelope me-1"></i>Email Address
-            </label>
-            <input type="email" class="form-control form-control-lg" id="email" name="email" required 
-                   placeholder="Enter your email address">
-            <div class="invalid-feedback">
-              Please provide a valid email address.
-            </div>
+            {{ form.email.label(class="form-label") }}
+            {{ form.email(class="form-control form-control-lg", placeholder="Enter your email address", required="required") }}
+            {% if form.email.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.email.errors %}{{ error }}{% endfor %}
+              </div>
+            {% else %}
+              <div class="invalid-feedback">
+                Please provide a valid email address.
+              </div>
+            {% endif %}
           </div>
 
           <div class="mb-4">
-            <label for="password" class="form-label">
-              <i class="bi bi-lock me-1"></i>Password
-            </label>
-            <input type="password" class="form-control form-control-lg" id="password" name="password" required
-                   placeholder="Enter your password">
-            <div class="invalid-feedback">
-              Please provide a password.
-            </div>
+            {{ form.password.label(class="form-label") }}
+            {{ form.password(class="form-control form-control-lg", placeholder="Enter your password", required="required") }}
+            {% if form.password.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.password.errors %}{{ error }}{% endfor %}
+              </div>
+            {% else %}
+              <div class="invalid-feedback">
+                Please provide a password.
+              </div>
+            {% endif %}
           </div>
 
           <div class="d-grid mb-4">
-            <button type="submit" class="btn btn-primary btn-lg py-3">
-              <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-            </button>
+            {{ form.submit(class="btn btn-primary btn-lg py-3") }}
           </div>
         </form>
 

@@ -21,8 +21,8 @@ def client():
 def seed_data(app):
     with app.app_context():
         company = Company(name='CalCo', contact_email='cal@example.com', password=generate_password_hash('pass'), approved=True)
-        owner = User(email='co@example.com', password='pass', name='Owner')
-        other = User(email='other@example.com', password='pass')
+        owner = User(email='co@example.com', password=generate_password_hash('pass'), name='Owner')
+        other = User(email='other@example.com', password=generate_password_hash('pass'))
         db.session.add_all([company, owner, other])
         db.session.commit()
         event = Event(id='1', title='Cal Event', description='Desc', date=datetime(2025,12,12), company_id=company.id)
