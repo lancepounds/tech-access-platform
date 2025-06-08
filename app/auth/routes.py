@@ -3,12 +3,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import User, Company
 from .forms import LoginForm
 from flask_login import login_user, logout_user
-
-from flask_login import login_user, logout_user
 from flask_jwt_extended import create_access_token
 from app.auth.decorators import decode_token
-from app.extensions import db, limiterfrom 
-
+from app.extensions import db, limiter # Import limiter
 from sqlalchemy.exc import IntegrityError
 import jwt # Re-enable for web login session token
 import datetime
@@ -171,11 +168,21 @@ def api_login():
     if user and check_password_hash(user.password, data['password']):
         # Identity can be user.id or user.email, depending on setup.
         # flask-jwt-extended uses 'sub' claim for identity.
-        # Additional claims are for 'role', 'email' etc.
         additional_claims = {"role": user.role, "email": user.email}
-        token = create_access_token(identity=str(user.id), additional_claims=additional_claims) # Use 'token' as key
-        return jsonify(token=token, role='user'), 200
+        if user.role == 'company':
+            company_obj = Company.query.filter_by(contact_email=user.email).first()
+            if company_obj and company_obj.approved: # Ensure company is approved
+                additional_claims["company_id"] = company_obj.id
+            elif company_obj and not company_obj.approved: # Company exists but not approved
+                return jsonify({"error": "Company account not approved"}), 403
+            else: # No company record found for this user claiming to be a company
+                return jsonify({"error": "Company details not found for this user"}), 403
 
+        token = create_access_token(identity=str(user.id), additional_claims=additional_claims)
+        # Return the role that was put into the token
+        return jsonify(token=token, role=additional_claims.get("role", user.role)), 200
+
+    # Fallback for direct Company login (if no User record with that email)
     if company and check_password_hash(company.password, data['password']):
         if not company.approved:
              return jsonify({"error": "Company account not approved"}), 403

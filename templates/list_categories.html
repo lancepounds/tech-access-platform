@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - Tech Access{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Categories</h2>
+        {% if is_admin_user %}
+            <a href="{{ url_for('categories.create_category') }}" class="btn btn-primary">Create New Category</a>
+        {% endif %}
+    </div>
+
+    {% if categories %}
+        <ul class="list-group">
+            {% for category in categories %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ category.name }}
+                    <div>
+                        {% if is_admin_user %}
+                            <a href="{{ url_for('categories.edit_category', category_id=category.id) }}" class="btn btn-sm btn-outline-secondary me-2">Edit</a>
+                            <form method="POST" action="{{ url_for('categories.delete_category', category_id=category.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this category?');">
+                                {{ delete_form.hidden_tag() }} {# CSRF token from the form instance #}
+                                {{ delete_form.submit(class="btn btn-danger btn-sm") }}
+                            </form>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No categories found.</p>
+    {% endif %}
+</div>
+{% endblock %}

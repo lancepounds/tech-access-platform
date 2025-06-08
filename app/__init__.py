@@ -20,6 +20,7 @@ def create_app():
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     if not app.debug and not app.testing:
         app.config['SESSION_COOKIE_SECURE'] = True
+
     # Set max content length for file uploads (e.g., 5MB)
     app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 

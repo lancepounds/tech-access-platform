@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField, FileField, SubmitField # DateTimeField removed
-from wtforms.validators import DataRequired, Optional, Length, Regexp # Regexp might be used later
+from wtforms import StringField, TextAreaField, SelectField, FileField, SubmitField, IntegerField # Added IntegerField
+from wtforms.validators import DataRequired, Optional, Length, Regexp
 from flask_wtf.file import FileAllowed
 from app.utils.files import ALLOWED_IMAGE_EXTENSIONS
 
@@ -14,4 +14,5 @@ class EventForm(FlaskForm):
         Optional(),
         FileAllowed(ALLOWED_IMAGE_EXTENSIONS, 'Images only!')
     ])
+    gift_card_amount_cents = IntegerField('Gift Card Amount (in cents)', validators=[Optional()])
     submit = SubmitField('Submit Event')
