@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, render_template, redirect, url_fo
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app.models import User
-from app.extensions import db
+from app.extensions import db, limiter # Import limiter
 from app.users.schemas import RegistrationSchema, LoginSchema
 from marshmallow import ValidationError
 import jwt
@@ -42,6 +42,7 @@ def show_register():
     return render_template('register.html')
 
 @api_users_bp.route('/register', methods=['POST'])
+@limiter.limit("5 per hour;20 per day")
 def register():
     """Register a new user via JSON API."""
     if not request.is_json:

@@ -3,9 +3,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import User, Company
 from .forms import LoginForm
 from flask_login import login_user, logout_user
-from flask_jwt_extended import create_access_token # Import create_access_token
+
+from flask_login import login_user, logout_user
+from flask_jwt_extended import create_access_token
 from app.auth.decorators import decode_token
-from app.extensions import db
+from app.extensions import db, limiterfrom 
+
 from sqlalchemy.exc import IntegrityError
 import jwt # Re-enable for web login session token
 import datetime
@@ -25,6 +28,7 @@ def signup_page():
     return render_template('signup.html')
 
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit("5 per hour;20 per day")
 def register():
     data = request.get_json()
 
@@ -65,6 +69,7 @@ def register():
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per minute;20 per hour")
 def login():
     form = LoginForm()
     if form.validate_on_submit():
@@ -153,6 +158,7 @@ def logout():
 
 
 @auth_bp.route('/api/login', methods=['POST'])
+@limiter.limit("10 per minute;20 per hour")
 def api_login():
     data = request.get_json()
 

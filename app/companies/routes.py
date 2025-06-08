@@ -9,15 +9,16 @@ import logging
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash
 from werkzeug.security import generate_password_hash
 from app.models import Company
-from .forms import CompanyRegistrationForm # Import the new form
-from app.extensions import db
+from flask import Blueprint
+from .forms import CompanyRegistrationForm
+from .schemas import ApproveCompanySchema
+from app.extensions import db, limiter
+from flask_login import login_required, current_user
+from marshmallow import ValidationError
 
 companies_bp = Blueprint('companies', __name__)
 
-# Simple admin token (in production, use real authentication)
-ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "my-secret-admin-token")
-if ADMIN_TOKEN == "my-secret-admin-token":
-    logging.warning("SECURITY WARNING: Using default ADMIN_TOKEN. This should be changed for production environments.")
+# (Admin routes will now use current_user.is_admin and rate limiting via limiter)
 
 
 @companies_bp.route('/register', methods=['GET'])
@@ -28,6 +29,7 @@ def show_register():
 
 
 @companies_bp.route('/register', methods=['POST'])
+@limiter.limit("5 per hour;20 per day")
 def register_company():
     """Handle company registration"""
     form = CompanyRegistrationForm()
@@ -83,10 +85,10 @@ def register_company():
 
 
 @companies_bp.route('/pending', methods=['GET'])
+@login_required # Added decorator
 def list_pending_companies():
-    token = request.headers.get('Authorization')
-    if token != f"Bearer {ADMIN_TOKEN}":
-        return jsonify({'error': 'Unauthorized'}), 403
+    if not current_user.is_admin: # New authorization check
+        return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
 
     pending = Company.query.filter_by(approved=False).all()
     result = [{'id': c.id, 'name': c.name} for c in pending]
@@ -94,16 +96,21 @@ def list_pending_companies():
 
 
 @companies_bp.route('/approve', methods=['POST'])
+@login_required # Added decorator
 def approve_company():
-    token = request.headers.get('Authorization')
-    if token != f"Bearer {ADMIN_TOKEN}":
-        return jsonify({'error': 'Unauthorized'}), 403
+    if not current_user.is_admin: # New authorization check
+        return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
 
-    data = request.get_json()
-    company_name = data.get('name')
+    request_data = request.get_json()
+    if request_data is None: # Explicitly check for None
+        return jsonify({"error": "No input data provided or malformed JSON"}), 400
 
-    if not company_name:
-        return jsonify({'error': 'Missing company name'}), 400
+    try:
+        data = ApproveCompanySchema().load(request_data) # Pass request_data directly
+    except ValidationError as err:
+        return jsonify({'errors': err.messages}), 400
+
+    company_name = data['name'] # Use validated data
 
     company = Company.query.filter_by(name=company_name).first()
     if not company:

@@ -1,6 +1,7 @@
 from flask import Flask, render_template
-from app.extensions import db, ma, login_manager, migrate, mail
+from app.extensions import db, ma, login_manager, migrate, mail, limiter # Import limiter
 from flask_wtf.csrf import CSRFProtect
+from flask_talisman import Talisman
 import os
 
 
@@ -11,6 +12,14 @@ def create_app():
     from config import DevelopmentConfig
     app.config.from_object(DevelopmentConfig)
 
+    # Initialize Talisman with default CSP
+    Talisman(app)
+
+    # Configure session cookie security
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    if not app.debug and not app.testing:
+        app.config['SESSION_COOKIE_SECURE'] = True
     # Set max content length for file uploads (e.g., 5MB)
     app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
@@ -23,6 +32,11 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app, db)
     mail.init_app(app)
+    limiter.init_app(app) # Initialize limiter
+    # Set global limits directly on the limiter instance
+    # limiter.global_limits = ["200 per day", "60 per hour"] # This is an alternative to app.config
+    app.config['RATELIMIT_DEFAULT'] = '200 per day;60 per hour' # Using app.config
+
     app.mail = mail
     login_manager.login_view = 'auth.login'
     from app.models import User
@@ -92,6 +106,10 @@ def create_app():
     app.register_blueprint(checks_bp, url_prefix='/checks')
     app.register_blueprint(categories_bp)
     app.register_blueprint(main_bp)
+
+    # Register CLI commands
+    from app.users.cli import grant_admin_command
+    app.cli.add_command(grant_admin_command)
 
     # Create tables
     with app.app_context():

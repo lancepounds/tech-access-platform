@@ -45,6 +45,7 @@ class User(db.Model, UserMixin):
     
     # Add relationship
     rsvps = db.relationship("RSVP", back_populates="user")
+    is_admin = db.Column(db.Boolean, default=False, nullable=False) # New admin field
 
     def __repr__(self):
         return f'<User {self.email}>'
