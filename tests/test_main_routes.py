@@ -67,14 +67,24 @@ def test_create_event_disallowed_image_extension(client):
             'title': 'Event with Bad Image Ext',
             'description': 'Testing disallowed extension',
             'date': '2024-10-10T10:00:00',
-            'category_id': '',
+                'category_id': '0', # Use '0' for Uncategorized to pass coerce=int
             'image': (io.BytesIO(b"fake image data"), 'event.txt') # Disallowed extension
         }
-        response = client.post(url_for('main.create_event'), data=data, content_type='multipart/form-data', follow_redirects=True)
-        assert response.status_code == 200
-        assert b"Invalid image file type." in response.data
-        messages = get_flashed_messages(with_categories=True)
-        assert any(msg[0] == 'danger' and 'Invalid image file type' in msg[1] for msg in messages)
+        # Remove follow_redirects=True to inspect the direct response of the POST
+        response = client.post(url_for('main.create_event'), data=data, content_type='multipart/form-data')
+        assert response.status_code == 200 # Should re-render the form with errors if validation fails
+
+        # Check if "Images only!" is in the response.
+        # This implies that form.validate_on_submit() was False and form.image.errors was populated by FileAllowed.
+        assert b"Images only!" in response.data, "The 'Images only!' message from FileAllowed was not found in the direct POST response."
+
+        # Check that the create_event template is rendered (not the events list redirect)
+        html_content = response.data.decode('utf-8')
+        assert "Create New Event" in html_content # Specific title of create_event.html
+        assert 'name="image"' in html_content # Form field should be present
+        # Check that the image field is marked invalid
+        # This is a simplified check, assuming 'is-invalid' will be near 'name="image"' if it applies to the image field
+        assert 'name="image"' in html_content and 'class="form-control is-invalid"' in html_content
 
 
 def test_create_event_invalid_image_content(client):
@@ -84,14 +94,18 @@ def test_create_event_invalid_image_content(client):
             'title': 'Event with Bad Image Content',
             'description': 'Testing invalid content',
             'date': '2024-10-11T10:00:00',
-            'category_id': '',
+                'category_id': '0', # Use '0' for Uncategorized
             'image': (io.BytesIO(b"this is not an image, it's text"), 'event.png') # Allowed extension, bad content
         }
         response = client.post(url_for('main.create_event'), data=data, content_type='multipart/form-data', follow_redirects=True)
         assert response.status_code == 200
-        assert b"Invalid image content." in response.data
-        messages = get_flashed_messages(with_categories=True)
-        assert any(msg[0] == 'danger' and 'Invalid image content' in msg[1] for msg in messages)
+        html_content = response.data.decode('utf-8')
+        # Check that the image input field has the 'is-invalid' class (approximate check)
+        assert 'name="image"' in html_content
+        assert 'class="form-control is-invalid"' in html_content
+        # Check for the error message (raw message in decoded HTML content)
+        expected_error_message = "Invalid image content. File does not appear to be a valid image."
+        assert expected_error_message in response.data.decode('utf-8')
 
 @patch('os.makedirs') # To simulate cases where makedirs might be fine
 @patch('werkzeug.datastructures.FileStorage.save')
@@ -104,18 +118,20 @@ def test_create_event_image_save_failure(mock_save, mock_makedirs, client):
             'title': 'Event with Save Failure',
             'description': 'Testing image save failure',
             'date': '2024-10-12T10:00:00',
-            'category_id': '',
+                'category_id': '0', # Use '0' for Uncategorized
             'image': (io.BytesIO(b'\x89PNG\r\n\x1a\n'), 'event.png') # Valid image data
         }
         response = client.post(url_for('main.create_event'), data=data, content_type='multipart/form-data', follow_redirects=True)
         assert response.status_code == 200
-        messages = get_flashed_messages(with_categories=True)
-        assert any(msg[0] == 'danger' and 'Could not save event image' in msg[1] for msg in messages)
+        html_content = response.data.decode('utf-8')
+        # Check that the image input field has the 'is-invalid' class (approximate check)
+        assert 'name="image"' in html_content
+        assert 'class="form-control is-invalid"' in html_content
+        # Check for the error message (raw message in decoded HTML content)
+        expected_error_message = "Could not save event image. System error during save."
+        assert expected_error_message in response.data.decode('utf-8')
 
-    # Also verify that the event might have been created but without an image_filename
+    # Verify that the event was NOT created due to the image save failure populating form.image.errors
     with client.application.app_context():
         event = Event.query.filter_by(title='Event with Save Failure').first()
-        # Depending on how strict the save failure handling is, event might not be None.
-        # The current implementation in main/routes.py lets the event creation proceed.
-        assert event is not None
-        assert event.image_filename is None
+        assert event is None
