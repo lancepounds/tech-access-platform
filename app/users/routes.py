@@ -18,34 +18,7 @@ api_users_bp = Blueprint('api_users', __name__)
 # JWT secret for token generation
 JWT_SECRET = Config.JWT_SECRET
 
-# Allowed file extensions for profile pictures
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-
-def allowed_file(filename):
-    """Check if file extension is allowed for profile pictures."""
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def validate_file_content(file):
-    """Validate that uploaded file is actually an image."""
-    try:
-        # Check file signature (magic bytes)
-        file.seek(0)
-        header = file.read(512)
-        file.seek(0)
-        
-        # Common image file signatures
-        image_signatures = [
-            b'\xff\xd8\xff',  # JPEG
-            b'\x89PNG\r\n\x1a\n',  # PNG
-            b'GIF87a',  # GIF87a
-            b'GIF89a',  # GIF89a
-            b'RIFF',  # WebP (contains RIFF)
-        ]
-        
-        return any(header.startswith(sig) for sig in image_signatures)
-    except:
-        return False
+# REMOVED: ALLOWED_EXTENSIONS, allowed_file, validate_file_content (moved to app/utils/files.py)
 
 def validate_password_strength(password):
     """Validate password meets security requirements."""

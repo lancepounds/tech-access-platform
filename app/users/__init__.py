@@ -8,6 +8,8 @@ from flask_mail import Message
 from app.extensions import db, mail
 from app.models import User, RSVP, Event, Waitlist, Favorite
 from app.users.forms import ProfileForm, CancelRSVPForm
+from app.utils.files import allowed_image_extension, validate_file_content # Import validators
+import logging # For logging save errors
 
 users_bp = Blueprint('users', __name__)
 
@@ -22,14 +24,27 @@ def profile():
         user.bio = form.bio.data
 
         avatar_file = form.avatar.data
-        if avatar_file:
+        if avatar_file: # form.avatar.data is a FileStorage object if a file was uploaded
             filename = secure_filename(avatar_file.filename)
+            # The FileAllowed validator in ProfileForm already checks extensions.
+            # If it fails, form.validate_on_submit() will be false, and this part of the code won't run.
+            # So, if we are here and avatar_file is present, its extension was allowed by FileAllowed.
+            # We still need to validate content.
+            if not validate_file_content(avatar_file): # validate_file_content seeks(0)
+                flash('Invalid avatar content. File does not appear to be a valid image.', 'danger')
+                return redirect(url_for('users.profile'))
+
             unique_name = f"{uuid.uuid4().hex}_{filename}"
             upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'profiles')
             os.makedirs(upload_folder, exist_ok=True)
             avatar_path = os.path.join(upload_folder, unique_name)
-            avatar_file.save(avatar_path)
-            user.avatar_filename = unique_name
+            try:
+                avatar_file.save(avatar_path)
+                user.avatar_filename = unique_name
+            except Exception as e:
+                logging.error(f"Avatar save error: {e}")
+                flash('Could not save avatar. Please try again later.', 'danger')
+                # No redirect here, so user stays on form and can try again or just save text fields
 
         db.session.commit()
         flash('Profile updated!', 'success')

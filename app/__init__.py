@@ -11,6 +11,9 @@ def create_app():
     from config import DevelopmentConfig
     app.config.from_object(DevelopmentConfig)
 
+    # Set max content length for file uploads (e.g., 5MB)
+    app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+
     # Suppress sending emails by default (tests override if needed)
     app.config.setdefault('MAIL_SUPPRESS_SEND', True)
 

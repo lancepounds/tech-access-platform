@@ -73,98 +73,75 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
-            # Generate JWT token for user
-            token = jwt.encode({
-                'email': user.email,
-                'role': user.role,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-            }, JWT_SECRET, algorithm='HS256')
+            login_user(user)  # Log in the user with Flask-Login
 
-            # Store login info in session and Flask-Login
-            login_user(user)
-            session['token'] = token
-            session['email'] = user.email
-            session['role'] = user.role
+            session['email'] = user.email # Common session vars
+            session['role'] = user.role   # Common session vars
 
-            flash('Logged in successfully', 'success')
-            return redirect(url_for('main.show_events'))
+            if user.role == 'company':
+                company_obj = Company.query.filter_by(contact_email=user.email).first()
+                if company_obj and company_obj.approved:
+                    session['company_id'] = company_obj.id
+                    token = jwt.encode({
+                        'email': user.email,
+                        'role': user.role,
+                        'company_id': company_obj.id,
+                        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+                    }, JWT_SECRET, algorithm='HS256')
+                    session['token'] = token
+                    flash('Company login successful.', 'success')
+                    return redirect(url_for('dashboard.company_dashboard'))
+                elif company_obj and not company_obj.approved:
+                    logout_user()
+                    session.clear()
+                    flash('Your company account is pending approval. Please wait for admin approval.', 'warning')
+                    return render_template('login.html', form=form)
+                else:
+                    logout_user()
+                    session.clear()
+                    flash('Company details not found for this user. Ensure your company is registered and approved.', 'danger')
+                    return render_template('login.html', form=form)
+            else:  # Regular user or other non-company roles
+                token = jwt.encode({
+                    'email': user.email,
+                    'role': user.role,
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+                }, JWT_SECRET, algorithm='HS256')
+                session['token'] = token
+                flash('Logged in successfully', 'success')
+                return redirect(url_for('main.show_events'))
 
-        company = Company.query.filter_by(contact_email=email).first()
-        if company and check_password_hash(company.password, password):
-            if not company.approved:
+        # If user not found by email, or password incorrect, try company login by contact_email as a fallback
+        # This part of the original logic might be redundant if all company reps are Users with role='company'
+        # For now, retaining a modified version of it.
+        # However, this block will NOT call login_user() and thus current_user won't be set for these.
+        # This could be an issue for @login_required routes if this path is taken.
+        # The preferred path is for a User with role='company' to exist.
+        company_as_entity = Company.query.filter_by(contact_email=email).first()
+        if company_as_entity and check_password_hash(company_as_entity.password, password) and not user: # Only if no user matched
+            if not company_as_entity.approved:
                 flash('Your company account is pending approval. Please wait for admin approval.', 'warning')
                 return render_template('login.html', form=form)
 
-            # Generate JWT token for company
+            # This path does not use flask_login.login_user(). current_user will not be set.
+            # Only session variables are set. This is suitable for non-Flask-Login based auth checks.
+            session['email'] = company_as_entity.contact_email
+            session['role'] = company_as_entity.role # This is 'company'
+            session['company_id'] = company_as_entity.id
             token = jwt.encode({
-                'email': company.contact_email,
-                'role': company.role,
-                'company_id': company.id,
-                'approved': company.approved,
+                'email': company_as_entity.contact_email,
+                'role': company_as_entity.role,
+                'company_id': company_as_entity.id,
+                'approved': company_as_entity.approved,
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
             }, JWT_SECRET, algorithm='HS256')
-
-            # Store login info in session
             session['token'] = token
-            session['email'] = company.contact_email
-            session['role'] = company.role
-            session['company_id'] = company.id
-
-            flash('Logged in successfully', 'success')
+            flash('Company entity login successful (session only).', 'success') # Differentiate this login
             return redirect(url_for('dashboard.company_dashboard'))
 
         flash('Invalid credentials', 'danger')
 
     return render_template('login.html', form=form)
-
-
-    # Use existing JWT login logic - THIS PART IS BEING REPLACED AND RE-INDENTED ABOVE
-    # user = User.query.filter_by(email=email).first()
-
-    # if user and check_password_hash(user.password, password):
-        # Generate JWT token for user
-        # token = jwt.encode({
-        #     'email': user.email,
-        #     'role': user.role,
-        #     'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-        # }, JWT_SECRET, algorithm='HS256')
-
-        # Store login info in session and Flask-Login
-        # login_user(user)
-        # session['token'] = token
-        # session['email'] = user.email
-        # session['role'] = user.role
-
-        # flash('Logged in successfully', 'success')
-        # return redirect(url_for('main.show_events'))
-
-    # Check if it's a company login
-    # company = Company.query.filter_by(contact_email=email).first()
-    # if company and check_password_hash(company.password, password):
-    #     if not company.approved:
-    #         flash('Your company account is pending approval. Please wait for admin approval.', 'warning')
-    #         return render_template('login.html', form=form) # Pass form here too
-
-        # Generate JWT token for company
-        # token = jwt.encode({
-        #     'email': company.contact_email,
-        #     'role': company.role,
-        #     'company_id': company.id,
-        #     'approved': company.approved,
-        #     'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-        # }, JWT_SECRET, algorithm='HS256')
-
-        # Store login info in session
-        # session['token'] = token
-        # session['email'] = company.contact_email
-        # session['role'] = company.role
-        # session['company_id'] = company.id
-
-        # flash('Logged in successfully', 'success')
-        # return redirect(url_for('dashboard.company_dashboard'))
-
-    # flash('Invalid credentials', 'danger')
-    # return render_template('login.html', form=form) # And here
 
 
 @auth_bp.route('/logout', methods=['POST'])

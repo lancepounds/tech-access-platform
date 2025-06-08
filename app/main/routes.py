@@ -16,8 +16,13 @@ from app.extensions import mail
 import datetime
 import uuid
 import os
+import logging # Added logging
+from app.utils.files import allowed_image_extension, validate_file_content # Import validators
 
 main_bp = Blueprint('main', __name__)
+
+# REMOVED ALLOWED_EVENT_IMAGE_EXTENSIONS and allowed_event_image (moved to app.utils.files)
+
 from app.auth.routes import login as auth_login
 
 @main_bp.route('/login', methods=['GET', 'POST'])
@@ -193,8 +198,11 @@ def test_sendgrid():
 @main_bp.route('/create-event', methods=['POST'])
 @login_required
 def create_event():
-    if not current_user.company_id:
-        return abort(403)
+    # User must be logged in, have 'company' role, and a company_id in session
+    company_id_from_session = session.get('company_id')
+    if not (current_user.role == 'company' and company_id_from_session):
+        flash("You must be logged in as an approved company representative to create events.", "danger")
+        return abort(403) # Or redirect to login/company registration
 
     # Get form data
     title = request.form.get('title')
@@ -219,7 +227,7 @@ def create_event():
         title=title,
         description=description,
         date=event_date,
-        company_id=current_user.company_id
+        company_id=company_id_from_session # Use company_id from session
     )
     if category_id_val:
         try:
@@ -229,12 +237,26 @@ def create_event():
 
     image_file = request.files.get('image')
     if image_file and image_file.filename:
+        if not allowed_image_extension(image_file.filename): # Use imported function
+            flash('Invalid image file type. Allowed types are png, jpg, jpeg, gif, webp.', 'danger')
+            return redirect(url_for('main.create_event_page'))
+
+        if not validate_file_content(image_file): # Use imported function
+            flash('Invalid image content. File does not appear to be a valid image.', 'danger')
+            return redirect(url_for('main.create_event_page'))
+
         filename = secure_filename(image_file.filename)
         unique_name = f"{uuid.uuid4().hex}_{filename}"
         upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'events')
         os.makedirs(upload_folder, exist_ok=True)
-        image_file.save(os.path.join(upload_folder, unique_name))
-        setattr(new_event, 'image_filename', unique_name)
+        try:
+            image_file.save(os.path.join(upload_folder, unique_name))
+            setattr(new_event, 'image_filename', unique_name)
+        except Exception as e:
+            logging.error(f"Event image save error for new event: {e}")
+            flash('Could not save event image. Please try again later.', 'danger')
+            # Potentially redirect, or let it proceed without an image if that's acceptable
+            # For now, let it proceed and rely on flash message
 
     try:
         db.session.add(new_event)
@@ -251,8 +273,14 @@ def create_event():
 @login_required
 def edit_event(event_id):
     event = Event.query.get_or_404(event_id)
-    if not current_user.company_id or event.company_id != current_user.company_id:
-        return abort(403)
+    company_id_from_session = session.get('company_id')
+    # User must be logged in, have 'company' role, a company_id in session,
+    # and that company_id must match the event's company_id
+    if not (current_user.role == 'company' and \
+            company_id_from_session and \
+            event.company_id == company_id_from_session):
+        flash("You are not authorized to edit this event.", "danger")
+        return abort(403) # Or redirect
     categories = Category.query.order_by(Category.name).all()
 
     if request.method == 'POST':
@@ -281,12 +309,25 @@ def edit_event(event_id):
 
         image_file = request.files.get('image')
         if image_file and image_file.filename:
+            if not allowed_image_extension(image_file.filename): # Use imported function
+                flash('Invalid image file type. Allowed types are png, jpg, jpeg, gif, webp.', 'danger')
+                return redirect(url_for('main.edit_event', event_id=event.id))
+
+            if not validate_file_content(image_file): # Use imported function
+                flash('Invalid image content. File does not appear to be a valid image.', 'danger')
+                return redirect(url_for('main.edit_event', event_id=event.id))
+
             filename = secure_filename(image_file.filename)
             unique_name = f"{uuid.uuid4().hex}_{filename}"
             upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'events')
             os.makedirs(upload_folder, exist_ok=True)
-            image_file.save(os.path.join(upload_folder, unique_name))
-            setattr(event, 'image_filename', unique_name)
+            try:
+                image_file.save(os.path.join(upload_folder, unique_name))
+                setattr(event, 'image_filename', unique_name)
+            except Exception as e:
+                logging.error(f"Event image save error for event {event_id}: {e}")
+                flash('Could not save event image. Please try again later.', 'danger')
+                # Let it proceed and rely on flash message
 
         try:
             db.session.commit()

@@ -8,7 +8,7 @@
     <h2 class="mb-0">
       <i class="bi bi-speedometer2 me-2 text-primary"></i>Company Dashboard
     </h2>
-    <a href="{{ url_for('create_event_page') }}" class="btn btn-primary">
+        <a href="{{ url_for('main.create_event_page') }}" class="btn btn-primary">
       <i class="bi bi-plus-circle me-2"></i>Create Event
     </a>
   </div>
@@ -86,85 +86,9 @@
       <i class="bi bi-calendar-plus text-muted mb-3" style="font-size: 4rem;"></i>
       <h4 class="text-muted">No events created yet!</h4>
       <p class="text-muted mb-4">Start engaging with your audience by creating your first event.</p>
-      <a href="{{ url_for('create_event_page') }}" class="btn btn-primary btn-lg">
+          <a href="{{ url_for('main.create_event_page') }}" class="btn btn-primary btn-lg">
         <i class="bi bi-plus-circle me-2"></i>Create Your First Event
       </a>
     </div>
   {% endif %}
-{% endblock %}
-{% extends "base.html" %}
-
-{% block title %}Company Dashboard - Tech Access{% endblock %}
-
-{% block content %}
-<div class="container mt-4">
-  <div class="row">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h1 class="mb-0">
-            <i class="bi bi-building me-2"></i>
-            {{ company.name }} Dashboard
-          </h1>
-          <a href="/api/events/create" class="btn btn-success">
-            <i class="bi bi-plus-circle me-1"></i>Create Event
-          </a>
-        </div>
-        <div class="card-body">
-          <h3 class="mb-4">Your Scheduled Demos & Tests</h3>
-          
-          {% if events %}
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Event Title</th>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for event in events %}
-                    <tr>
-                      <td>
-                        <strong>{{ event.title }}</strong>
-                      </td>
-                      <td>
-                        <i class="bi bi-calendar me-1"></i>
-                        {{ event.date.strftime('%m/%d/%Y %I:%M %p') }}
-                      </td>
-                      <td>
-                        {{ event.description[:80] }}{% if event.description|length > 80 %}...{% endif %}
-                      </td>
-                      <td>
-                        <div class="btn-group btn-group-sm">
-                          <a href="/api/events/{{ event.id }}" class="btn btn-outline-primary">
-                            <i class="bi bi-eye"></i>
-                          </a>
-                          <a href="/api/events/{{ event.id }}/edit" class="btn btn-outline-secondary">
-                            <i class="bi bi-pencil"></i>
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="text-center py-5">
-              <i class="bi bi-calendar-plus" style="font-size: 3rem; color: var(--text-light);"></i>
-              <h4 class="mt-3 text-muted">No events scheduled</h4>
-              <p class="text-muted">Create your first event to start hosting demos and testing sessions.</p>
-              <a href="/api/events/create" class="btn btn-primary mt-3">
-                <i class="bi bi-plus-circle me-1"></i>Create Your First Event
-              </a>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}
