@@ -3,9 +3,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import User, Company
 from .forms import LoginForm
 from flask_login import login_user, logout_user
+
+from flask_login import login_user, logout_user
 from flask_jwt_extended import create_access_token
 from app.auth.decorators import decode_token
-from app.extensions import db, limiter # Import limiter
+from app.extensions import db, limiterfrom 
+
 from sqlalchemy.exc import IntegrityError
 import jwt # Re-enable for web login session token
 import datetime
