@@ -129,6 +129,7 @@ class Event(db.Model):
     rsvps = db.relationship('RSVP', backref='event', lazy='dynamic')
     capacity = db.Column(db.Integer, nullable=True)
     waitlist = db.relationship('Waitlist', backref='event', lazy='dynamic')
+    image_filename = db.Column(db.String(255), nullable=True) # Added for event images
 
     # Backwards compatibility for code that still references ``name``
     @property
