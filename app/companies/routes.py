@@ -9,16 +9,15 @@ import logging
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash
 from werkzeug.security import generate_password_hash
 from app.models import Company
-from flask import Blueprint
 from .forms import CompanyRegistrationForm
 from .schemas import ApproveCompanySchema
-from app.extensions import db, limiter
+from app.extensions import db, limiter # Import limiter
 from flask_login import login_required, current_user
 from marshmallow import ValidationError
 
 companies_bp = Blueprint('companies', __name__)
 
-# (Admin routes will now use current_user.is_admin and rate limiting via limiter)
+# ADMIN_TOKEN related lines removed
 
 
 @companies_bp.route('/register', methods=['GET'])

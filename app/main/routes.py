@@ -5,17 +5,17 @@ import csv
 from werkzeug.utils import secure_filename
 from app.models import Event, RSVP, Company, User, Reward, Category, Review, Waitlist
 from sqlalchemy import or_, func
-from datetime import date # ensure this is imported if not already
+from datetime import date
 from app.reviews.forms import ReviewForm
 from app.users.forms import WaitlistForm
 from app.auth.decorators import decode_token
 from app.extensions import db
 from flask_mail import Message
 from app.extensions import mail
-import datetime # Ensure this is imported
+import datetime
 import uuid
 import os
-import logging
+import logging # Keep for existing logging.error
 from app.utils.files import allowed_image_extension, validate_file_content
 from .forms import EventForm
 
@@ -49,7 +49,7 @@ def show_events():
 
 @main_bp.route('/events')
 def list_events():
-    today_date = date.today() # Renamed to avoid conflict with datetime.date
+    today_date = date.today()
     upcoming_events = Event.query.filter(Event.date >= today_date).order_by(Event.date).all()
     past_events = Event.query.filter(Event.date < today_date).order_by(Event.date.desc()).all()
     return render_template(
@@ -98,13 +98,20 @@ def rsvp_event(event_id):
         db.session.commit()
         flash('Event is full. You have been added to the waitlist.', 'info')
         return redirect(url_for('main.event_detail', event_id=event_id))
+
     new_rsvp = RSVP(event_id=str(event_id), user_id=current_user.id)
     db.session.add(new_rsvp)
     db.session.commit()
+
     msg = Message(subject=f"RSVP Confirmation for {event.title}", recipients=[current_user.email])
     msg.body = render_template('email/rsvp_confirmation.txt', user=current_user, event=event)
     mail.send(msg)
-    flash('RSVP successful! A confirmation email has been sent.', 'success')
+
+    flash_message = 'RSVP successful! A confirmation email has been sent.'
+    if event.gift_card_amount_cents and event.gift_card_amount_cents > 0:
+        flash_message += " This event offers a gift card which may need to be processed via API or by contacting the event organizer."
+    flash(flash_message, 'success')
+
     return redirect(url_for('users.my_rsvps'))
 
 @main_bp.route('/search')
@@ -154,52 +161,44 @@ def test_sendgrid():
     except Exception as e: return jsonify({'error': f'SendGrid error: {str(e)}'}), 500
 
 @main_bp.route('/create-event', methods=['POST'])
-@login_required # Restored
+@login_required
 def create_event():
-    logging.debug("CREATE_EVENT ROUTE ENTERED (POST)")
-    company_id_from_session = session.get('company_id') # Restored
-    if not (current_user.role == 'company' and company_id_from_session): # Restored
-        flash("You must be logged in as an approved company representative to create events.", "danger") # Restored
-        return abort(403) # Restored
-
-    image_file_in_request = request.files.get('image')
-    if image_file_in_request:
-        logging.debug(f"REQUEST.FILES['image'] FILENAME: {image_file_in_request.filename}, CONTENT_TYPE: {image_file_in_request.content_type}")
-    else:
-        logging.debug("REQUEST.FILES does not contain 'image'")
+    company_id_from_session = session.get('company_id')
+    if not (current_user.role == 'company' and company_id_from_session):
+        flash("You must be logged in as an approved company representative to create events.", "danger")
+        return abort(403)
 
     form = EventForm()
     form.category_id.choices = [(0, 'Uncategorized')] + [(c.id, c.name) for c in Category.query.order_by(Category.name).all()]
 
-    validation_result = form.validate_on_submit()
-    logging.debug(f"FORM.VALIDATE_ON_SUBMIT RESULT: {validation_result}")
-    if validation_result:
+    if form.validate_on_submit():
         title = form.title.data
         description = form.description.data
         date_str = form.date.data
+        gift_card_amount_val = form.gift_card_amount_cents.data
 
         try:
             event_date = datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
         except ValueError:
             form.date.errors.append("Invalid date format. Use YYYY-MM-DDTHH:MM:SS.")
-            logging.debug(f"DATE PARSING FAILED for '{date_str}'. Errors: {form.date.errors}")
             return render_template('create_event.html', form=form)
 
         category_id_val = form.category_id.data
         image_file = form.image.data
 
-        new_event = Event(title=title, description=description, date=event_date, company_id=company_id_from_session)
+        new_event = Event(
+            title=title,
+            description=description,
+            date=event_date,
+            company_id=company_id_from_session,
+            gift_card_amount_cents=gift_card_amount_val
+        )
         if category_id_val != 0: new_event.category_id = category_id_val
         else: new_event.category_id = None
 
         if image_file and image_file.filename:
-            logging.debug(f"IMAGE FILENAME FOR PROCESSING: {image_file.filename}")
-            # Note: The direct .txt check and allowed_image_extension checks were removed as FileAllowed should handle it.
-            is_content_valid = validate_file_content(image_file)
-            logging.debug(f"VALIDATE_FILE_CONTENT RESULT: {is_content_valid}")
-            if not is_content_valid:
+            if not validate_file_content(image_file):
                 form.image.errors.append("Invalid image content. File does not appear to be a valid image.")
-                logging.debug(f"IMAGE CONTENT VALIDATION ERRORS: {form.image.errors}")
                 return render_template('create_event.html', form=form)
             else:
                 filename = secure_filename(image_file.filename)
@@ -212,11 +211,8 @@ def create_event():
                 except Exception as e:
                     logging.error(f"Event image save error for new event: {e}")
                     form.image.errors.append('Could not save event image. System error during save.')
-                    logging.debug(f"IMAGE SAVE FAILURE ERRORS: {form.image.errors}")
 
-        logging.debug(f"FINAL CHECK - form.image.errors before DB ops: {form.image.errors}")
         if not form.image.errors:
-            logging.debug(f"NO IMAGE ERRORS, PROCEEDING TO DB")
             try:
                 db.session.add(new_event)
                 db.session.commit()
@@ -226,12 +222,6 @@ def create_event():
                 db.session.rollback()
                 logging.error(f"Error creating event in DB: {e}")
                 flash('Failed to create event. Please try again.', 'danger')
-        else:
-            logging.debug(f"IMAGE ERRORS EXIST ({form.image.errors}), RE-RENDERING VIA FALL THROUGH TO FINAL RENDER")
-
-    else:
-        logging.debug(f"FORM VALIDATION FAILED. All form errors: {form.errors}")
-        logging.debug(f"Specifically form.image.errors: {form.image.errors}")
 
     return render_template('create_event.html', form=form)
 
@@ -244,41 +234,37 @@ def edit_event(event_id):
         flash("You are not authorized to edit this event.", "danger")
         return abort(403)
 
-    # For edit_event, when POSTing, it's common to pass request.form to populate.
-    # If a new file is uploaded, request.files will also be used by FlaskForm.
-    # If no new file, form.image.data will be None from request.files, so existing image isn't cleared.
-    form = EventForm(request.form if request.method == "POST" else None, obj=event)
-
-    if request.method == 'GET': # Pre-fill specific fields not handled by obj=event or if custom formatting needed
+    if request.method == 'POST':
+        form = EventForm(request.form)
+    else:
+        form = EventForm(obj=event)
         if event.date:
-            form.date.data = event.date.strftime('%Y-%m-%dT%H:%M:%S') # For StringField
-        if event.category_id is None: # Handle pre-selection of 'Uncategorized'
-             form.category_id.data = 0
-        # Note: image field is not pre-filled with existing image data for FileField; template handles display
+            form.date.data = event.date.strftime('%Y-%m-%dT%H:%M:%S')
+        # gift_card_amount_cents is handled by obj=event for IntegerField
 
     form.category_id.choices = [(0, 'Uncategorized')] + [(c.id, c.name) for c in Category.query.order_by(Category.name).all()]
+    if request.method == 'GET' and event.category_id is None:
+        form.category_id.data = 0
 
     if form.validate_on_submit():
         event.title = form.title.data
         event.description = form.description.data
         date_str = form.date.data
+        event.gift_card_amount_cents = form.gift_card_amount_cents.data
+
         try:
             event_date = datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
         except ValueError:
             form.date.errors.append("Invalid date format. Use YYYY-MM-DDTHH:MM:SS.")
-            # logging.debug(f"DATE PARSING FAILED for '{date_str}' in edit_event. Errors: {form.date.errors}") # logging.debug for edit
             return render_template('edit_event.html', form=form, event=event)
 
         event.date = event_date
         event.category_id = form.category_id.data if form.category_id.data != 0 else None
 
-        image_file = form.image.data # This is from Flask-WTF, will be FileStorage or None
+        image_file = form.image.data
         if image_file and image_file.filename:
-            # New file uploaded, process it
-            # logging.debug(f"EDIT_EVENT - IMAGE FILENAME FOR PROCESSING: {image_file.filename}") # logging.debug for edit
             if not validate_file_content(image_file):
                 form.image.errors.append("Invalid image content. File does not appear to be a valid image.")
-                # logging.debug(f"EDIT_EVENT - IMAGE CONTENT VALIDATION ERRORS: {form.image.errors}") # logging.debug for edit
                 return render_template('edit_event.html', form=form, event=event)
             else:
                 filename = secure_filename(image_file.filename)
@@ -291,11 +277,8 @@ def edit_event(event_id):
                 except Exception as e:
                     logging.error(f"Event image save error for event {event_id}: {e}")
                     form.image.errors.append('Could not save event image. System error during save.')
-                    # logging.debug(f"EDIT_EVENT - IMAGE SAVE FAILURE ERRORS: {form.image.errors}") # logging.debug for edit
 
-        # logging.debug(f"EDIT_EVENT - FINAL CHECK - form.image.errors before DB ops: {form.image.errors}") # logging.debug for edit
         if not form.image.errors:
-            # logging.debug(f"EDIT_EVENT - NO IMAGE ERRORS, PROCEEDING TO DB") # logging.debug for edit
             try:
                 db.session.commit()
                 flash('Event updated successfully!', 'success')
@@ -304,38 +287,22 @@ def edit_event(event_id):
                 db.session.rollback()
                 logging.error(f"Error updating event {event_id} in DB: {e}")
                 flash('Failed to update event. Please try again.', 'danger')
-        # else: # logging.debug for edit
-            # logging.debug(f"EDIT_EVENT - IMAGE ERRORS EXIST ({form.image.errors}), RE-RENDERING")
-
-    # else: # For form.validate_on_submit() being False on POST, or for GET request
-        # if request.method == "POST": # logging.debug for edit
-            # logging.debug(f"EDIT_EVENT - FORM VALIDATION FAILED (POST). All form errors: {form.errors}")
-            # logging.debug(f"EDIT_EVENT - Specifically form.image.errors (POST): {form.image.errors}")
 
     return render_template('edit_event.html', form=form, event=event)
 
-# ... (rest of the file remains the same) ...
-
 @main_bp.route('/my-rsvps-page')
 def show_my_rsvps():
-    # Check if user is logged in via session
     if 'token' not in session or 'role' not in session:
         flash('Please log in to view your RSVPs.', 'danger')
         return redirect(url_for('auth.login'))
-
     if session['role'] != 'user':
         flash('Only users can view RSVPs.', 'danger')
         return redirect(url_for('main.show_events'))
-
-    # Decode token to get user info
     decoded = decode_token(session['token'])
     if not decoded:
         flash('Session expired. Please log in again.', 'danger')
         return redirect(url_for('auth.login'))
-
-    # Query RSVPs for the logged-in user
     rsvps = RSVP.query.filter_by(user_email=decoded['email']).join(Event).join(Company).all()
-
     return render_template('my_rsvps.html', rsvps=rsvps)
 
 @main_bp.route('/dashboard')
@@ -349,175 +316,124 @@ def company_dashboard():
 
 @main_bp.route('/company-dashboard')
 def company_dashboard_legacy():
-    # Check if company is logged in via session
     if 'token' not in session or 'role' not in session:
         flash('Please log in to view your dashboard.', 'danger')
         return redirect(url_for('auth.login'))
-
     if session['role'] != 'company':
         flash('Only companies can view the dashboard.', 'danger')
         return redirect(url_for('main.show_events'))
-
-    # Decode token to get company info
     decoded = decode_token(session['token'])
     if not decoded:
         flash('Session expired. Please log in again.', 'danger')
         return redirect(url_for('auth.login'))
-
     company = Company.query.filter_by(name=decoded['email']).first()
     if not company:
         flash('Company not found.', 'danger')
         return redirect(url_for('main.show_events'))
-
     if not company.approved:
         flash('Company not approved.', 'danger')
         return redirect(url_for('main.show_events'))
-
-    # Query events for the logged-in company with their RSVPs
     events = Event.query.filter_by(company_id=company.id).all()
-
-    # Load RSVPs for each event
     for event in events:
         event.rsvps = RSVP.query.filter_by(event_id=event.id).all()
-
     return render_template('company_dashboard.html', events=events)
 
 @main_bp.route('/rsvps/<int:rsvp_id>/fulfill-ui', methods=['POST'])
 def fulfill_rsvp_ui(rsvp_id):
-    # Check if company is logged in via session
     if 'token' not in session or 'role' not in session:
         flash('Please log in to fulfill RSVPs.', 'danger')
         return redirect(url_for('auth.login'))
-
     if session['role'] != 'company':
         flash('Only companies can fulfill RSVPs.', 'danger')
         return redirect(url_for('main.show_events'))
-
-    # Decode token to get company info
     decoded = decode_token(session['token'])
     if not decoded:
         flash('Session expired. Please log in again.', 'danger')
         return redirect(url_for('auth.login'))
-
     company = Company.query.filter_by(name=decoded['email']).first()
     if not company or not company.approved:
         flash('Company not found or not approved.', 'danger')
         return redirect(url_for('main.show_events'))
-
     rsvp = RSVP.query.get(rsvp_id)
     if not rsvp:
         flash('RSVP not found.', 'danger')
         return redirect(url_for('main.company_dashboard'))
-
     event = Event.query.get(rsvp.event_id)
     if event.company_id != company.id:
         flash('This RSVP does not belong to one of your events.', 'danger')
         return redirect(url_for('main.company_dashboard'))
-
     if rsvp.fulfilled:
         flash('RSVP is already fulfilled.', 'info')
         return redirect(url_for('main.company_dashboard'))
-
     rsvp.fulfilled = True
-
     try:
         db.session.commit()
         flash(f'RSVP for {rsvp.user_email} marked as fulfilled!', 'success')
     except Exception as e:
         db.session.rollback()
         flash('Failed to update RSVP. Please try again.', 'danger')
-
     return redirect(url_for('main.company_dashboard'))
 
 @main_bp.route('/rsvps/<int:rsvp_id>/issue-gift', methods=['POST'])
 def issue_gift(rsvp_id):
-    # Only companies can issue gifts
     if session.get('role') != 'company':
         flash('Please log in as a company.', 'danger')
         return redirect(url_for('auth.login'))
-
     decoded = decode_token(session['token'])
     company = Company.query.filter_by(name=decoded['email']).first()
     if not company or not company.approved:
         flash('Not authorized.', 'danger')
         return redirect(url_for('auth.login'))
-
     rsvp = RSVP.query.get_or_404(rsvp_id)
     if rsvp.fulfilled:
         flash('Gift already issued.', 'warning')
         return redirect(url_for('main.company_dashboard'))
-
-    # Generate and save gift code
     code = str(uuid.uuid4())
     reward = Reward(rsvp_id=rsvp.id, code=code)
     rsvp.fulfilled = True
-
     db.session.add_all([reward, rsvp])
     db.session.commit()
-
     flash(f'Gift code issued: {code}', 'success')
     return redirect(url_for('main.company_dashboard'))
 
 @main_bp.route('/my-rsvps', methods=['GET'])
 def get_my_rsvps():
     token = request.headers.get('Authorization')
-    if not token:
-        return jsonify({'error': 'Missing token'}), 401
-
+    if not token: return jsonify({'error': 'Missing token'}), 401
     decoded = decode_token(token)
-    if not decoded:
-        return jsonify({'error': 'Invalid token'}), 401
-
-    if decoded['role'] != 'user':
-        return jsonify({'error': 'Unauthorized'}), 403
-
+    if not decoded: return jsonify({'error': 'Invalid token'}), 401
+    if decoded['role'] != 'user': return jsonify({'error': 'Unauthorized'}), 403
     rsvps = RSVP.query.filter_by(user_email=decoded['email']).all()
-    events = []
+    events_data = []
     for rsvp in rsvps:
         event = Event.query.get(rsvp.event_id)
         if event:
-            events.append({
-                'id': event.id,
-                'title': event.title,
-                'description': event.description,
-                'date': event.date.isoformat(),
-                'company_name': event.company.name,
+            events_data.append({
+                'id': event.id, 'title': event.title, 'description': event.description,
+                'date': event.date.isoformat(), 'company_name': event.company.name,
                 'rsvp_date': rsvp.created_at.isoformat()
             })
-
-    return jsonify(events), 200
+    return jsonify(events_data), 200
 
 @main_bp.route('/rsvps/<int:rsvp_id>/fulfill', methods=['POST'])
 def fulfill_rsvp(rsvp_id):
     token = request.headers.get('Authorization')
-    if not token:
-        return jsonify({'error': 'Missing token'}), 401
-
+    if not token: return jsonify({'error': 'Missing token'}), 401
     decoded = decode_token(token)
-    if not decoded or decoded['role'] != 'company':
-        return jsonify({'error': 'Unauthorized'}), 403
-
+    if not decoded or decoded['role'] != 'company': return jsonify({'error': 'Unauthorized'}), 403
     company = Company.query.filter_by(name=decoded['email']).first()
-    if not company or not company.approved:
-        return jsonify({'error': 'Company not found or not approved'}), 403
-
+    if not company or not company.approved: return jsonify({'error': 'Company not found or not approved'}), 403
     rsvp = RSVP.query.get(rsvp_id)
-    if not rsvp:
-        return jsonify({'error': 'RSVP not found'}), 404
-
+    if not rsvp: return jsonify({'error': 'RSVP not found'}), 404
     event = Event.query.get(rsvp.event_id)
-    if event.company_id != company.id:
-        return jsonify({'error': 'This RSVP does not belong to one of your events'}), 403
-
+    if event.company_id != company.id: return jsonify({'error': 'This RSVP does not belong to one of your events'}), 403
     rsvp.fulfilled = True
-
     try:
         db.session.commit()
         return jsonify({'message': f'RSVP for {rsvp.user_email} marked as fulfilled'}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to update RSVP: {str(e)}'}), 500
-
 
 @main_bp.route('/events/<int:event_id>/rsvp-capacity', methods=['POST'])
 @login_required
@@ -526,7 +442,7 @@ def rsvp_event_capacity(event_id):
     if RSVP.query.filter_by(event_id=event.id, user_id=current_user.id).first():
         flash('You have already RSVP\'d for this event.', 'warning')
         return redirect(url_for('main.show_events'))
-    if event.capacity is not None and event.rsvps.count() >= event.capacity:
+    if event.capacity is not None and RSVP.query.filter_by(event_id=event.id).count() >= event.capacity:
         wait = Waitlist(user_id=current_user.id, event_id=event.id)
         db.session.add(wait)
         db.session.commit()
@@ -538,44 +454,33 @@ def rsvp_event_capacity(event_id):
     flash('RSVP successful!', 'success')
     return redirect(url_for('main.show_events'))
 
-
 @main_bp.route('/companies/<int:company_id>')
 def show_company(company_id):
-    """Display a company's details."""
     company = Company.query.get_or_404(company_id)
     return f"Company: {company.name}"
-
 
 @main_bp.route('/events/<int:event_id>/export', methods=['GET'])
 @login_required
 def export_attendees(event_id):
     event = Event.query.get_or_404(event_id)
-    if not current_user.company_id or event.company_id != current_user.company_id:
-        abort(403)
+    if not current_user.company_id or event.company_id != current_user.company_id: abort(403)
     si = io.StringIO()
     writer = csv.writer(si)
     writer.writerow(['Name', 'Email', 'RSVP Date'])
-    for rsvp in event.rsvps:
+    for rsvp_item in event.rsvps: # Changed variable name
         writer.writerow([
-            rsvp.user.name,
-            rsvp.user.email,
-            rsvp.created_at.strftime('%Y-%m-%d %H:%M')
+            rsvp_item.user.name, rsvp_item.user.email, # Assumes user relationship on rsvp_item
+            rsvp_item.created_at.strftime('%Y-%m-%d %H:%M')
         ])
     output = si.getvalue()
     si.close()
-    return Response(
-        output,
-        mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment;filename=attendees_event_{event_id}.csv'}
-    )
-
+    return Response(output, mimetype='text/csv', headers={'Content-Disposition': f'attachment;filename=attendees_event_{event_id}.csv'})
 
 @main_bp.route('/events/<int:event_id>/calendar.ics', methods=['GET'])
 @login_required
 def event_calendar(event_id):
     event = Event.query.get_or_404(event_id)
-    if not current_user.company_id or event.company_id != current_user.company_id:
-        abort(403)
+    if not current_user.company_id or event.company_id != current_user.company_id: abort(403)
     si = io.StringIO()
     writer = csv.writer(si)
     writer.writerow(['UID', 'DTSTART', 'SUMMARY', 'DESCRIPTION', 'URL'])
@@ -589,14 +494,6 @@ def event_calendar(event_id):
     event_lines = '\r\n'.join(f"{h}:{v}" for h, v in zip(headers, values))
     ics_content = (
         'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//YourApp//EN\r\n' +
-        'BEGIN:VEVENT\r\n' +
-        event_lines +
-        '\r\nEND:VEVENT\r\nEND:VCALENDAR'
+        'BEGIN:VEVENT\r\n' + event_lines + '\r\nEND:VEVENT\r\nEND:VCALENDAR'
     )
-    return Response(
-        ics_content,
-        headers={
-            'Content-Type': 'text/calendar',
-            'Content-Disposition': f'attachment; filename=event_{event.id}.ics'
-        }
-    )
+    return Response(ics_content, headers={'Content-Type': 'text/calendar', 'Content-Disposition': f'attachment; filename=event_{event.id}.ics'})

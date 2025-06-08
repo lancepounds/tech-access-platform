@@ -47,10 +47,26 @@
           </div>
 
           <div class="mb-3">
+            {{ form.gift_card_amount_cents.label(class="form-label") }}
+            {{ form.gift_card_amount_cents(class="form-control" + (" is-invalid" if form.gift_card_amount_cents.errors else "")) }}
+            {% if form.gift_card_amount_cents.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.gift_card_amount_cents.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
             {{ form.image.label(class="form-label") }}
             {{ form.image(class="form-control" + (" is-invalid" if form.image.errors else "")) }}
             {% if form.image.errors %}
               <div class="invalid-feedback d-block">{% for error in form.image.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.gift_card_amount_cents.label(class="form-label") }}
+            {{ form.gift_card_amount_cents(class="form-control" + (" is-invalid" if form.gift_card_amount_cents.errors else "")) }}
+            {% if form.gift_card_amount_cents.errors %}
+              <div class="invalid-feedback d-block">{% for error in form.gift_card_amount_cents.errors %}<span>{{ error }}</span>{% endfor %}</div>
             {% endif %}
           </div>
 

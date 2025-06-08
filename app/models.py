@@ -131,6 +131,7 @@ class Event(db.Model):
     capacity = db.Column(db.Integer, nullable=True)
     waitlist = db.relationship('Waitlist', backref='event', lazy='dynamic')
     image_filename = db.Column(db.String(255), nullable=True) # Added for event images
+    gift_card_amount_cents = db.Column(db.Integer, nullable=True, default=1000) # New field
 
     # Backwards compatibility for code that still references ``name``
     @property
