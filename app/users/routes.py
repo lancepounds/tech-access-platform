@@ -42,7 +42,7 @@ def show_register():
     return render_template('register.html')
 
 @api_users_bp.route('/register', methods=['POST'])
-@limiter.limit("5 per hour;20 per day")
+@limiter.limit("5 per hour;20 per day") # Reverted to static limit
 def register():
     """Register a new user via JSON API."""
     if not request.is_json:

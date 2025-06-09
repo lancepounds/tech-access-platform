@@ -33,10 +33,19 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app, db)
     mail.init_app(app)
-    limiter.init_app(app) # Initialize limiter
-    # Set global limits directly on the limiter instance
-    # limiter.global_limits = ["200 per day", "60 per hour"] # This is an alternative to app.config
-    app.config['RATELIMIT_DEFAULT'] = '200 per day;60 per hour' # Using app.config
+
+    # Configure rate limiter (Standard Limiter)
+    # RATELIMIT_STORAGE_URL is still useful for standard Limiter if not set in constructor
+    app.config.setdefault('RATELIMIT_STORAGE_URL', 'memory://')
+    app.config.setdefault('RATELIMIT_STRATEGY', 'fixed-window') # Can also be useful
+
+    if app.config.get('TESTING'):
+        app.config['RATELIMIT_ENABLED'] = False
+    else:
+        app.config['RATELIMIT_ENABLED'] = True
+        app.config.setdefault('RATELIMIT_DEFAULT', '200 per day;60 per hour')
+
+    limiter.init_app(app) # Always call init_app for standard Limiter
 
     app.mail = mail
     login_manager.login_view = 'auth.login'
