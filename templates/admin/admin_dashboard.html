@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title if title else "Admin Dashboard" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>{{ title if title else "Admin Dashboard" }}</h1>
+    <p>Welcome to the admin dashboard.</p>
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">User Management</h5>
+                    <p class="card-text">View and manage user accounts.</p>
+                    <a href="{{ url_for('admin.list_users') }}" class="btn btn-primary">Manage Users</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Company Approval</h5>
+                    <p class="card-text">Review and approve company registrations.</p>
+                    <a href="{{ url_for('admin.pending_companies') }}" class="btn btn-primary">Approve Companies</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Category Management</h5>
+                    <p class="card-text">Create, edit, or delete event categories.</p>
+                    <a href="{{ url_for('categories.list_categories') }}" class="btn btn-primary">Manage Categories</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Add more sections/cards for other admin functionalities as needed #}
+    {# For example:
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Site Settings</h5>
+                    <p class="card-text">Configure global site settings.</p>
+                    <a href="#" class="btn btn-primary">Site Settings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    #}
+</div>
+{% endblock %}
