@@ -96,6 +96,7 @@ def create_app():
     from app.checks.routes import checks_bp
     from app.dashboard.routes import dash_bp
     from app.api import api_bp
+    from app.admin import admin_bp as admin_blueprint # Import admin blueprint
 
     csrf.exempt(auth_bp)
     csrf.exempt(api_users_bp)
@@ -116,6 +117,7 @@ def create_app():
     app.register_blueprint(checks_bp, url_prefix='/checks')
     app.register_blueprint(categories_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(admin_blueprint) # Register admin blueprint
 
     # Register CLI commands
     from app.users.cli import grant_admin_command

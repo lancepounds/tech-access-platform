@@ -327,7 +327,7 @@
             </a>
           </li>
 
-          {% if not session.get('role') %}
+          {% if not current_user.is_authenticated %}
             <!-- Not logged in -->
             <li class="nav-item">
               <a class="nav-link {{ 'active' if request.endpoint == 'auth.login' else '' }}" href="{{ url_for('auth.login') }}">
@@ -347,52 +347,49 @@
                 <i class="bi bi-building me-1"></i>Company Registration
               </a>
             </li>
-          {% elif session.get('role') == 'user' %}
-            <!-- User logged in -->
+          {% else %}
+            <!-- Common links for all authenticated users -->
             <li class="nav-item">
               <a class="nav-link {{ 'active' if request.endpoint == 'main.show_events' else '' }}" href="{{ url_for('main.show_events') }}">
                 <i class="bi bi-calendar-event me-1"></i>Events
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'users.my_rsvps' else '' }}" href="{{ url_for('users.my_rsvps') }}">
-                <i class="bi bi-check-circle me-1"></i>My RSVPs
-              </a>
-            </li>
-             <li class="nav-item">
               <a class="nav-link {{ 'active' if request.endpoint == 'main.testing_opportunities' else '' }}" href="{{ url_for('main.testing_opportunities') }}">
-                <i class="bi bi-calendar-event me-1"></i>Testing Opportunities
+                <i class="bi bi-search-heart me-1"></i>Testing Opportunities {# Changed icon for variety #}
               </a>
             </li>
+
+            <!-- Role-specific links -->
+            {% if current_user.role == 'user' %}
+              <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'users.my_rsvps' else '' }}" href="{{ url_for('users.my_rsvps') }}">
+                  <i class="bi bi-check-circle me-1"></i>My RSVPs
+                </a>
+              </li>
+            {% elif current_user.role == 'company' %}
+              <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'main.create_event_page' else '' }}" href="{{ url_for('main.create_event_page') }}">
+                  <i class="bi bi-plus-circle me-1"></i>Create Event
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'main.company_dashboard' else '' }}" href="{{ url_for('main.company_dashboard') }}">
+                  <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                </a>
+              </li>
+            {% endif %}
+
+            <!-- Admin link - visible to any admin user regardless of their primary role -->
+            {% if current_user.is_admin %}
             <li class="nav-item">
-              <form method="post" action="{{ url_for('auth.logout') }}" style="display: inline;">
-                <button type="submit" class="logout-btn">
-                  <i class="bi bi-box-arrow-left me-1"></i>Logout
-                </button>
-              </form>
+                <a class="nav-link {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}" href="{{ url_for('admin.dashboard') }}">
+                    <i class="bi bi-shield-lock-fill me-1"></i>Admin
+                </a>
             </li>
-          {% elif session.get('role') == 'company' %}
-            <!-- Company logged in -->
-            <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'main.show_events' else '' }}" href="{{ url_for('main.show_events') }}">
-                <i class="bi bi-calendar-event me-1"></i>Events
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'main.create_event_page' else '' }}" href="{{ url_for('main.create_event_page') }}">
-                <i class="bi bi-plus-circle me-1"></i>Create Event
-              </a>
-            </li>
-             <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'main.testing_opportunities' else '' }}" href="{{ url_for('main.testing_opportunities') }}">
-                <i class="bi bi-calendar-event me-1"></i>Testing Opportunities
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {{ 'active' if request.endpoint == 'main.company_dashboard' else '' }}" href="{{ url_for('main.company_dashboard') }}">
-                <i class="bi bi-speedometer2 me-1"></i>Dashboard
-              </a>
-            </li>
+            {% endif %}
+
+            <!-- Logout Button -->
             <li class="nav-item">
               <form method="post" action="{{ url_for('auth.logout') }}" style="display: inline;">
                 <button type="submit" class="logout-btn">
