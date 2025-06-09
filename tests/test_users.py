@@ -7,11 +7,22 @@ from flask_login import login_user
 from werkzeug.security import generate_password_hash
 from flask import url_for # Added import
 
+import os
+import io
+import pytest
+from app import create_app, db
+from app.models import User
+from flask_login import login_user
+from werkzeug.security import generate_password_hash
+from flask import url_for # Added import
+from app.extensions import limiter as global_limiter_instance # Import global limiter
+
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = False
+
     app.config['UPLOAD_FOLDER'] = str(tmp_path / 'uploads')
     app.config['SERVER_NAME'] = 'localhost.test' # Added SERVER_NAME
     with app.app_context():
@@ -21,7 +32,15 @@ def client(tmp_path, monkeypatch):
         db.session.add(user)
         db.session.commit()
     client = app.test_client()
+
+    # Directly disable the limiter for the duration of tests using this fixture
+    original_limiter_state = global_limiter_instance.enabled
+    global_limiter_instance.enabled = False
+
     yield client
+
+    # Restore original limiter state
+    global_limiter_instance.enabled = original_limiter_state
 
 def login_test_user(client):
     client.post('/login', data={'email': 'test@example.com', 'password': 'testpassword'}, follow_redirects=True)

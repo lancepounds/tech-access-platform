@@ -1,15 +1,28 @@
 import pytest
 from app import create_app, db
-from app.models import User, Category, Event # Added Event
+from app.models import User, Category, Event
 from werkzeug.security import generate_password_hash
-from flask import get_flashed_messages, url_for
-from datetime import datetime # Added datetime
+from flask import get_flashed_messages, url_for, session as flask_session # To check session
+from datetime import datetime
+from app.categories.forms import DeleteCategoryForm # Import DeleteCategoryForm
 
-@pytest.fixture(scope="module") # Changed to module scope for efficiency
+import pytest
+from app import create_app, db
+from app.models import User, Category, Event
+from werkzeug.security import generate_password_hash
+from flask import get_flashed_messages, url_for, session as flask_session # To check session
+from datetime import datetime
+from app.categories.forms import DeleteCategoryForm # Import DeleteCategoryForm
+from app.extensions import limiter as global_limiter_instance # Import global limiter
+
+@pytest.fixture(scope="module")
 def client():
     app = create_app()
     app.config.update(
         TESTING=True,
+        # RATELIMIT_ENABLED = False is set in app/__init__.py for TESTING=True
+        # However, directly disabling the instance can be more robust for decorators
+        # that might have captured the limiter instance before app config is fully processed by it.
         WTF_CSRF_ENABLED=False,
         SECRET_KEY='test_secret_key_categories', # Unique key
         SERVER_NAME='localhost.test',
@@ -32,7 +45,15 @@ def client():
         db.session.commit()
 
     client = app.test_client()
+
+    # Directly disable the limiter for the duration of tests in this module
+    original_limiter_state = global_limiter_instance.enabled
+    global_limiter_instance.enabled = False
+
     yield client
+
+    # Restore original limiter state after tests
+    global_limiter_instance.enabled = original_limiter_state
 
     # Teardown: Optional if using in-memory, but good practice for file DBs
     # with app.app_context():
@@ -254,9 +275,43 @@ def category_with_event(client):
 
 def test_delete_category_unauthorized_user(client, category_for_deletion):
     with client.application.app_context():
-        login_user(client, 'user_cat@example.com', 'userpass') # Non-admin
-        response = client.post(url_for('categories.delete_category', category_id=category_for_deletion), follow_redirects=False)
-    assert response.status_code == 403
+        login_response = login_user(client, 'user_cat@example.com', 'userpass')
+        assert login_response.status_code == 200 # Login itself should succeed
+
+        # Check session right before the critical POST
+        with client.session_transaction() as sess:
+            assert sess.get('_user_id') is not None # Check if user_id is in session
+            # The actual user ID might be different from email, depending on what Flask-Login stores.
+            # For this test, just checking if *a* user is logged in is sufficient.
+            # assert sess.get('csrf_token') is not None # Only if not WTF_CSRF_ENABLED=False
+
+        # Prepare form data for the POST.
+        # Since WTF_CSRF_ENABLED=False in test config, explicit token isn't strictly needed for validation
+        # but sending form data for a form POST is good practice.
+        delete_form_data = {} # DeleteCategoryForm only has a submit button.
+
+        response = client.post(
+            url_for('categories.delete_category', category_id=category_for_deletion),
+            data=delete_form_data, # Send some form data
+            follow_redirects=False
+        )
+
+        if response.status_code != 403:
+            print(f"Unexpected status for unauthorized delete: {response.status_code}")
+            try:
+                print(f"Response data: {response.data.decode()}")
+            except:
+                print(f"Response data: {response.data}")
+            with client.session_transaction() as sess:
+                print(f"Session state: {dict(sess)}")
+
+
+        assert response.status_code == 403
+
+        # Clean up session by logging out
+        # The existing logout route is POST only.
+        logout_response = client.post(url_for('auth.logout'), follow_redirects=True)
+        assert logout_response.status_code == 200 # Check that logout was successful
 
 def test_delete_category_success(client, category_for_deletion):
     cat_id = category_for_deletion
