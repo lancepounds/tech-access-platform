@@ -266,10 +266,12 @@
             <div class="form-check mb-3">
               <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
               <label class="form-check-label" for="terms">
-                <i class="bi bi-check-circle me-1"></i>I agree to the Terms of Service and Privacy Policy
+                <i class="bi bi-check-circle me-1"></i>I agree to the 
+                <a href="{{ url_for('main.terms_of_service') }}" target="_blank">Terms of Service</a> and 
+                <a href="#" target="_blank">Privacy Policy</a>
               </label>
               <div class="invalid-feedback">
-                You must agree to the terms and conditions.
+                You must agree to the terms and conditions to continue.
               </div>
             </div>
           </div>

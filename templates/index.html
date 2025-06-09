@@ -4,20 +4,34 @@
 {% block title %}Welcome - Tech Access Group{% endblock %}
 
 {% block content %}
-<form action="{{ url_for('main.search') }}" method="get" class="mb-4">
-  <div class="input-group">
-    <input type="text" name="q" class="form-control" placeholder="Search events…" required>
-    <button type="submit" class="btn btn-primary">Search</button>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="search-forms p-4 mb-5 bg-white rounded-3 shadow-sm">
+        <h3 class="h5 mb-4 text-center">Find what you're looking for</h3>
+        <form action="{{ url_for('main.search') }}" method="get" class="mb-3">
+          <div class="input-group">
+            <input type="text" name="q" class="form-control form-control-lg" placeholder="Search events…" required>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-search me-2"></i>Search
+            </button>
+          </div>
+        </form>
+        <form action="{{ url_for('main.search_companies') }}" method="get">
+          <div class="input-group">
+            <input type="text" name="q" class="form-control form-control-lg" placeholder="Search companies…" required>
+            <button type="submit" class="btn btn-outline-primary px-4">
+              <i class="bi bi-building me-2"></i>Companies
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
-</form>
-<form action="{{ url_for('main.search_companies') }}" method="get" class="mb-4">
-  <div class="input-group">
-    <input type="text" name="q" class="form-control" placeholder="Search companies…" required>
-    <button type="submit" class="btn btn-primary">Search Companies</button>
-  </div>
-</form>
+</div>
+
 <!-- Hero Section -->
-<div class="hero-section text-center py-5 mb-5">
+<div class="hero-section text-center py-5">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-8">
@@ -222,6 +236,24 @@
 
 .hero-actions .btn {
   min-width: 180px;
+}
+
+.main-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  margin: 2rem 0;
+  min-height: calc(100vh - 4rem);
+  padding: 2rem 0;
+}
+
+.navbar {
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 0;
 }
 
 @media (max-width: 768px) {
