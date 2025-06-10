@@ -31,10 +31,10 @@
 </div>
 
 <!-- Hero Section -->
-<div class="hero-section text-center py-5">
+<div class="hero-section py-5">
   <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
+    <div class="row align-items-center">
+      <div class="col-md-6 text-center text-md-start mb-4 mb-md-0">
         <div class="hero-icon mb-4">
           <i class="bi bi-lightning-charge-fill" style="font-size: 5rem; color: var(--primary-color); filter: drop-shadow(0 10px 20px rgba(99, 102, 241, 0.3));"></i>
         </div>
@@ -44,22 +44,22 @@
         <p class="hero-subtitle lead mb-5 text-muted fs-4">
           Connecting people with disabilities to accessible products and services, fostering inclusive technology development.
         </p>
-        
+
         {% if not session.get('role') %}
-        <div class="hero-actions mb-5">
-          <a href="{{ url_for('api_users.show_register') }}" class="btn btn-success btn-lg me-3 px-5 py-3">
+        <div class="hero-actions mb-5 d-flex flex-column flex-sm-row justify-content-center justify-content-md-start">
+          <a href="{{ url_for('api_users.show_register') }}" class="btn btn-success btn-lg me-sm-3 mb-3 mb-sm-0 px-5 py-3">
             <i class="bi bi-person-plus-fill me-2"></i>Join as Member
           </a>
-          <a href="{{ url_for('companies.show_register') }}" class="btn btn-warning btn-lg me-3 px-5 py-3">
+          <a href="{{ url_for('companies.show_register') }}" class="btn btn-warning btn-lg me-sm-3 mb-3 mb-sm-0 px-5 py-3">
             <i class="bi bi-building me-2"></i>Register Company
           </a>
           <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg px-5 py-3">
             <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
           </a>
-        </div></div>
+        </div>
         {% else %}
-        <div class="hero-actions mb-5">
-          <a href="{{ url_for('main.show_events') }}" class="btn btn-primary btn-lg me-3 px-5 py-3">
+        <div class="hero-actions mb-5 d-flex flex-column flex-sm-row justify-content-center justify-content-md-start">
+          <a href="{{ url_for('main.show_events') }}" class="btn btn-primary btn-lg me-sm-3 mb-3 mb-sm-0 px-5 py-3">
             <i class="bi bi-calendar-event me-2"></i>View Events
           </a>
           {% if session.get('role') == 'company' %}
@@ -69,6 +69,9 @@
           {% endif %}
         </div>
         {% endif %}
+      </div>
+      <div class="col-md-6 text-center d-none d-md-block">
+        <img src="https://source.unsplash.com/720x520/?technology,accessibility" alt="People collaborating" class="img-fluid rounded-4 shadow-lg hero-img">
       </div>
     </div>
   </div>
@@ -228,6 +231,11 @@
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(16, 185, 129, 0.05));
   border-radius: 20px;
   z-index: -1;
+}
+
+.hero-img {
+  max-width: 100%;
+  height: auto;
 }
 
 .stat-item {
