@@ -35,6 +35,10 @@ def index():
 def terms_of_service():
     return render_template('terms_of_service.html')
 
+@main_bp.route('/faq')
+def faq():
+    return render_template('faq.html')
+
 @main_bp.route('/_db_health')
 def db_health():
     try:

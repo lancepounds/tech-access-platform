@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ - Tech Access Group{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h1 class="h3 mb-0">Frequently Asked Questions</h1>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="faqAccordion">
+            <div class="accordion-item mb-3">
+              <h2 class="accordion-header" id="faq-heading-1">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq-collapse-1" aria-expanded="true" aria-controls="faq-collapse-1">
+                  What is Tech Access Group?
+                </button>
+              </h2>
+              <div id="faq-collapse-1" class="accordion-collapse collapse show" aria-labelledby="faq-heading-1" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Tech Access Group connects people with disabilities to companies seeking accessibility feedback on their products and services.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item mb-3">
+              <h2 class="accordion-header" id="faq-heading-2">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-collapse-2" aria-expanded="false" aria-controls="faq-collapse-2">
+                  How do I register as a member or company?
+                </button>
+              </h2>
+              <div id="faq-collapse-2" class="accordion-collapse collapse" aria-labelledby="faq-heading-2" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Use the "Join as Member" or "Register Company" buttons on the home page to create an account tailored to your needs.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item mb-3">
+              <h2 class="accordion-header" id="faq-heading-3">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-collapse-3" aria-expanded="false" aria-controls="faq-collapse-3">
+                  Who can create events?
+                </button>
+              </h2>
+              <div id="faq-collapse-3" class="accordion-collapse collapse" aria-labelledby="faq-heading-3" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Approved company users can create accessibility testing events. Members can browse and RSVP to upcoming events.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faq-heading-4">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-collapse-4" aria-expanded="false" aria-controls="faq-collapse-4">
+                  How do I contact support?
+                </button>
+              </h2>
+              <div id="faq-collapse-4" class="accordion-collapse collapse" aria-labelledby="faq-heading-4" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Send us an email at <a href="mailto:support@techaccessgroup.com">support@techaccessgroup.com</a> and we will be happy to help.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
