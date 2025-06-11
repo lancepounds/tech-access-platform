@@ -128,6 +128,71 @@
   </div>
 </div>
 
+<!-- Upcoming Events Section -->
+<div class="container my-5">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="fw-bold mb-4 text-center">Upcoming Events</h2>
+    </div>
+  </div>
+  {% if upcoming_events %}
+  <div class="row g-4">
+    {% for event in upcoming_events %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">{{ event.title }}</h5>
+          <p class="card-subtitle mb-2 text-muted">{{ event.date.strftime('%Y-%m-%d %H:%M') }}</p>
+          <p class="card-text flex-grow-1">{{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}</p>
+          <div class="mt-auto">
+            <a href="{{ url_for('main.event_detail', event_id=event.id) }}" class="btn btn-primary btn-sm me-2">View Details</a>
+            <form action="{{ url_for('main.rsvp_event', event_id=event.id) }}" method="post" style="display: inline;" class="rsvp-form">
+              <button type="submit" class="btn btn-sm btn-success">RSVP</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="row">
+    <div class="col-12">
+      <p class="text-center text-muted">No upcoming events at the moment. Check back soon!</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Participating Companies Section -->
+<div class="container my-5">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="fw-bold mb-4 text-center">Participating Companies</h2>
+    </div>
+  </div>
+  {% if companies %}
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <ul class="list-group shadow-sm">
+        {% for company in companies %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          {{ company.name }}
+          <a href="{{ url_for('main.show_company', company_id=company.id) }}" class="btn btn-outline-secondary btn-sm">View Profile</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% else %}
+  <div class="row">
+    <div class="col-12">
+      <p class="text-center text-muted">No companies to display at the moment.</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
 <!-- Stats Section -->
 {% if session.get('role') %}
 <div class="container mb-5">
@@ -280,4 +345,96 @@
   }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const rsvpForms = document.querySelectorAll('.rsvp-form');
+
+    rsvpForms.forEach(form => {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const formElement = event.target;
+            const submitButton = formElement.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            const actionUrl = formElement.action;
+            const method = formElement.method;
+
+            // Disable button and show processing state
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processing...';
+
+            // Create a small message area
+            let messageElement = formElement.querySelector('.rsvp-message');
+            if (!messageElement) {
+                messageElement = document.createElement('small');
+                messageElement.className = 'rsvp-message d-block mt-1';
+                formElement.appendChild(messageElement);
+            }
+            messageElement.textContent = ''; // Clear previous messages
+
+            fetch(actionUrl, {
+                method: method,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    // If CSRF tokens were needed and available globally (e.g. in a meta tag)
+                    // 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                // body: new FormData(formElement) // Not needed if only URL params are used by backend for this action
+            })
+            .then(response => {
+                // The rsvp_event route redirects, so a successful response here means the redirect was followed.
+                // The flash messages will appear on the *redirected* page.
+                // We'll optimistically update the button as the request was initiated.
+                // A more robust solution requires the backend to return JSON.
+                if (response.ok) { // response.ok is true for statuses 200-299
+                    // Check if the response URL is different, indicating a redirect occurred
+                    if (response.redirected) {
+                        // Successfully initiated RSVP, redirect will happen.
+                        // Change button to "RSVP'd" or similar. The page will reload anyway.
+                        submitButton.textContent = 'RSVP\'d!';
+                        submitButton.classList.remove('btn-success');
+                        submitButton.classList.add('btn-secondary');
+                        // No need to re-enable, page will reload.
+                        // Optional: Display a temporary success message before reload
+                        messageElement.textContent = 'RSVP successful! Reloading...';
+                        messageElement.className = 'rsvp-message d-block mt-1 text-success';
+
+                        // Allow the browser to follow the redirect by reloading
+                        // This is a bit of a workaround due to the backend redirecting.
+                        // Ideally, the backend returns JSON, and we handle it here without a full reload.
+                        window.location.href = response.url; // This will effectively complete the redirect
+                        return; // Stop further processing in this .then()
+                    } else {
+                        // This case might occur if the response was OK but not a redirect.
+                        // For example, if the backend was changed to return JSON.
+                        // For now, assume success means redirect.
+                        submitButton.textContent = 'Done';
+                        submitButton.classList.remove('btn-success');
+                        submitButton.classList.add('btn-info');
+                        messageElement.textContent = 'Action complete.';
+                         messageElement.className = 'rsvp-message d-block mt-1 text-info';
+                    }
+                } else {
+                    // Handle HTTP errors (e.g., 400, 401, 403, 500)
+                    // The current backend route flashes messages and redirects even for some errors.
+                    // This part might not be fully hit if all errors also redirect.
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                    messageElement.textContent = `Error: ${response.statusText || 'Could not process RSVP.'}`;
+                    messageElement.className = 'rsvp-message d-block mt-1 text-danger';
+                }
+            })
+            .catch(error => {
+                // Handle network errors or other issues with the fetch call itself
+                console.error('Fetch error:', error);
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+                messageElement.textContent = 'Request failed. Please try again.';
+                messageElement.className = 'rsvp-message d-block mt-1 text-danger';
+            });
+        });
+    });
+});
+</script>
 {% endblock %}
