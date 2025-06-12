@@ -29,11 +29,21 @@ def login_redirect():
 
 @main_bp.route('/')
 def index():
-    return render_template('index.html')
+    # Fetch upcoming events
+    upcoming_events = Event.query.filter(Event.date > datetime.datetime.utcnow()).order_by(Event.date).limit(5).all()
+
+    # Fetch approved companies
+    companies = Company.query.filter_by(approved=True).order_by(Company.created_at.desc()).limit(5).all()
+
+    return render_template('index.html', upcoming_events=upcoming_events, companies=companies)
 
 @main_bp.route('/terms-of-service')
 def terms_of_service():
     return render_template('terms_of_service.html')
+
+@main_bp.route('/faq')
+def faq():
+    return render_template('faq.html')
 
 @main_bp.route('/_db_health')
 def db_health():

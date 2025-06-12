@@ -135,3 +135,47 @@ def test_create_event_image_save_failure(mock_save, mock_makedirs, client):
     with client.application.app_context():
         event = Event.query.filter_by(title='Event with Save Failure').first()
         assert event is None
+
+
+def test_home_page_loads_with_data(client):
+    from datetime import datetime, timedelta
+    with client.application.app_context():
+        # Create sample data
+        event1 = Event(title="Future Event 1", description="Fun event", date=datetime.utcnow() + timedelta(days=7), company_id=1)
+        event2 = Event(title="Future Event 2", description="Another fun event", date=datetime.utcnow() + timedelta(days=14), company_id=1)
+        db.session.add_all([event1, event2])
+
+        company1 = Company(name="Approved Test Company A", description="A great company", approved=True, contact_email="compA@example.com", password="securepasswordA", role="company")
+        company2 = Company(name="Approved Test Company B", description="Another great company", approved=True, contact_email="compB@example.com", password="securepasswordB", role="company")
+        # Create a non-approved company to ensure it doesn't show up
+        company3 = Company(name="Not Approved Company C", description="A new company", approved=False, contact_email="compC@example.com", password="securepasswordC", role="company")
+        db.session.add_all([company1, company2, company3])
+        db.session.commit()
+
+        # Make a GET request to the home page
+        response = client.get(url_for('main.index'))
+
+        # Assertions
+        assert response.status_code == 200
+        assert b"Tech Access Group" in response.data # Hero section title
+        assert b"Upcoming Events" in response.data
+        assert b"Participating Companies" in response.data
+
+        # Check for event data
+        assert b"Future Event 1" in response.data
+        assert b"Future Event 2" in response.data
+        # Check that event date is displayed (format may vary, check for year or part of description)
+        assert b"Fun event" in response.data
+
+        # Check for company data
+        assert b"Approved Test Company A" in response.data
+        assert b"Approved Test Company B" in response.data
+        assert b"Not Approved Company C" not in response.data # Ensure non-approved is not shown
+
+        # Clean up (optional if test DB is wiped, but good practice for clarity)
+        db.session.delete(event1)
+        db.session.delete(event2)
+        db.session.delete(company1)
+        db.session.delete(company2)
+        db.session.delete(company3)
+        db.session.commit()
