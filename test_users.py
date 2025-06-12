@@ -3,6 +3,7 @@ import pytest
 import json
 from main import app, db, User
 from werkzeug.security import generate_password_hash, check_password_hash
+from app.extensions import limiter as global_limiter_instance
 
 @pytest.fixture
 def client():
@@ -14,7 +15,10 @@ def client():
     with app.test_client() as client:
         with app.app_context():
             db.create_all()
+            original_state = global_limiter_instance.enabled
+            global_limiter_instance.enabled = False
             yield client
+            global_limiter_instance.enabled = original_state
             db.drop_all()
 
 @pytest.fixture
@@ -22,7 +26,11 @@ def sample_user():
     """Create a sample user for testing."""
     return {
         'email': 'test@example.com',
-        'password': 'testpassword123'
+        'password': 'testpassword123',
+        'firstName': 'Test',
+        'lastName': 'User',
+        'techExperience': 'beginner',
+        'terms': True
     }
 
 @pytest.fixture
@@ -61,9 +69,14 @@ class TestUserRegistration:
     
     def test_register_missing_email(self, client):
         """Test registration with missing email."""
-        response = client.post('/api/users/register',
-                             json={'password': 'testpassword123'},
-                             content_type='application/json')
+        data = {
+            'password': 'testpassword123',
+            'firstName': 'Test',
+            'lastName': 'User',
+            'techExperience': 'beginner',
+            'terms': True
+        }
+        response = client.post('/api/users/register', json=data, content_type='application/json')
         
         assert response.status_code == 400
         data = json.loads(response.data)
@@ -73,9 +86,14 @@ class TestUserRegistration:
     
     def test_register_missing_password(self, client):
         """Test registration with missing password."""
-        response = client.post('/api/users/register',
-                             json={'email': 'test@example.com'},
-                             content_type='application/json')
+        data = {
+            'email': 'test@example.com',
+            'firstName': 'Test',
+            'lastName': 'User',
+            'techExperience': 'beginner',
+            'terms': True
+        }
+        response = client.post('/api/users/register', json=data, content_type='application/json')
         
         assert response.status_code == 400
         data = json.loads(response.data)
@@ -85,12 +103,15 @@ class TestUserRegistration:
     
     def test_register_invalid_email(self, client):
         """Test registration with invalid email format."""
-        response = client.post('/api/users/register',
-                             json={
-                                 'email': 'invalid-email',
-                                 'password': 'testpassword123'
-                             },
-                             content_type='application/json')
+        data = {
+            'email': 'invalid-email',
+            'password': 'testpassword123',
+            'firstName': 'Test',
+            'lastName': 'User',
+            'techExperience': 'beginner',
+            'terms': True
+        }
+        response = client.post('/api/users/register', json=data, content_type='application/json')
         
         assert response.status_code == 400
         data = json.loads(response.data)
@@ -100,12 +121,15 @@ class TestUserRegistration:
     
     def test_register_short_password(self, client):
         """Test registration with password too short."""
-        response = client.post('/api/users/register',
-                             json={
-                                 'email': 'test@example.com',
-                                 'password': '123'
-                             },
-                             content_type='application/json')
+        data = {
+            'email': 'test@example.com',
+            'password': '123',
+            'firstName': 'Test',
+            'lastName': 'User',
+            'techExperience': 'beginner',
+            'terms': True
+        }
+        response = client.post('/api/users/register', json=data, content_type='application/json')
         
         assert response.status_code == 400
         data = json.loads(response.data)
@@ -137,7 +161,7 @@ class TestUserLogin:
     def test_login_success(self, client, existing_user, sample_user):
         """Test successful user login."""
         response = client.post('/api/users/login',
-                             json=sample_user,
+                             json={'email': sample_user['email'], 'password': sample_user['password']},
                              content_type='application/json')
         
         assert response.status_code == 200
@@ -224,9 +248,11 @@ class TestUserProfile:
     
     def get_auth_token(self, client, sample_user):
         """Helper method to get authentication token."""
-        login_response = client.post('/api/users/login',
-                                   json=sample_user,
-                                   content_type='application/json')
+        login_response = client.post(
+            '/api/users/login',
+            json={'email': sample_user['email'], 'password': sample_user['password']},
+            content_type='application/json'
+        )
         return json.loads(login_response.data)['token']
     
     def test_profile_success(self, client, existing_user, sample_user):
@@ -297,7 +323,11 @@ class TestUserWorkflow:
         """Test complete user workflow from registration to profile access."""
         user_data = {
             'email': 'workflow@example.com',
-            'password': 'workflowpassword123'
+            'password': 'workflowpassword123',
+            'firstName': 'Flow',
+            'lastName': 'User',
+            'techExperience': 'beginner',
+            'terms': True
         }
         
         # Step 1: Register user
@@ -307,9 +337,11 @@ class TestUserWorkflow:
         assert register_response.status_code == 201
         
         # Step 2: Login user
-        login_response = client.post('/api/users/login',
-                                   json=user_data,
-                                   content_type='application/json')
+        login_response = client.post(
+            '/api/users/login',
+            json={'email': user_data['email'], 'password': user_data['password']},
+            content_type='application/json'
+        )
         assert login_response.status_code == 200
         login_data = json.loads(login_response.data)
         assert 'token' in login_data
