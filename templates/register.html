@@ -27,7 +27,7 @@
           {% endif %}
         {% endwith %}
 
-        <form method="post" action="/register" novalidate class="needs-validation" id="registerForm" enctype="multipart/form-data">
+        <form method="post" action="{{ url_for('api_users.register') }}" novalidate class="needs-validation" id="registerForm" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <!-- Personal Information Section -->
           <div class="mb-4">
@@ -368,13 +368,52 @@ function previewImage(input) {
     
     confirmPassword.addEventListener('input', validatePasswords);
 
-    form.addEventListener('submit', function(event) {
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+
       validatePasswordStrength();
       validatePasswords();
       if (form.checkValidity() === false) {
-        event.preventDefault();
         event.stopPropagation();
+        form.classList.add('was-validated');
+        return;
       }
+
+      const formData = new FormData(form);
+      const payload = {
+        firstName: formData.get('firstName'),
+        lastName: formData.get('lastName'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        disabilities: formData.getAll('disabilities'),
+        specificDisability: formData.get('specificDisability'),
+        assistiveTech: formData.get('assistiveTech'),
+        techExperience: formData.get('techExperience'),
+        interests: formData.getAll('interests'),
+        password: formData.get('password'),
+        emailNotifications: formData.get('emailNotifications') === 'true',
+        newsletter: formData.get('newsletter') === 'true',
+        terms: formData.get('terms') !== null
+      };
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          alert('Registered! Please log in.');
+          window.location.href = '{{ url_for('auth.login') }}';
+        } else {
+          alert('Error: ' + (data.error || 'Registration failed'));
+        }
+      } catch (error) {
+        alert('Error: Unable to connect to server');
+      }
+
       form.classList.add('was-validated');
     }, false);
   }, false);

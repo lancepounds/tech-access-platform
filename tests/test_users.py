@@ -133,3 +133,29 @@ def test_update_profile_avatar_save_failure(mock_save, client):
         # Re-fetch user after POST, because the session might have changed the object
         user_after_post = User.query.filter_by(email='test@example.com').first()
         assert user_after_post.avatar_filename == original_avatar # Should not have changed
+
+
+def test_registration_page_load(client):
+    with client.application.app_context():
+        response = client.get(url_for('api_users.show_register'))
+    assert response.status_code == 200
+    assert b'Join Tech Access' in response.data
+
+
+def test_register_user_via_form(client):
+    with client.application.app_context():
+        target_url = url_for('api_users.register')
+    form_data = {
+        'firstName': 'Jane',
+        'lastName': 'Doe',
+        'email': 'jane@example.com',
+        'password': 'Password123!',
+        'techExperience': 'beginner',
+        'terms': 'true'
+    }
+    response = client.post(target_url, data=form_data, follow_redirects=False)
+    assert response.status_code == 201
+    data = response.get_json()
+    assert data['message'] == 'User registered successfully'
+    with client.application.app_context():
+        assert User.query.filter_by(email='jane@example.com').first() is not None

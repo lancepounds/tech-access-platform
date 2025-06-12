@@ -44,13 +44,22 @@ def show_register():
 @api_users_bp.route('/register', methods=['POST'])
 @limiter.limit("5 per hour;20 per day") # Reverted to static limit
 def register():
-    """Register a new user via JSON API."""
-    if not request.is_json:
-        return jsonify({'error': 'No JSON data provided'}), 400
+    """Register a new user via JSON API or form submission."""
+    data = request.get_json(silent=True)
+    if not data:
+        # Fallback to form data
+        form = request.form
+        if not form:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        data = form.to_dict(flat=True)
+        data['disabilities'] = form.getlist('disabilities')
+        data['interests'] = form.getlist('interests')
+        data['emailNotifications'] = form.get('emailNotifications', 'true')
+        data['newsletter'] = form.get('newsletter', 'false')
+        data['terms'] = form.get('terms', 'false')
 
-    data = request.get_json() or {}
     try:
-        validated = LoginSchema().load(data)
+        validated = RegistrationSchema().load(data)
     except ValidationError as err:
         return jsonify({'error': 'Validation failed', 'details': err.messages}), 400
 
@@ -65,7 +74,21 @@ def register():
         return jsonify({'error': 'Email already registered'}), 400
 
     hashed_password = generate_password_hash(validated['password'])
-    user = User(email=email, password=hashed_password, role='user')
+    user = User(
+        email=email,
+        password=hashed_password,
+        role='user',
+        first_name=validated.get('firstName'),
+        last_name=validated.get('lastName'),
+        phone=validated.get('phone'),
+        disabilities=json.dumps(validated.get('disabilities')) if validated.get('disabilities') else None,
+        specific_disability=validated.get('specificDisability'),
+        assistive_tech=validated.get('assistiveTech'),
+        tech_experience=validated.get('techExperience'),
+        interests=json.dumps(validated.get('interests')) if validated.get('interests') else None,
+        email_notifications=validated.get('emailNotifications', True),
+        newsletter_subscription=validated.get('newsletter', False)
+    )
     db.session.add(user)
     db.session.commit()
     return jsonify({'message': 'User registered successfully'}), 201
