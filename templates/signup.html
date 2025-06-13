@@ -145,8 +145,8 @@
         const data = await res.json();
         
         if (res.ok) {
-          alert('Registered! Please log in.');
-          window.location.href = '/login';
+          // Server will handle redirect, client-side redirect removed.
+          // console.log("Registration successful, server will redirect.");
         } else {
           alert('Error: ' + (data.msg || data.error));
         }
