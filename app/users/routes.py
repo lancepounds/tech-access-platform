@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from app.models import User
 from app.extensions import db, limiter # Import limiter
 from app.users.schemas import RegistrationSchema, LoginSchema
+from flask_login import login_user # Added for login_user
 from marshmallow import ValidationError
 import jwt
 import datetime
@@ -45,18 +46,23 @@ def show_register():
 @limiter.limit("5 per hour;20 per day") # Reverted to static limit
 def register():
     """Register a new user via JSON API or form submission."""
-    data = request.get_json(silent=True)
-    if not data:
-        # Fallback to form data
+    is_json_request = request.is_json
+
+    if is_json_request:
+        data = request.get_json()
+    else: # Form submission
         form = request.form
-        if not form:
-            return jsonify({'error': 'No JSON data provided'}), 400
+        if not form: # Should not happen if not JSON and POST
+            return jsonify({'error': 'No form data provided'}), 400
         data = form.to_dict(flat=True)
+        # Handling list fields from form
         data['disabilities'] = form.getlist('disabilities')
         data['interests'] = form.getlist('interests')
-        data['emailNotifications'] = form.get('emailNotifications', 'true')
-        data['newsletter'] = form.get('newsletter', 'false')
-        data['terms'] = form.get('terms', 'false')
+        # Handling boolean fields from form (checkboxes might not send value if unchecked)
+        data['emailNotifications'] = form.get('emailNotifications') == 'true' # Explicitly check for 'true'
+        data['newsletter'] = form.get('newsletter') == 'true'
+        data['terms'] = form.get('terms') == 'true'
+
 
     try:
         validated = RegistrationSchema().load(data)
@@ -91,7 +97,33 @@ def register():
     )
     db.session.add(user)
     db.session.commit()
-    return jsonify({'message': 'User registered successfully'}), 201
+
+    # Log in the user
+    login_user(user)
+
+    # Set up session variables
+    session['email'] = user.email
+    session['role'] = user.role # Should be 'user'
+
+    # Generate JWT token
+    token_payload = {
+        'email': user.email,
+        'role': user.role,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+    }
+    token = jwt.encode(token_payload, JWT_SECRET, algorithm='HS256')
+    session['token'] = token
+
+    if is_json_request:
+        return jsonify({
+            'message': 'User registered successfully',
+            'token': token, # Send token in JSON response
+            'role': user.role,
+            'user_id': user.id
+        }), 201
+    else: # Form submission
+        flash('Registration successful! Welcome.', 'success')
+        return redirect(url_for('dashboard.member_dashboard'))
 
 @api_users_bp.route('/login', methods=['POST'])
 def api_login():

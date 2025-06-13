@@ -2,13 +2,13 @@ from flask import Blueprint, request, jsonify, render_template, session, flash, 
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import User, Company
 from .forms import LoginForm
-from flask_login import login_user, logout_user
+from flask_login import login_user, logout_user # login_user is used
 from flask_jwt_extended import create_access_token
 from app.auth.decorators import decode_token
 from app.extensions import db, limiter # Import limiter
 from sqlalchemy.exc import IntegrityError
-import jwt # Re-enable for web login session token
-import datetime
+import jwt
+import datetime # datetime is used
 import os
 import logging
 
@@ -51,13 +51,56 @@ def register():
         role=role
     )
 
+    db.session.add(new_user)
+
+    new_company = None
+    if role == 'company':
+        # Use email prefix as default company name if 'company_name' not provided
+        company_name = data.get('company_name', data['email'].split('@')[0] + " (Default Name)")
+        new_company = Company(
+            name=company_name,
+            contact_email=new_user.email,
+            password=hashed_password,  # Using user's hashed password for company entity as per plan
+            approved=False # Companies start as not approved
+        )
+        db.session.add(new_company)
+
     try:
-        db.session.add(new_user)
         db.session.commit()
-        return jsonify({'message': 'User registered successfully'}), 201
+
+        # Log in the user
+        login_user(new_user)
+
+        # Set up session variables
+        session['email'] = new_user.email
+        session['role'] = new_user.role
+
+        token_payload = {
+            'email': new_user.email,
+            'role': new_user.role,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }
+
+        if new_user.role == 'company' and new_company:
+            session['company_id'] = new_company.id
+            token_payload['company_id'] = new_company.id
+
+        token = jwt.encode(token_payload, JWT_SECRET, algorithm='HS256')
+        session['token'] = token
+
+        if new_user.role == 'company':
+            flash('Registration successful. Please complete your company profile if prompted. Approval may be required for full functionality.', 'info')
+            return redirect(url_for('dashboard.company_dashboard'))
+        else: # 'user' role
+            # flash('User registered successfully!', 'success') # Optional: flash message for user
+            return redirect(url_for('dashboard.member_dashboard'))
+
     except IntegrityError as e:
         db.session.rollback()
         logging.error(f"IntegrityError during user registration: {str(e)}")
+        # Check if the error is due to company name or email already existing
+        if new_company and Company.query.filter((Company.name == new_company.name) | (Company.contact_email == new_company.contact_email)).first():
+             return jsonify({'error': 'Company name or contact email already exists.'}), 400
         return jsonify({'error': 'Database integrity error during registration.'}), 500
     except Exception as e:
         db.session.rollback()

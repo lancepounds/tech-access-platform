@@ -405,8 +405,8 @@ function previewImage(input) {
         const data = await res.json();
 
         if (res.ok) {
-          alert('Registered! Please log in.');
-          window.location.href = '{{ url_for('auth.login') }}';
+          // Server will handle redirect, client-side redirect removed.
+          // console.log("Registration successful, server will redirect.");
         } else {
           alert('Error: ' + (data.error || 'Registration failed'));
         }

@@ -2,19 +2,10 @@ import os
 import io
 import pytest
 from app import create_app, db
-from app.models import User
+from app.models import User, Company # Added Company
 from flask_login import login_user
 from werkzeug.security import generate_password_hash
-from flask import url_for # Added import
-
-import os
-import io
-import pytest
-from app import create_app, db
-from app.models import User
-from flask_login import login_user
-from werkzeug.security import generate_password_hash
-from flask import url_for # Added import
+from flask import url_for, session # Added session for direct inspection if needed
 from app.extensions import limiter as global_limiter_instance # Import global limiter
 
 @pytest.fixture
@@ -158,4 +149,116 @@ def test_register_user_via_form(client):
     data = response.get_json()
     assert data['message'] == 'User registered successfully'
     with client.application.app_context():
-        assert User.query.filter_by(email='jane@example.com').first() is not None
+        user = User.query.filter_by(email='jane@example.com').first()
+        assert user is not None
+        # Cleanup for this test
+        db.session.delete(user)
+        db.session.commit()
+
+
+# New tests for registration flows and redirects
+
+def test_auth_signup_and_redirect_member(client):
+    """Test registration via /auth/register for a member role and redirect."""
+    with client.application.app_context():
+        target_url = url_for('auth.register')
+
+    test_email = 'testmember_auth@example.com'
+    payload = {'email': test_email, 'password': 'password123', 'role': 'member'}
+
+    response = client.post(target_url, json=payload, follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('dashboard.member_dashboard', _external=False)
+
+    with client.session_transaction() as sess:
+        assert sess['role'] == 'user' # 'member' role is mapped to 'user'
+        assert sess['email'] == test_email
+        assert sess.get('token') is not None
+        assert sess.get('company_id') is None
+
+    # Cleanup
+    with client.application.app_context():
+        user = User.query.filter_by(email=test_email).first()
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+
+def test_auth_signup_and_redirect_company(client):
+    """Test registration via /auth/register for a company role and redirect."""
+    with client.application.app_context():
+        target_url = url_for('auth.register')
+
+    test_email = 'testcompany_auth@example.com'
+    payload = {'email': test_email, 'password': 'password123', 'role': 'company'}
+
+    response = client.post(target_url, json=payload, follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.location == url_for('dashboard.company_dashboard', _external=False)
+
+    company_id_in_session = None
+    with client.session_transaction() as sess:
+        assert sess['role'] == 'company'
+        assert sess['email'] == test_email
+        assert sess.get('token') is not None
+        assert sess.get('company_id') is not None
+        company_id_in_session = sess.get('company_id')
+
+    # Verify company and user were created in DB
+    with client.application.app_context():
+        user = User.query.filter_by(email=test_email).first()
+        assert user is not None
+        assert user.role == 'company'
+
+        company = Company.query.filter_by(contact_email=test_email).first()
+        assert company is not None
+        assert company.id == company_id_in_session
+        assert company.approved == False # Default for new company registration
+
+        # Cleanup
+        if user:
+            db.session.delete(user)
+        if company:
+            db.session.delete(company)
+        db.session.commit()
+
+def test_detailed_registration_and_redirect_form_post(client):
+    """Test registration via /api/users/register with form data and redirect."""
+    with client.application.app_context():
+        target_url = url_for('api_users.register')
+
+    test_email = 'detaileduser_form@example.com'
+    form_data = {
+        'email': test_email,
+        'password': 'passwordSecure123',
+        'firstName': 'TestDetailed',
+        'lastName': 'UserForm',
+        'techExperience': 'intermediate',
+        'terms': 'true', # Schema requires this to be true
+        'emailNotifications': 'true', # Schema has load_default=True
+        'newsletter': 'false' # Schema has load_default=False
+    }
+
+    response = client.post(target_url, data=form_data, follow_redirects=False)
+
+    assert response.status_code == 302, f"Expected 302, got {response.status_code}. Response data: {response.data}"
+    assert response.location == url_for('dashboard.member_dashboard', _external=False)
+
+    with client.session_transaction() as sess:
+        assert sess['role'] == 'user'
+        assert sess['email'] == test_email
+        assert sess.get('token') is not None
+        assert sess.get('company_id') is None # This is a user registration
+
+    # Verify user created in DB
+    with client.application.app_context():
+        user = User.query.filter_by(email=test_email).first()
+        assert user is not None
+        assert user.role == 'user'
+        assert user.first_name == 'TestDetailed'
+
+        # Cleanup
+        if user:
+            db.session.delete(user)
+            db.session.commit()
