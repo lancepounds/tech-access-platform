@@ -50,10 +50,12 @@ def register():
 
     if is_json_request:
         data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
     else: # Form submission
         form = request.form
-        if not form: # Should not happen if not JSON and POST
-            return jsonify({'error': 'No form data provided'}), 400
+        if not form:
+            return jsonify({'error': 'No JSON data provided'}), 400
         data = form.to_dict(flat=True)
         # Handling list fields from form
         data['disabilities'] = form.getlist('disabilities')

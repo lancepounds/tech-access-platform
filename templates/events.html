@@ -3,11 +3,19 @@
 {% block title %}Events – Tech Access{% endblock %}
 
 {% block content %}
+<style>
+  #event-search {
+    max-width: 400px;
+    margin-bottom: 1rem;
+  }
+</style>
+
 <h2>Upcoming Events</h2>
+<input type="text" id="event-search" class="form-control" placeholder="Search events...">
 {% if upcoming_events %}
-  <ul class="list-group mb-4">
+  <ul id="upcoming-events" class="list-group mb-4">
     {% for ev in upcoming_events %}
-      <li class="list-group-item">
+      <li class="list-group-item" data-description="{{ ev.description }}">
         <a href="{{ url_for('main.event_detail', event_id=ev.id) }}">{{ ev.title }}</a> — {{ ev.date }}
       </li>
     {% endfor %}
@@ -18,14 +26,30 @@
 
 <h2>Past Events</h2>
 {% if past_events %}
-  <ul class="list-group">
+  <ul id="past-events" class="list-group">
     {% for ev in past_events %}
-      <li class="list-group-item text-muted">
+      <li class="list-group-item text-muted" data-description="{{ ev.description }}">
         <a href="{{ url_for('main.event_detail', event_id=ev.id) }}">{{ ev.title }}</a> — {{ ev.date }}
       </li>
     {% endfor %}
   </ul>
-{% else %}
-  <p>No past events.</p>
-{% endif %}
+  {% else %}
+    <p>No past events.</p>
+  {% endif %}
+
+  <script>
+    const searchInput = document.getElementById('event-search');
+    searchInput.addEventListener('input', function() {
+      const term = this.value.toLowerCase();
+      document.querySelectorAll('#upcoming-events li, #past-events li').forEach(li => {
+        const text = li.textContent.toLowerCase();
+        const desc = (li.dataset.description || '').toLowerCase();
+        if (text.includes(term) || desc.includes(term)) {
+          li.style.display = '';
+        } else {
+          li.style.display = 'none';
+        }
+      });
+    });
+  </script>
 {% endblock %}
