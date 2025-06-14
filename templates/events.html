@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="mb-3">
-  <input type="text" id="eventSearch" class="form-control" placeholder="Search events...">
+  <input type="text" id="event-search" class="form-control" placeholder="Search events...">
 </div>
 <h2>Upcoming Events</h2>
 {% if upcoming_events %}
@@ -32,13 +32,13 @@
   <p>No past events.</p>
 {% endif %}
 <style>
-  #eventSearch {
+  #event-search {
     max-width: 400px;
   }
 </style>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('eventSearch');
+    const searchInput = document.getElementById('event-search');
     const items = document.querySelectorAll('.event-item');
 
     searchInput.addEventListener('input', function () {
