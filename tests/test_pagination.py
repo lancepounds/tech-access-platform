@@ -18,7 +18,8 @@ def client():
 
 
 def extract_titles(html: str):
-    return re.findall(r'<li class="list-group-item(?: text-muted)?">\s*<a [^>]+>([^<]+)</a>', html)
+    """Return all event titles from the events list markup."""
+    return re.findall(r'<li class="list-group-item(?: text-muted)?(?: event-item)?"[^>]*>\s*<a [^>]+>([^<]+)</a>', html)
 
 
 def test_all_events_displayed(client):
