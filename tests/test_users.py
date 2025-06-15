@@ -145,13 +145,14 @@ def test_register_user_via_form(client):
         'terms': 'true'
     }
     response = client.post(target_url, data=form_data, follow_redirects=False)
-    assert response.status_code == 201
-    data = response.get_json()
-    assert data['message'] == 'User registered successfully'
+    assert response.status_code == 302
+    with client.application.app_context():
+        expected_location = url_for('dashboard.member_dashboard', _external=False)
+    assert response.location == expected_location
+    # Ensure the user was created and clean up
     with client.application.app_context():
         user = User.query.filter_by(email='jane@example.com').first()
         assert user is not None
-        # Cleanup for this test
         db.session.delete(user)
         db.session.commit()
 
@@ -169,7 +170,9 @@ def test_auth_signup_and_redirect_member(client):
     response = client.post(target_url, json=payload, follow_redirects=False)
 
     assert response.status_code == 302
-    assert response.location == url_for('dashboard.member_dashboard', _external=False)
+    with client.application.app_context():
+        expected_location = url_for('dashboard.member_dashboard', _external=False)
+    assert response.location == expected_location
 
     with client.session_transaction() as sess:
         assert sess['role'] == 'user' # 'member' role is mapped to 'user'
@@ -195,7 +198,9 @@ def test_auth_signup_and_redirect_company(client):
     response = client.post(target_url, json=payload, follow_redirects=False)
 
     assert response.status_code == 302
-    assert response.location == url_for('dashboard.company_dashboard', _external=False)
+    with client.application.app_context():
+        expected_location = url_for('dashboard.company_dashboard', _external=False)
+    assert response.location == expected_location
 
     company_id_in_session = None
     with client.session_transaction() as sess:
@@ -243,7 +248,9 @@ def test_detailed_registration_and_redirect_form_post(client):
     response = client.post(target_url, data=form_data, follow_redirects=False)
 
     assert response.status_code == 302, f"Expected 302, got {response.status_code}. Response data: {response.data}"
-    assert response.location == url_for('dashboard.member_dashboard', _external=False)
+    with client.application.app_context():
+        expected_location = url_for('dashboard.member_dashboard', _external=False)
+    assert response.location == expected_location
 
     with client.session_transaction() as sess:
         assert sess['role'] == 'user'

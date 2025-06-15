@@ -150,10 +150,10 @@ class TestUserRegistration:
     def test_register_no_json_data(self, client):
         """Test registration without JSON data."""
         response = client.post('/api/users/register')
-        
+
         assert response.status_code == 400
         data = json.loads(response.data)
-        assert data['error'] == 'No JSON data provided'
+        assert data['error'] == 'No form data provided'
 
 class TestUserLogin:
     """Test cases for user login endpoint."""

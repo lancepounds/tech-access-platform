@@ -179,3 +179,12 @@ def test_home_page_loads_with_data(client):
         db.session.delete(company2)
         db.session.delete(company3)
         db.session.commit()
+
+
+def test_events_page_has_search_box(client):
+    with client.application.app_context():
+        response = client.get(url_for('main.list_events'))
+
+    html = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert '<input' in html and 'id="event-search"' in html
