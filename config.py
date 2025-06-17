@@ -29,6 +29,7 @@ class Config:
     JWT_HEADER_TYPE = "Bearer"
 
     UPLOAD_FOLDER = os.path.join(basedir, 'static', 'uploads')
+    PASSWORD_RESET_TOKEN_EXPIRES_HOURS = 1
 
 
 class DevelopmentConfig(Config):

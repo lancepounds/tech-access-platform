@@ -27,6 +27,9 @@ def create_app():
     # Suppress sending emails by default (tests override if needed)
     app.config.setdefault('MAIL_SUPPRESS_SEND', True)
 
+    # Import models BEFORE initializing db and migrate
+    from app import models
+
     # Initialize extensions
     db.init_app(app)
     ma.init_app(app)
@@ -49,11 +52,12 @@ def create_app():
 
     app.mail = mail
     login_manager.login_view = 'auth.login'
-    from app.models import User
+    # User model is already imported via `from app import models`
+    # from app.models import User # This line can be removed or commented out
 
     @login_manager.user_loader
     def load_user(user_id: str):
-        return User.query.get(user_id)
+        return models.User.query.get(user_id) # Use models.User
     
     # Initialize CSRF protection
     csrf = CSRFProtect()

@@ -1,10 +1,12 @@
-from flask import Blueprint, request, jsonify, render_template, session, flash, redirect, url_for
+from flask import Blueprint, request, jsonify, render_template, session, flash, redirect, url_for, current_app
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.models import User, Company
-from .forms import LoginForm
+from .forms import LoginForm, ForgotPasswordForm, ResetPasswordForm
 from flask_login import login_user, logout_user # login_user is used
 from flask_jwt_extended import create_access_token
 from app.auth.decorators import decode_token
+from app.email_service import send_email
+import secrets
 from app.extensions import db, limiter # Import limiter
 from sqlalchemy.exc import IntegrityError
 import jwt
@@ -19,6 +21,15 @@ if JWT_SECRET is None:
     JWT_SECRET = 'fallback-jwt-secret'
     logging.warning("SECURITY WARNING: Using default JWT_SECRET. This should be changed for production environments.")
 
+# Helper function for token verification
+def verify_reset_token(token):
+    try:
+        user = User.query.filter_by(reset_token=token).first()
+        if user and user.reset_token_expiration > datetime.datetime.utcnow():
+            return user
+    except Exception as e: # Broad exception for safety, log this
+        current_app.logger.error(f"Error verifying reset token: {e}")
+    return None
 
 @auth_bp.route('/signup', methods=['GET'])
 def signup_page():
@@ -187,6 +198,52 @@ def login():
         flash('Invalid credentials', 'danger')
 
     return render_template('login.html', form=form)
+
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+@limiter.limit("5 per hour") # Adding rate limiting
+def forgot_password():
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            token = secrets.token_urlsafe(32)
+            user.reset_token = token
+            # Use current_app.config for expiration duration
+            expires_hours = current_app.config.get('PASSWORD_RESET_TOKEN_EXPIRES_HOURS', 1)
+            user.reset_token_expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=expires_hours)
+            db.session.commit()
+
+            reset_url = url_for('auth.reset_password_with_token', token=token, _external=True)
+            html_content = render_template('email/reset_password_email.html',
+                                           reset_url=reset_url,
+                                           user=user,
+                                           expires_hours=expires_hours)
+            send_email(user.email, 'Password Reset Request', html_content)
+
+        flash('If an account with that email exists, a password reset link has been sent.', 'info')
+        return redirect(url_for('auth.login'))
+    return render_template('auth/forgot_password.html', form=form, title='Forgot Password')
+
+
+@auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+@limiter.limit("5 per hour") # Adding rate limiting
+def reset_password_with_token(token):
+    user = verify_reset_token(token)
+    if not user:
+        flash('The password reset link is invalid or has expired.', 'danger')
+        return redirect(url_for('auth.forgot_password'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.password = generate_password_hash(form.password.data)
+        user.reset_token = None
+        user.reset_token_expiration = None
+        db.session.commit()
+        flash('Your password has been successfully reset. Please log in.', 'success')
+        return redirect(url_for('auth.login'))
+
+    return render_template('auth/reset_password.html', form=form, token=token, title='Reset Password')
 
 
 @auth_bp.route('/logout', methods=['POST'])

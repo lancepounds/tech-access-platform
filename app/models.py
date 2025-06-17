@@ -1,6 +1,7 @@
 
 from app.extensions import db
 from flask_login import UserMixin
+from werkzeug.security import check_password_hash, generate_password_hash # Added generate_password_hash for completeness
 import datetime
 import uuid
 import os
@@ -42,6 +43,10 @@ class User(db.Model, UserMixin):
     # Timestamps
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+    # Password Reset
+    reset_token = db.Column(db.String(100), nullable=True, index=True, unique=True)
+    reset_token_expiration = db.Column(db.DateTime, nullable=True)
     
     # Add relationship
     rsvps = db.relationship("RSVP", back_populates="user")
@@ -66,6 +71,14 @@ class User(db.Model, UserMixin):
         if self.avatar_filename:
             return url_for('static', filename='avatars/' + self.avatar_filename)
         return '/static/avatars/default.png'
+
+    # Password hashing methods
+    # set_password is not strictly needed if password is hashed upon assignment or in form processing
+    # def set_password(self, password):
+    #     self.password = generate_password_hash(password)
+
+    def check_password(self, password_to_check):
+        return check_password_hash(self.password, password_to_check)
 
 
 class Company(db.Model):
