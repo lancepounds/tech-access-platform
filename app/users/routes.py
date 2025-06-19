@@ -10,7 +10,7 @@ import jwt
 import datetime
 import os
 import uuid
-import json
+# import json # No longer needed
 import re
 from config import Config
 
@@ -87,11 +87,11 @@ def register():
         first_name=validated.get('firstName'),
         last_name=validated.get('lastName'),
         phone=validated.get('phone'),
-        disabilities=json.dumps(validated.get('disabilities')) if validated.get('disabilities') else None,
+        disabilities=validated.get('disabilities'), # Directly assign Python list/dict
         specific_disability=validated.get('specificDisability'),
         assistive_tech=validated.get('assistiveTech'),
         tech_experience=validated.get('techExperience'),
-        interests=json.dumps(validated.get('interests')) if validated.get('interests') else None,
+        interests=validated.get('interests'), # Directly assign Python list/dict
         email_notifications=validated.get('emailNotifications', True),
         newsletter_subscription=validated.get('newsletter', False)
     )

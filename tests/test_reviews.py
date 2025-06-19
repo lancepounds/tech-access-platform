@@ -35,10 +35,32 @@ def test_submit_and_display_review(client):
 def test_average_rating_calculation(client):
     # Seed multiple reviews
     with client.application.app_context():
-        rv1 = Review(user_id=1, event_id=1, rating=4)
-        rv2 = Review(user_id=1, event_id=1, rating=2)
+        # Get the user created in the fixture
+        user = User.query.filter_by(email='u@example.com').first()
+        assert user is not None
+
+        # Event ID is '1' as per fixture for the event
+        event_id_from_fixture = '1'
+
+        # Create reviews using the actual user.id (string UUID)
+        rv1 = Review(user_id=user.id, event_id=event_id_from_fixture, rating=4, comment="Good")
+        rv2 = Review(user_id=user.id, event_id=event_id_from_fixture, rating=2, comment="Okay")
+
+        # Need to create a new user for a third review if reviews must be unique per user/event
+        # or ensure test_submit_and_display_review's review doesn't interfere.
+        # For this test, let's assume we only have these two reviews for calculation.
+        # If the `test_submit_and_display_review` runs first, it adds one review.
+        # To isolate, we could delete existing reviews for this event or use a different event.
+        # For simplicity, let's assume a clean state for this event's reviews for this test's purpose.
+        Review.query.filter_by(event_id=event_id_from_fixture).delete() # Clear previous reviews for this event for this test
+        db.session.commit()
+
         db.session.add_all([rv1, rv2])
         db.session.commit()
-    res = client.get('/events/1')
-    # (4+2)/2 = 3.0
+
+    res = client.get(f'/events/{event_id_from_fixture}')
+    # Average of 4 and 2 is 3.0.
+    # The existing test_submit_and_display_review adds a review with rating 5.
+    # If that runs first, average would be (5+4+2)/3 = 11/3 = 3.66... -> "3.7 / 5"
+    # By clearing reviews above, we ensure calculation is (4+2)/2 = 3.0
     assert b'3.0 / 5' in res.data

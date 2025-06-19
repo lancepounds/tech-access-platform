@@ -1,13 +1,10 @@
 
-import json # Moved to top
-import json
-import re
-import json
-import re
 import os
 import logging
+import re # Consolidated import
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
+# import json # No longer needed in this file
+# from werkzeug.security import generate_password_hash # No longer needed here
 from app.models import Company
 from .forms import CompanyRegistrationForm
 from .schemas import ApproveCompanySchema
@@ -45,12 +42,12 @@ def register_company():
             flash('Company name or email already exists.', 'danger')
             return render_template('company_register.html', form=form) # Re-render with form and error
         
-        interests_json = json.dumps(form.interests.data) if form.interests.data else None
+        # interests_json = json.dumps(form.interests.data) if form.interests.data else None # No longer needed for db.JSON
         
         new_company = Company(
             name=company_name,
             contact_email=contact_email,
-            password=generate_password_hash(form.password.data),
+            # Password will be set using set_password method
             phone=form.phone.data,
             website=form.website.data,
             address=form.address.data,
@@ -59,7 +56,7 @@ def register_company():
             company_size=form.company_size.data,
             products_services=form.products_services.data,
             accessibility_goals=form.accessibility_goals.data,
-            interests=interests_json,
+            interests=form.interests.data, # Assign Python list/dict directly
             contact_name=form.contact_name.data,
             contact_title=form.contact_title.data,
             accessibility_experience=form.accessibility_experience.data,
@@ -68,6 +65,7 @@ def register_company():
             testing_budget=form.testing_budget.data,
             approved=False  # Companies need admin approval
         )
+        new_company.set_password(form.password.data) # Use the new method
         
         try:
             db.session.add(new_company)

@@ -473,11 +473,36 @@ def show_company(company_id):
     company = Company.query.get_or_404(company_id)
     return f"Company: {company.name}"
 
-@main_bp.route('/events/<int:event_id>/export', methods=['GET'])
+@main_bp.route('/events/<string:event_id>/export', methods=['GET']) # Changed to string:event_id
 @login_required
 def export_attendees(event_id):
     event = Event.query.get_or_404(event_id)
-    if not current_user.company_id or event.company_id != current_user.company_id: abort(403)
+
+    # Event must be associated with a company for a company to export attendees.
+    if not event.company_id:
+        # This event is not owned by any company, so no company can export.
+        # Or, if events can also be user-owned and users could export, logic would differ.
+        # Assuming only companies that own events can export.
+        current_app.logger.warning(f"Attempt to export attendees for event {event_id} which has no company_id.")
+        abort(403)
+
+    logged_in_company_id = session.get('company_id')
+
+    # User must be acting as a representative of the company that owns the event.
+    # This relies on current_user.role being 'company' and session['company_id'] being set correctly at login.
+    is_authorized_company_rep = False
+    if current_user.is_authenticated and hasattr(current_user, 'role') and current_user.role == 'company':
+        if logged_in_company_id is not None and logged_in_company_id == event.company_id:
+            is_authorized_company_rep = True
+
+    if not is_authorized_company_rep:
+        current_app.logger.warning(
+            f"Unauthorized attempt to export attendees for event {event_id}. "
+            f"User role: {getattr(current_user, 'role', 'N/A')}, "
+            f"Session company_id: {logged_in_company_id}, Event company_id: {event.company_id}"
+        )
+        abort(403)
+
     si = io.StringIO()
     writer = csv.writer(si)
     writer.writerow(['Name', 'Email', 'RSVP Date'])
@@ -490,7 +515,7 @@ def export_attendees(event_id):
     si.close()
     return Response(output, mimetype='text/csv', headers={'Content-Disposition': f'attachment;filename=attendees_event_{event_id}.csv'})
 
-@main_bp.route('/events/<int:event_id>/calendar.ics', methods=['GET'])
+@main_bp.route('/events/<string:event_id>/calendar.ics', methods=['GET']) # This one should also be string
 @login_required
 def event_calendar(event_id):
     event = Event.query.get_or_404(event_id)

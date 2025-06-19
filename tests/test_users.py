@@ -187,6 +187,79 @@ def test_auth_signup_and_redirect_member(client):
             db.session.delete(user)
             db.session.commit()
 
+
+def test_user_get_avatar_url(client):
+    """Test the get_avatar_url method on the User model."""
+    with client.application.app_context():
+        # User with a specific avatar
+        user_with_avatar = User(
+            email='avataruser@example.com',
+            password='password',
+            avatar_filename='custom_avatar.png'
+        )
+        db.session.add(user_with_avatar)
+        db.session.commit() # Commit to get ID if needed, though not strictly for this test
+
+        expected_url_custom = url_for('static', filename='uploads/profiles/custom_avatar.png')
+        assert user_with_avatar.get_avatar_url() == expected_url_custom
+
+        # User without a specific avatar (should use default)
+        user_no_avatar = User(
+            email='noavataruser@example.com',
+            password='password'
+            # avatar_filename is None by default
+        )
+        db.session.add(user_no_avatar)
+        db.session.commit()
+
+        expected_url_default = url_for('static', filename='uploads/profiles/default.png')
+        assert user_no_avatar.get_avatar_url() == expected_url_default
+
+        # Clean up
+        db.session.delete(user_with_avatar)
+        db.session.delete(user_no_avatar)
+        db.session.commit()
+
+def test_user_json_fields_storage(client):
+    """Test that JSON fields (disabilities, interests) are stored and retrieved correctly."""
+    with client.application.app_context():
+        user_data = {
+            'email': 'jsonuser@example.com',
+            'password': 'password',
+            'disabilities': ['visual_impairment', 'mobility_aid'],
+            'interests': ['assistive_tech', 'web_accessibility']
+        }
+        user = User(**user_data)
+        db.session.add(user)
+        db.session.commit()
+
+        retrieved_user = User.query.filter_by(email='jsonuser@example.com').first()
+        assert retrieved_user is not None
+        assert isinstance(retrieved_user.disabilities, list)
+        assert retrieved_user.disabilities == ['visual_impairment', 'mobility_aid']
+        assert isinstance(retrieved_user.interests, list)
+        assert retrieved_user.interests == ['assistive_tech', 'web_accessibility']
+
+        # Test with empty lists / None
+        user_empty_json = User(
+            email='emptyjson@example.com',
+            password='password',
+            disabilities=[],
+            interests=None
+        )
+        db.session.add(user_empty_json)
+        db.session.commit()
+
+        retrieved_empty_user = User.query.filter_by(email='emptyjson@example.com').first()
+        assert retrieved_empty_user is not None
+        assert retrieved_empty_user.disabilities == []
+        assert retrieved_empty_user.interests is None # Or `== []` depending on how db.JSON handles None for lists
+
+        # Clean up
+        db.session.delete(retrieved_user)
+        db.session.delete(retrieved_empty_user)
+        db.session.commit()
+
 def test_auth_signup_and_redirect_company(client):
     """Test registration via /auth/register for a company role and redirect."""
     with client.application.app_context():

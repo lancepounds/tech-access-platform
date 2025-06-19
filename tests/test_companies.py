@@ -129,3 +129,54 @@ def test_company_registration_no_terms(client):
 
     assert response.status_code == 200 # Re-renders form
     assert b"You must agree to the terms and conditions." in response.data
+
+
+def test_company_model_password_hashing(client):
+    """Test direct model password hashing."""
+    with client.application.app_context():
+        company = Company(
+            name="Hashing Test Corp",
+            contact_email="hash@example.com",
+            # No password set initially
+        )
+        company.set_password("securepassword123")
+        db.session.add(company)
+        db.session.commit()
+
+        assert company.password is not None
+        assert company.password != "securepassword123"
+        assert company.check_password("securepassword123")
+        assert not company.check_password("wrongpassword")
+
+def test_company_registration_saves_hashed_password_and_json_interests(client):
+    """Test that registration route saves hashed password and JSON interests."""
+    with client:
+        company_data = {
+            'company_name': 'SecurePass Co',
+            'contact_email': 'secure@testco.com',
+            'password': 'aVerySecurePassword!@#',
+            'confirm_password': 'aVerySecurePassword!@#',
+            'contact_name': 'Security Officer',
+            'company_description': 'A company focused on security.',
+            'products_services': 'Security products',
+            'interests': ['web_accessibility', 'assistive_tech'], # Use valid choices
+            'terms_agreement': 'y',
+        }
+        with client.application.app_context():
+            target_url = url_for('companies.register_company')
+        response = client.post(target_url, data=company_data, follow_redirects=True)
+
+        assert response.status_code == 200 # Assuming redirect to login
+        assert b"Company registration submitted successfully!" in response.data
+
+    # Verify in database
+    with client.application.app_context():
+        company = Company.query.filter_by(contact_email='secure@testco.com').first()
+        assert company is not None
+        assert company.name == 'SecurePass Co'
+        # Check password (cannot check hash directly, but check_password should work)
+        assert company.check_password('aVerySecurePassword!@#')
+        assert not company.check_password('wrongPassword')
+        # Check interests (should be Python list when accessed from model)
+        assert isinstance(company.interests, list)
+        assert company.interests == ['web_accessibility', 'assistive_tech']
