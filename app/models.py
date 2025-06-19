@@ -24,14 +24,14 @@ class User(db.Model, UserMixin):
     avatar_filename = db.Column(db.String(128), nullable=True)
     
     # Accessibility Information
-    disabilities = db.Column(db.Text, nullable=True)  # JSON string of selected disabilities
+    disabilities = db.Column(db.JSON, nullable=True)  # Stores a list of selected disabilities
     specific_disability = db.Column(db.Text, nullable=True)  # Detailed description of specific disability
     wheelchair_usage = db.Column(db.String(20), nullable=True)  # fulltime, parttime, or none
     assistive_tech = db.Column(db.Text, nullable=True)
     
     # Experience & Interests
     tech_experience = db.Column(db.String(20), nullable=True)
-    interests = db.Column(db.Text, nullable=True)  # JSON string of selected interests
+    interests = db.Column(db.JSON, nullable=True)  # Stores a list of selected interests
     
     # Communication Preferences
     email_notifications = db.Column(db.Boolean, default=True)
@@ -69,8 +69,8 @@ class User(db.Model, UserMixin):
     def get_avatar_url(self):
         """Return the URL for the user's avatar image."""
         if self.avatar_filename:
-            return url_for('static', filename='avatars/' + self.avatar_filename)
-        return '/static/avatars/default.png'
+            return url_for('static', filename='uploads/profiles/' + self.avatar_filename)
+        return url_for('static', filename='uploads/profiles/default.png') # Assumes default.png is in uploads/profiles
 
     # Password hashing methods
     # set_password is not strictly needed if password is hashed upon assignment or in form processing
@@ -110,11 +110,17 @@ class Company(db.Model):
     # Products & Services
     products_services = db.Column(db.Text, nullable=True)
     accessibility_goals = db.Column(db.Text, nullable=True)
-    interests = db.Column(db.Text, nullable=True)  # JSON string of selected interests
+    interests = db.Column(db.JSON, nullable=True)  # Stores a list of selected interests
     
     # Timestamps
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password_to_check):
+        return check_password_hash(self.password, password_to_check)
 
     def __repr__(self):
         return f'<Company {self.name}>'
@@ -155,10 +161,13 @@ class Event(db.Model):
     def name(self, value: str) -> None:
         self.title = value
 
+    def __repr__(self):
+        return f'<Event id={self.id} title="{self.title}">'
+
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     event_id = db.Column(db.String, db.ForeignKey('events.id'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
     comment = db.Column(db.Text, nullable=True)
@@ -166,6 +175,9 @@ class Review(db.Model):
 
     user = db.relationship('User', backref='reviews')
     event = db.relationship('Event', backref='reviews')
+
+    def __repr__(self):
+        return f'<Review id={self.id} event_id="{self.event_id}" user_id="{self.user_id}" rating={self.rating}>'
 
 
 class RSVP(db.Model):
@@ -179,13 +191,19 @@ class RSVP(db.Model):
     # Add relationships
     user = db.relationship("User", back_populates="rsvps")
 
+    def __repr__(self):
+        return f'<RSVP id={self.id} event_id="{self.event_id}" user_id="{self.user_id}">'
+
 
 class Waitlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
+    event_id = db.Column(db.String, db.ForeignKey('events.id'), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     user = db.relationship('User', backref='waitlist_entries')
+
+    def __repr__(self):
+        return f'<Waitlist id={self.id} event_id="{self.event_id}" user_id="{self.user_id}">'
 
 
 class Favorite(db.Model):
@@ -195,6 +213,9 @@ class Favorite(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     user = db.relationship('User', backref='favorites')
     event = db.relationship('Event', backref='favorited_by')
+
+    def __repr__(self):
+        return f'<Favorite id={self.id} event_id="{self.event_id}" user_id="{self.user_id}">'
 
 
 class GiftCard(db.Model):
@@ -206,6 +227,9 @@ class GiftCard(db.Model):
     stripe_charge_id = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
+    def __repr__(self):
+        return f'<GiftCard id={self.id} event_id="{self.event_id}" user_id="{self.user_id}" amount_cents={self.amount_cents}>'
+
 
 class Reward(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -215,6 +239,9 @@ class Reward(db.Model):
     issued_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     redeemed = db.Column(db.Boolean, default=False)
     rsvp = db.relationship('RSVP', backref='reward', uselist=False)
+
+    def __repr__(self):
+        return f'<Reward id={self.id} rsvp_id="{self.rsvp_id}" code="{self.code}" value_cents={self.value_cents}>'
 
 
 class Check(db.Model):

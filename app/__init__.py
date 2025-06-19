@@ -5,12 +5,16 @@ from flask_talisman import Talisman
 import os
 
 
-def create_app():
+from config import config # Import the config dictionary
+
+def create_app(config_name=None):
+    if config_name is None:
+        config_name = os.getenv('FLASK_ENV', 'default')
+
     app = Flask(__name__, template_folder='../templates')
 
-    # Load configuration
-    from config import DevelopmentConfig
-    app.config.from_object(DevelopmentConfig)
+    # Load configuration using the provided name or default
+    app.config.from_object(config[config_name]()) # Instantiates the config class
 
     # Initialize Talisman with default CSP
     Talisman(app)

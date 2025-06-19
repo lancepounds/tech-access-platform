@@ -1,43 +1,43 @@
-import io
-import csv
-from datetime import date
-from flask import Blueprint, render_template, Response, abort
-from flask_login import login_required, current_user
-from app.models import Event
-from app.main.routes import main_bp
+"""
+This file may have previously contained route definitions
+or other main application logic.
 
+Based on recent review, route definitions, especially for the 'main' blueprint,
+are primarily managed in 'app/main/routes.py'.
 
+Any specific application setup or global handlers that might belong here
+should be evaluated. If this file becomes empty, it might be a candidate
+for removal or restructuring, depending on the project's overall design.
 
+For now, it's cleared of redundant route definitions.
+"""
 
-@main_bp.route('/events/<int:event_id>/export', methods=['GET'])
-@login_required
-def export_attendees(event_id):
-    event = Event.query.get_or_404(event_id)
-    if not current_user.company_id or event.company_id != current_user.company_id:
-        abort(403)
-    si = io.StringIO()
-    writer = csv.writer(si)
-    writer.writerow(['Name', 'Email', 'RSVP Date'])
-    for rsvp in event.rsvps:
-        writer.writerow([
-            rsvp.user.name,
-            rsvp.user.email,
-            rsvp.created_at.strftime('%Y-%m-%d %H:%M')
-        ])
-    output = si.getvalue()
-    si.close()
-    return Response(
-        output,
-        mimetype='text/csv',
-        headers={'Content-Disposition': f'attachment;filename=attendees_event_{event_id}.csv'}
-    )
+# Imports that might be needed if this file serves other purposes later:
+# from flask import Blueprint
+# from flask_login import login_required, current_user
+# from app.models import Event
+# from app.main.routes import main_bp # If main_bp needed for other setup here
 
+# Placeholder if this file is expected to exist by other parts of the app,
+# or if it's intended for future use (e.g., app factory pattern).
+def placeholder_function():
+    """
+    This is a placeholder. If app/main.py is essential for the application's
+    structure but currently has no active code after refactoring,
+    this ensures the file is not entirely empty.
+    It can be removed if the file itself is deemed unnecessary.
+    """
+    pass
 
-@main_bp.route('/events')
-def events():
-    today = date.today()
-    upcoming_events = Event.query.filter(Event.date >= today).order_by(Event.date).all()
-    past_events = Event.query.filter(Event.date < today).order_by(Event.date.desc()).all()
-    return render_template('events.html', upcoming_events=upcoming_events, past_events=past_events)
+# If app/main.py is the entry point or part of app creation,
+# the following might be relevant, but typically this is in app/__init__.py:
+#
+# def create_app():
+#     app = Flask(__name__)
+#     # ... app configurations ...
+#     from .main.routes import main_bp
+#     app.register_blueprint(main_bp)
+#     # ... register other blueprints ...
+#     return app
 
-
+# For now, keeping it minimal after removing redundant routes.
