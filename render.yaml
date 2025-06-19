@@ -1,0 +1,91 @@
+# This is a basic render.yaml file.
+# It will be populated with the necessary configuration in the subsequent steps.
+services:
+  - type: web
+    name: tech-access-platform
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn main:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10.13" # Specify a concrete patch version for stability
+      - key: FLASK_APP
+        value: "main:app" # Correctly points to the Flask app instance in main.py
+      - key: FLASK_ENV
+        value: "production"
+      - key: SECRET_KEY
+        generateValue: true # Instructs Render to generate a secure secret key
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tech-access-db # Name of the Render PostgreSQL service
+          property: connectionString
+      - key: WEB_CONCURRENCY # Optional: Adjust Gunicorn worker count based on plan
+        value: "4" # Example: 4 workers for a Standard plan
+      # Essential production environment variables.
+      # These MUST be set in the Render dashboard or via an environment group for a live deployment.
+      # It's recommended to use Render's secret file feature or environment groups for sensitive values.
+      - key: STRIPE_SECRET_KEY
+        value: "" # Placeholder - SET IN RENDER DASHBOARD
+      - key: SUPABASE_URL
+        value: "" # Placeholder - SET IN RENDER DASHBOARD
+      - key: SUPABASE_KEY
+        value: "" # Placeholder - SET IN RENDER DASHBOARD
+      - key: JWT_SECRET_KEY # Can be the same as SECRET_KEY or a different strong key
+        generateValue: true # Or set a specific value in Render Dashboard
+      # SendGrid/Email configuration (assumes SendGrid, adjust if using basic SMTP)
+      # If SENDGRID_API_KEY is not set, the app might try to use fallback SMTP settings from config.py
+      - key: SENDGRID_API_KEY
+        value: "" # Placeholder - SET IN RENDER DASHBOARD
+      - key: MAIL_SERVER
+        value: "smtp.sendgrid.net" # Default for SendGrid
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USE_TLS
+        value: "true"
+      - key: MAIL_USERNAME
+        value: "apikey" # Standard for SendGrid API key auth
+      - key: MAIL_PASSWORD
+        sync: false # Mark as secret, will use SENDGRID_API_KEY if set, otherwise set in dashboard
+        value: ""   # Placeholder - will effectively use SENDGRID_API_KEY or be set in dashboard
+      - key: MAIL_DEFAULT_SENDER_NAME
+        value: "Tech Access Platform"
+      - key: MAIL_DEFAULT_SENDER_EMAIL
+        value: "noreply@example.com" # Placeholder - SET TO YOUR DOMAIN IN RENDER DASHBOARD
+      # The UPLOAD_FOLDER is managed by the application's file system on Render, typically ephemeral.
+      # For persistent storage, consider using Render Disks or an external object storage service (e.g., S3, Supabase Storage).
+      # The PASSWORD_RESET_TOKEN_EXPIRES_HOURS is already configured in config.py
+
+databases:
+  - name: tech-access-db
+    databaseName: tech_access_platform_db # Optional: specify a database name
+    user: tech_access_user # Optional: specify a username
+    plan: free # Or your desired plan
+    # region: oregon # Optional: specify a region, e.g., frankfurt, oregon, singapore
+    # ipAllowList: # Optional: restrict access to specific IPs
+    #   - source: 0.0.0.0/0 # Allow all IPs by default
+    #     description: Everywhere
+
+# Example for a worker (if you have background tasks with Celery, etc.)
+#  - type: worker
+#    name: my-worker
+#    env: python
+#    buildCommand: "pip install -r requirements.txt"
+#    startCommand: "celery -A app.celery worker -l info"
+#    envVars:
+#      - key: DATABASE_URL
+#        fromDatabase:
+#          name: tech-access-db
+#          property: connectionString
+#      - key: REDIS_URL # If using Redis for Celery broker
+#        fromService:
+#          type: redis
+#          name: my-redis
+#          property: connectionString
+
+# Example for Redis (if needed for Celery broker or caching)
+#  - type: redis
+#    name: my-redis
+#    plan: free # Or your desired plan
+#    ipAllowList: [] # By default, only services in the same Render account can connect
+#    maxmemoryPolicy: allkeys-lru # Example: least recently used eviction policy
+#    region: oregon # Optional: specify a region
