@@ -11,7 +11,7 @@ from flask import url_for
 class User(db.Model, UserMixin):
     __tablename__ = "users"
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), default='user')
     
@@ -137,9 +137,9 @@ class Category(db.Model):
 class Event(db.Model):
     __tablename__ = "events"
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    title = db.Column(db.String(128), nullable=False)
+    title = db.Column(db.String(128), nullable=False, index=True)
     description = db.Column(db.Text, nullable=False)
-    date = db.Column(db.DateTime, nullable=False)
+    date = db.Column(db.DateTime, nullable=False, index=True)
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=True)
     user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=True)  # For user-created events
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)

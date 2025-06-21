@@ -5,6 +5,7 @@ import csv
 from werkzeug.utils import secure_filename
 from app.models import Event, RSVP, Company, User, Reward, Category, Review, Waitlist
 from sqlalchemy import or_, func
+from sqlalchemy.orm import joinedload
 from datetime import date
 from app.reviews.forms import ReviewForm
 from app.users.forms import WaitlistForm
@@ -63,13 +64,35 @@ def show_events():
 
 @main_bp.route('/events')
 def list_events():
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config.get('EVENTS_PER_PAGE', 10) # Define EVENTS_PER_PAGE in config or use default
     today_date = date.today()
-    upcoming_events = Event.query.filter(Event.date >= today_date).order_by(Event.date).all()
-    past_events = Event.query.filter(Event.date < today_date).order_by(Event.date.desc()).all()
+
+    upcoming_events_pagination = Event.query.filter(Event.date >= today_date)\
+        .order_by(Event.date)\
+        .paginate(page=page, per_page=per_page, error_out=False)
+
+    # For past events, we might want a separate pagination or decide how to handle it.
+    # Let's paginate upcoming events first and decide on past events.
+    # For simplicity, let's also paginate past events, perhaps with a different page parameter if needed,
+    # or just show the first page of past events, or a link to a separate paginated past events page.
+    # For now, let's assume we want to show the *same page number* for past events, which might be confusing.
+    # A better UX might be to only paginate upcoming, and have a separate "View all past events" link.
+    # Or, paginate them independently.
+    # Let's paginate them with the same page number for now and it can be refined.
+    # However, it's more common to paginate a single primary list on a page.
+    # I will paginate upcoming_events and keep past_events simple (e.g. first few or unpaginated for now)
+    # to avoid complex multi-pagination UI on one page, unless specified.
+
+    # Option 1: Paginate only upcoming events
+    past_events = Event.query.filter(Event.date < today_date)\
+        .order_by(Event.date.desc())\
+        .limit(5).all() # Show a few recent past events, not paginated
+
     return render_template(
         'events.html',
-        upcoming_events=upcoming_events,
-        past_events=past_events
+        upcoming_events_pagination=upcoming_events_pagination,
+        past_events=past_events # Pass the limited list of past events
     )
 
 @main_bp.route('/events/<event_id>', methods=['GET', 'POST'])
@@ -90,9 +113,11 @@ def event_detail(event_id):
             flash('Your review has been posted.', 'success')
         return redirect(url_for('main.event_detail', event_id=event.id))
     avg_rating = db.session.query(func.avg(Review.rating)).filter_by(event_id=event.id).scalar() or 0
-    reviews = Review.query.filter_by(event_id=event.id).order_by(Review.created_at.desc()).all()
-    count = event.rsvps.count()
-    attendees = [rsvp.user for rsvp in event.rsvps.all()]
+    reviews = Review.query.filter_by(event_id=event.id).options(joinedload(Review.user)).order_by(Review.created_at.desc()).all()
+    count = event.rsvps.count() # Get the count once
+    # Eager load User for each RSVP to avoid N+1 when accessing rsvp.user in the loop or template
+    rsvps_with_users = event.rsvps.options(joinedload(RSVP.user)).all()
+    attendees = [rsvp.user for rsvp in rsvps_with_users]
     return render_template(
         'event_detail.html', event=event, count=count, attendees=attendees,
         form=form, waitlist_form=waitlist_form, Waitlist=Waitlist,
@@ -313,11 +338,49 @@ def show_my_rsvps():
         flash('Only users can view RSVPs.', 'danger')
         return redirect(url_for('main.show_events'))
     decoded = decode_token(session['token'])
-    if not decoded:
-        flash('Session expired. Please log in again.', 'danger')
+    if not decoded or 'email' not in decoded:
+        flash('Session expired or invalid. Please log in again.', 'danger')
+        return redirect(url_for('auth.login')) # Make sure this is the correct login URL
+
+    current_user_obj = User.query.filter_by(email=decoded['email']).first()
+    if not current_user_obj:
+        flash('User not found. Please log in again.', 'danger')
         return redirect(url_for('auth.login'))
-    rsvps = RSVP.query.filter_by(user_email=decoded['email']).join(Event).join(Company).all()
-    return render_template('my_rsvps.html', rsvps=rsvps)
+
+    # Fetch RSVPs with event and event's company
+    user_rsvps = RSVP.query.filter_by(user_id=current_user_obj.id)\
+        .options(joinedload(RSVP.event).joinedload(Event.company))\
+        .order_by(Event.date.desc())\
+        .all()
+
+    # Fetch Waitlists with event
+    user_waitlists = Waitlist.query.filter_by(user_id=current_user_obj.id)\
+        .options(joinedload(Waitlist.event))\
+        .join(Event)\
+        .order_by(Event.date.desc())\
+        .all()
+
+    # For the cancel RSVP form - ensure this form is defined
+    # from app.users.forms import CancelRsvpForm # Placeholder, might need to create this form
+    # form = CancelRsvpForm()
+    # For now, to avoid error if form doesn't exist, we can pass a dummy or None
+    # A proper CSRF solution would need a real form or different handling.
+    # The template uses form.csrf_token. A FlaskForm passed will have it.
+    # Let's assume a simple form can be used or this CSRF is from flask_wtf.html5_validation or similar.
+    # For now, I'll mock passing a form object if I can't find CancelRsvpForm.
+    # Checking users/forms.py for CancelRsvpForm.
+    # It's not there. I will need to create a dummy form or remove the CSRF token for now.
+    # Given the scope, I will pass a CSRF token manually if possible, or omit form if it causes issues.
+    # The template uses `{{ form.csrf_token }}`. This usually comes from a FlaskForm.
+    # Let's check `app/users/forms.py`. It contains `WaitlistForm`. No `CancelRsvpForm`.
+    # I will add a dummy form for now for the CSRF token.
+
+    from flask_wtf import FlaskForm # Generic form for CSRF
+    class DummyCSRFForm(FlaskForm):
+        pass
+    form = DummyCSRFForm()
+
+    return render_template('my_rsvps.html', rsvps=user_rsvps, waitlists=user_waitlists, form=form, Waitlist=Waitlist) # Added Waitlist for the template
 
 @main_bp.route('/dashboard')
 def company_dashboard():
@@ -347,9 +410,11 @@ def company_dashboard_legacy():
     if not company.approved:
         flash('Company not approved.', 'danger')
         return redirect(url_for('main.show_events'))
-    events = Event.query.filter_by(company_id=company.id).all()
-    for event in events:
-        event.rsvps = RSVP.query.filter_by(event_id=event.id).all()
+    # Eager load rsvps for each event, and the user for each rsvp
+    events = Event.query.filter_by(company_id=company.id)\
+        .options(
+            selectinload(Event.rsvps).joinedload(RSVP.user)
+        ).all()
     return render_template('company_dashboard.html', events=events)
 
 @main_bp.route('/rsvps/<int:rsvp_id>/fulfill-ui', methods=['POST'])
@@ -416,15 +481,33 @@ def get_my_rsvps():
     if not token: return jsonify({'error': 'Missing token'}), 401
     decoded = decode_token(token)
     if not decoded: return jsonify({'error': 'Invalid token'}), 401
-    if decoded['role'] != 'user': return jsonify({'error': 'Unauthorized'}), 403
-    rsvps = RSVP.query.filter_by(user_email=decoded['email']).all()
+    if decoded.get('role') != 'user': return jsonify({'error': 'Unauthorized'}), 403
+
+    user_email = decoded.get('email')
+    if not user_email:
+        return jsonify({'error': 'User email not in token'}), 401
+
+    user_obj = User.query.filter_by(email=user_email).first()
+    if not user_obj:
+        return jsonify({'error': 'User not found for token'}), 401
+
+    rsvps = RSVP.query.filter_by(user_id=user_obj.id)\
+        .options(
+            joinedload(RSVP.event).joinedload(Event.company)
+        ).all()
+
     events_data = []
     for rsvp in rsvps:
-        event = Event.query.get(rsvp.event_id)
-        if event:
+        if rsvp.event:
+            company_name = None
+            if rsvp.event.company: # Company might be nullable on Event if user can create events
+                company_name = rsvp.event.company.name
             events_data.append({
-                'id': event.id, 'title': event.title, 'description': event.description,
-                'date': event.date.isoformat(), 'company_name': event.company.name,
+                'id': rsvp.event.id,
+                'title': rsvp.event.title,
+                'description': rsvp.event.description,
+                'date': rsvp.event.date.isoformat(),
+                'company_name': company_name,
                 'rsvp_date': rsvp.created_at.isoformat()
             })
     return jsonify(events_data), 200
@@ -506,9 +589,13 @@ def export_attendees(event_id):
     si = io.StringIO()
     writer = csv.writer(si)
     writer.writerow(['Name', 'Email', 'RSVP Date'])
-    for rsvp_item in event.rsvps: # Changed variable name
+    # Eagerly load the 'user' related to each 'rsvp_item'
+    rsvps_with_users = event.rsvps.options(joinedload(RSVP.user)).all()
+    for rsvp_item in rsvps_with_users:
+        user_name = rsvp_item.user.name if rsvp_item.user else 'N/A'
+        user_email = rsvp_item.user.email if rsvp_item.user else 'N/A'
         writer.writerow([
-            rsvp_item.user.name, rsvp_item.user.email, # Assumes user relationship on rsvp_item
+            user_name, user_email,
             rsvp_item.created_at.strftime('%Y-%m-%d %H:%M')
         ])
     output = si.getvalue()
