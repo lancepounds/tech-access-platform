@@ -106,15 +106,24 @@ def create_app(config_name=None):
     from app.api import api_bp
     from app.admin import admin_bp as admin_blueprint # Import admin blueprint
 
-    csrf.exempt(auth_bp)
-    csrf.exempt(api_users_bp)
-    csrf.exempt(users_bp)
-    csrf.exempt(events_bp)
-    csrf.exempt(companies_bp)
-    csrf.exempt(categories_bp)
-    csrf.exempt(checks_bp)
-    csrf.exempt(main_bp)
+    # csrf.exempt(auth_bp) # Protected by default
+    # csrf.exempt(api_users_bp) # Potentially exempt if pure API and token auth
+    # csrf.exempt(users_bp) # Protected by default
+    # csrf.exempt(events_bp) # Potentially exempt if pure API and token auth
+    # csrf.exempt(companies_bp) # Protected by default
+    # csrf.exempt(categories_bp) # Protected by default
+    # csrf.exempt(checks_bp) # Protected by default
+    # csrf.exempt(main_bp) # Protected by default
     
+    # Exempt API blueprint if it's purely token-based
+    csrf.exempt(api_bp)
+    # api_users_bp and events_bp might also need exemption if they are purely token-based APIs.
+    # For now, let's assume they might have session-based interaction points or need protection.
+    # If issues arise, these can be exempted later.
+    # csrf.exempt(api_users_bp)
+    # csrf.exempt(events_bp)
+
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(dash_bp)
     app.register_blueprint(api_bp)
