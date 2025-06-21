@@ -107,6 +107,24 @@ def test_create_event_invalid_image_content(client):
         expected_error_message = "Invalid image content. File does not appear to be a valid image."
         assert expected_error_message in response.data.decode('utf-8')
 
+
+def test_create_event_image_too_large(client):
+    with client:
+        login_company_user(client)
+        large_image = io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"a" * (2 * 1024 * 1024 + 1))
+        data = {
+            'title': 'Event with Large Image',
+            'description': 'Testing file size limit',
+            'date': '2024-10-13T10:00:00',
+            'category_id': '0',
+            'image': (large_image, 'event.png')
+        }
+        response = client.post(url_for('main.create_event'), data=data, content_type='multipart/form-data', follow_redirects=True)
+        assert response.status_code == 200
+        assert b'File must be smaller than 2 MB.' in response.data
+        html_content = response.data.decode('utf-8')
+        assert 'class="form-control is-invalid"' in html_content
+
 @patch('os.makedirs') # To simulate cases where makedirs might be fine
 @patch('werkzeug.datastructures.FileStorage.save')
 def test_create_event_image_save_failure(mock_save, mock_makedirs, client):

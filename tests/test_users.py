@@ -95,6 +95,21 @@ def test_update_profile_avatar_invalid_content(client):
             messages = get_flashed_messages(with_categories=True)
             assert any(msg[0] == 'danger' and 'Invalid avatar content' in msg[1] for msg in messages)
 
+
+def test_update_profile_avatar_too_large(client):
+    with client:
+            login_test_user(client)
+            large_image = io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"a" * (2 * 1024 * 1024 + 1))
+            data = {
+                'name': 'Test User Name',
+                'bio': 'Test bio',
+                'avatar': (large_image, 'avatar.png')
+            }
+            response = client.post(url_for('users.profile'), data=data, content_type='multipart/form-data', follow_redirects=True)
+            assert response.status_code == 200
+            assert b'File must be smaller than 2 MB.' in response.data
+            assert b'class="form-control is-invalid"' in response.data
+
 @patch('werkzeug.datastructures.FileStorage.save')
 def test_update_profile_avatar_save_failure(mock_save, client):
     with client:
