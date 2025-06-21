@@ -34,6 +34,7 @@
       </div>
       <div class="card-body p-4 p-md-5">
         <form id="signup-form" class="needs-validation" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <div class="mb-3">
             <label for="email" class="form-label">
               <i class="bi bi-envelope me-1"></i>Email Address
@@ -134,12 +135,19 @@
       const password = form.password.value;
       const role = form.role.value;
       const wheelchairUsage = form.wheelchair_usage ? form.wheelchair_usage.value : null;
+      const csrfToken = form.csrf_token.value; // Read CSRF token
       
       try {
         const res = await fetch('/auth/register', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({email, password, role, wheelchair_usage: wheelchairUsage})
+          body: JSON.stringify({
+            email,
+            password,
+            role,
+            wheelchair_usage: wheelchairUsage,
+            csrf_token: csrfToken // Include CSRF token in payload
+          })
         });
         
         const data = await res.json();
