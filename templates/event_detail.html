@@ -44,7 +44,7 @@
 
 <p><strong>RSVPs:</strong> {{ count }}</p>
 {% if event.capacity %}
-  <p>Seats left: {{ event.capacity - event.rsvps.count() }}</p>
+  <p>Seats left: {{ event.capacity - count }}</p>
 {% endif %}
 
 {% if event.category %}
@@ -69,7 +69,7 @@
     {% set user_rsvp = event.rsvps.filter_by(user_id=current_user.id).first() %}
     {% set waitlisted = event.waitlist.filter_by(user_id=current_user.id).first() %}
     {% if not user_rsvp %}
-      {% if event.capacity and event.rsvps.count() >= event.capacity %}
+      {% if event.capacity and count >= event.capacity %}
         <form method="post" action="{{ url_for('main.rsvp_event', event_id=event.id) }}">
           {{ waitlist_form.csrf_token }}
           <button type="submit" class="btn btn-secondary">Join Waitlist</button>

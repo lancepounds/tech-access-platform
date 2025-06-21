@@ -33,6 +33,7 @@ class Config:
 
     UPLOAD_FOLDER = os.path.join(basedir, 'static', 'uploads')
     PASSWORD_RESET_TOKEN_EXPIRES_HOURS = 1
+    EVENTS_PER_PAGE = 10
 
 
 class DevelopmentConfig(Config):
