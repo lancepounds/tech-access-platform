@@ -33,11 +33,16 @@ def test_client(app):
 def init_database(app): # Depends on the app fixture to get app.app_context()
     """Fixture to initialize the database for each test function."""
     with app.app_context():
-        db.drop_all() # Drop all tables
-        db.create_all() # Create all tables
-        yield db         # Provide the db object to the test if needed
-        db.session.remove() # Clean up session
-        # db.drop_all() # Optional: drop tables again after test, if desired
+        # Setup: drop and recreate all tables
+        db.drop_all()
+        db.create_all()
+
+        # Yield the db instance for use in tests
+        yield db
+
+        # Teardown: remove session and drop all tables to ensure clean state for next test
+        db.session.remove()
+        db.drop_all()
 
 @pytest.fixture
 def test_user(init_database): # Depends on init_database to ensure clean db
