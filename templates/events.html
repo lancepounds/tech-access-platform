@@ -17,7 +17,11 @@
     {% endfor %}
   </ul>
   {% if upcoming_events_pagination.pages > 1 %}
-    {{ macros.render_pagination(upcoming_events_pagination, 'main.list_events') }}
+    {% set query_params = {} %}
+    {% if request.args.get('query') %}
+      {% set _ = query_params.update({'query': request.args.get('query')}) %}
+    {% endif %}
+    {{ macros.render_pagination(upcoming_events_pagination, 'main.list_events', query_params=query_params) }}
   {% endif %}
 {% else %}
   <p>No upcoming events.</p>

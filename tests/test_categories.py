@@ -146,9 +146,12 @@ def sample_events(test_app, init_database, sample_categories, regular_user): # A
         # Ensure categories and user are fetched within the current session if they were created elsewhere
         db_regular_user = db.session.merge(regular_user) # Merge user to current session
 
-        # Fetch categories by name to ensure we get session-bound objects
-        cat_tech = Category.query.filter_by(name='Technology').first()
-        cat_business = Category.query.filter_by(name='Business').first()
+        # Fetch Category objects from DB using IDs from sample_categories
+        cat_tech_id = sample_categories[0] # Assuming 'Technology' is the first
+        cat_business_id = sample_categories[1] # Assuming 'Business' is the second
+
+        cat_tech = Category.query.get(cat_tech_id)
+        cat_business = Category.query.get(cat_business_id)
 
         events_data = [
             {
@@ -202,26 +205,39 @@ def test_example_fixture_usage(client, init_database, regular_user, sample_categ
     # or if tests modify data and expect to see those changes reflected via direct model queries.
 
     # For this basic test, direct assertion on fixture return is fine if fixtures manage session state correctly.
-    current_user = User.query.get(regular_user.id)
-    assert current_user is not None
-    assert current_user.username == 'testuser'
+    # Ensure regular_user is session-managed
+    # The test_app fixture is passed to this test, use it for app_context
+    with client.application.app_context(): # Corrected: use client.application or test_app directly
+        current_user = db.session.merge(regular_user)
+        assert current_user is not None
+        # Assuming User model has 'name' not 'username' based on fixture updates
+        assert current_user.name == 'Test User' # Changed from 'testuser'
 
-    assert len(sample_categories) == 3
-    assert len(sample_events) == 3
+        assert len(sample_categories) == 3 # sample_categories returns IDs
+        assert len(sample_events) == 3 # sample_events returns Event objects
 
-    tech_event = Event.query.filter_by(name='Tech Conference 2024').first()
-    assert tech_event is not None
-    assert tech_event.category is not None
-    assert tech_event.category.name == 'Technology'
+        tech_event = Event.query.filter_by(name='Tech Conference 2024').first()
+        assert tech_event is not None
 
-    # Verify user association with the event
-    assert tech_event.user_id == current_user.id
-    assert tech_event.user.username == current_user.username
+        # Fetch the category for the event to ensure it's session-managed
+        # Use .get on the Category model directly as it's simpler and standard
+        tech_category = Category.query.get(tech_event.category_id)
+        assert tech_category is not None
+        assert tech_category.name == 'Technology'
+        # Direct access via backref should also work if session management is correct
+        assert tech_event.category is not None
+        assert tech_event.category.name == 'Technology'
 
-    # Verify an event without a category
-    art_event = Event.query.filter_by(name='Art Exhibition Opening').first()
-    assert art_event is not None
-    assert art_event.category is None
+
+        # Verify user association with the event
+        assert tech_event.user_id == current_user.id
+        # Assuming User model has 'name' not 'username'
+        assert tech_event.user.name == current_user.name # Changed from username
+
+        # Verify an event without a category
+        art_event = Event.query.filter_by(name='Art Exhibition Opening').first()
+        assert art_event is not None
+        assert art_event.category is None
 
 
 # --- Tests for Category Creation (/categories/create) ---
@@ -305,7 +321,10 @@ def test_create_category_duplicate_name(client, test_app, init_database, admin_u
         # Login as admin
         client.post('/auth/login', data={'email': 'admin@example.com', 'password': 'adminpassword'}) # Use known string
 
-        existing_category = sample_categories[0] # Take one from fixture
+        existing_category_id = sample_categories[0] # Take one ID from fixture
+        existing_category = Category.query.get(existing_category_id)
+        assert existing_category is not None # Ensure it was fetched
+
         initial_category_count = Category.query.count()
 
         response = client.post('/categories/create', data={
@@ -362,7 +381,7 @@ def test_list_categories_admin(client, test_app, init_database, admin_user, samp
         response_data = response.data.decode('utf-8')
 
         for cat_id in sample_categories: # sample_categories now returns IDs
-            category = Category.query.get(cat_id) # Re-fetch category
+            category = db.session.get(Category, cat_id) # Use db.session.get for session-awareness
             assert category is not None
             assert category.name in response_data
             # Example: Check for a delete form specific to admin for each category
@@ -378,7 +397,9 @@ def test_list_categories_company(client, test_app, init_database, company_user, 
         assert response.status_code == 200
         response_data = response.data.decode('utf-8')
 
-        for category in sample_categories:
+        for cat_id in sample_categories:
+            category = db.session.get(Category, cat_id)
+            assert category is not None
             assert category.name in response_data
             # Ensure delete forms/buttons are NOT present for company user
             assert f'<form method="post" action="/categories/{category.id}/delete">' not in response_data
@@ -396,7 +417,9 @@ def test_list_categories_regular_user(client, test_app, init_database, regular_u
         assert response.status_code == 200
         response_data = response.data.decode('utf-8')
 
-        for category in sample_categories:
+        for cat_id in sample_categories:
+            category = db.session.get(Category, cat_id)
+            assert category is not None
             assert category.name in response_data
             # Ensure delete forms/buttons are NOT present for regular user
             assert f'<form method="post" action="/categories/{category.id}/delete">' not in response_data
@@ -425,7 +448,9 @@ def test_edit_category_admin(client, test_app, init_database, admin_user, sample
     with test_app.app_context():
         client.post('/auth/login', data={'email': 'admin@example.com', 'password': 'adminpassword'}) # Use known string
 
-        category_to_edit = sample_categories[0]
+        category_id_to_edit = sample_categories[0]
+        category_to_edit = db.session.get(Category, category_id_to_edit)
+        assert category_to_edit is not None
         original_name = category_to_edit.name
         edit_url = f'/categories/{category_to_edit.id}/edit'
 
@@ -458,7 +483,9 @@ def test_edit_category_regular_user_unauthorized(client, test_app, init_database
     with test_app.app_context():
         client.post('/auth/login', data={'email': 'user@example.com', 'password': 'password'}) # Use known string
 
-        category_to_edit = sample_categories[0]
+        category_id_to_edit = sample_categories[0]
+        category_to_edit = db.session.get(Category, category_id_to_edit)
+        assert category_to_edit is not None
         original_name = category_to_edit.name
         edit_url = f'/categories/{category_to_edit.id}/edit'
 
@@ -481,7 +508,9 @@ def test_edit_category_company_user_unauthorized(client, test_app, init_database
     with test_app.app_context():
         client.post('/auth/login', data={'email': 'company@example.com', 'password': 'password'}) # Use known string
 
-        category_to_edit = sample_categories[0]
+        category_id_to_edit = sample_categories[0]
+        category_to_edit = db.session.get(Category, category_id_to_edit)
+        assert category_to_edit is not None
         original_name = category_to_edit.name
         edit_url = f'/categories/{category_to_edit.id}/edit'
 
@@ -546,7 +575,9 @@ def test_edit_category_form_validation(client, test_app, init_database, admin_us
     with test_app.app_context():
         client.post('/auth/login', data={'email': 'admin@example.com', 'password': 'adminpassword'}) # Use known string
 
-        category_to_edit = sample_categories[0]
+        category_id_to_edit = sample_categories[0]
+        category_to_edit = db.session.get(Category, category_id_to_edit)
+        assert category_to_edit is not None
         original_name = category_to_edit.name
         edit_url = f'/categories/{category_to_edit.id}/edit'
 
@@ -624,24 +655,28 @@ def test_delete_category_regular_user_unauthorized(client, test_app, init_databa
     with test_app.app_context():
         client.post('/auth/login', data={'email': 'user@example.com', 'password': 'password'}) # Use known string
 
-        category_to_delete = sample_categories[0]
+        category_id_to_delete = sample_categories[0]
+        category_to_delete = db.session.get(Category, category_id_to_delete)
+        assert category_to_delete is not None
         delete_url = f'/categories/{category_to_delete.id}/delete'
 
         response = client.post(delete_url)
         assert response.status_code == 403
-        assert Category.query.get(category_to_delete.id) is not None # Not deleted
+        assert db.session.get(Category, category_to_delete.id) is not None # Not deleted
 
 def test_delete_category_company_user_unauthorized(client, test_app, init_database, company_user, sample_categories):
     """Test unauthorized deletion attempt by a company user."""
     with test_app.app_context():
         client.post('/auth/login', data={'email': 'company@example.com', 'password': 'password'}) # Use known string
 
-        category_to_delete = sample_categories[0]
+        category_id_to_delete = sample_categories[0]
+        category_to_delete = db.session.get(Category, category_id_to_delete)
+        assert category_to_delete is not None
         delete_url = f'/categories/{category_to_delete.id}/delete'
 
         response = client.post(delete_url)
         assert response.status_code == 403
-        assert Category.query.get(category_to_delete.id) is not None # Not deleted
+        assert db.session.get(Category, category_to_delete.id) is not None # Not deleted
 
 def test_delete_non_existent_category_admin(client, test_app, init_database, admin_user):
     """Test deleting a non-existent category by an admin."""
@@ -676,7 +711,9 @@ def test_delete_category_csrf_protection(client, test_app, init_database, admin_
     with test_app.app_context():
         client.post('/auth/login', data={'email': 'admin@example.com', 'password': 'adminpassword'}) # Use known string
 
-        category_to_delete = sample_categories[0]
+        category_id_to_delete = sample_categories[0]
+        category_to_delete = db.session.get(Category, category_id_to_delete)
+        assert category_to_delete is not None
         delete_url = f'/categories/{category_to_delete.id}/delete'
 
         # To simulate a missing/invalid CSRF token with WTForms, we can disable the test client's CSRF handling
